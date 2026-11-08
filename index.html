@@ -113,6 +113,62 @@ function checkoutInfo(){if(!cart.length)return showNotice('Keranjang masih koson
 async function submitOrder(){const btn=document.getElementById('submitOrderBtn'),out=document.getElementById('checkoutResult');try{if(!cart.length)throw Error('Keranjang masih kosong.');const name=document.getElementById('checkoutName').value.trim(),phone=document.getElementById('checkoutPhone').value.trim(),recipient=document.getElementById('checkoutRecipient').value.trim(),addressPhone=document.getElementById('checkoutAddressPhone').value.trim(),province=document.getElementById('checkoutProvince').value,city=document.getElementById('checkoutCity').value.trim(),fullAddress=document.getElementById('checkoutFullAddress').value.trim();if(!name||!phone||!recipient||!addressPhone||!province||!city||!fullAddress)throw Error('Lengkapi seluruh data pemesan dan alamat yang wajib.');if(province==='OUTSIDE')throw Error('Pengiriman di luar Pulau Jawa belum tersedia. Silakan pesan melalui Shopee.');const data={idempotencyKey:window.crypto?.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random(),customer:{name,whatsapp:phone,email:document.getElementById('checkoutEmail').value.trim()},address:{recipientName:recipient,phone:addressPhone,province,city,district:document.getElementById('checkoutDistrict').value.trim(),postalCode:document.getElementById('checkoutPostal').value.trim(),fullAddress,reference:document.getElementById('checkoutReference').value.trim()},paymentMethod:document.querySelector('input[name="checkoutPayment"]:checked')?.value||'TRANSFER',notes:document.getElementById('checkoutNotes').value.trim(),items:cart.map(x=>({productId:x.variationId,qty:x.qty}))};btn.disabled=true;btn.textContent='Mengirim pesanan...';const r=await api('createWebOrder',data);if(!r.ok)throw Error(r.error||'Pesanan belum dapat dikirim.');out.innerHTML=`<div class="message success"><b>Pesanan berhasil dibuat!</b><br>Nomor pesanan: <b>${esc(r.data.orderId)}</b><br>Subtotal: ${money(r.data.subtotal)}<br>Ongkir: ${money(r.data.shippingCost)}<br>Total pembayaran: <b>${money(r.data.grandTotal)}</b><br>Admin akan menghubungi kamu untuk konfirmasi selanjutnya.</div>`;cart=[];saveCart();renderCart();btn.textContent='Pesanan Terkirim';return}catch(e){out.textContent=e.message;out.style.color='#c33'}finally{btn.disabled=false;if(btn.textContent!=='Pesanan Terkirim')btn.textContent='Kirim Pesanan'}}
 document.getElementById('homeSearch').addEventListener('input',e=>{document.getElementById('productSearch').value=e.target.value;filter='Semua';navigate('products')});document.getElementById('productSearch').addEventListener('input',renderProducts);
 function setTheme(t){document.documentElement.dataset.theme=t;document.getElementById('themeBtn').textContent=t==='dark'?'☀':'☾';try{localStorage.setItem('aliflam-theme',t)}catch(e){}document.querySelector('meta[name="theme-color"]').content=t==='dark'?'#0d1726':'#f5f8fc'}try{setTheme(localStorage.getItem('aliflam-theme')||'light')}catch(e){setTheme('light')}document.getElementById('themeBtn').onclick=()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');
-async function loadCatalog(){showLoading('Memuat katalog produk...');try{const r=await api('catalog');if(!r.ok)throw Error(r.error||'Katalog belum dapat dimuat.');VARIANTS=mapCatalog(r.data?.products||[]);buildGroups();refreshCategories();renderHome();renderProducts();saveCart();const m=location.hash.match(/^#produk\/(.+)$/);if(m)openDetail(decodeURIComponent(m[1]),false)}catch(e){document.getElementById('homeProducts').innerHTML='<div class="empty">Katalog belum dapat dimuat. Periksa koneksi atau hubungi admin.</div>';document.getElementById('products').innerHTML='<div class="empty">'+esc(e.message)+'</div>'}finally{hideLoading()}}
+const CATALOG_CACHE_KEY='aliflam-catalog-cache-v1';
+function renderCatalogProducts(products){
+  VARIANTS=mapCatalog(products||[]);
+  buildGroups();
+  refreshCategories();
+  renderHome();
+  renderProducts();
+  saveCart();
+  const m=location.hash.match(/^#produk\/(.+)$/);
+  if(m)openDetail(decodeURIComponent(m[1]),false);
+}
+function readCatalogCache(){
+  try{
+    const raw=localStorage.getItem(CATALOG_CACHE_KEY);
+    if(!raw)return null;
+    const cache=JSON.parse(raw);
+    return Array.isArray(cache.products)?cache:null;
+  }catch(e){return null}
+}
+function writeCatalogCache(products){
+  try{
+    localStorage.setItem(CATALOG_CACHE_KEY,JSON.stringify({
+      savedAt:Date.now(),
+      products:products||[]
+    }));
+  }catch(e){}
+}
+function showCatalogPlaceholder(){
+  const message='<div class="empty">Katalog sedang disiapkan...</div>';
+  document.getElementById('homeCats').innerHTML='<div class="muted tiny">Kategori sedang dimuat...</div>';
+  document.getElementById('homeProducts').innerHTML=message;
+  document.getElementById('products').innerHTML=message;
+  document.getElementById('productCount').textContent='';
+}
+async function loadCatalog(){
+  const cached=readCatalogCache();
+  if(cached){
+    renderCatalogProducts(cached.products);
+  }else{
+    showCatalogPlaceholder();
+  }
+
+  try{
+    const r=await api('catalog');
+    if(!r.ok)throw Error(r.error||'Katalog belum dapat dimuat.');
+    const products=r.data?.products||[];
+    writeCatalogCache(products);
+    renderCatalogProducts(products);
+  }catch(e){
+    if(!cached){
+      document.getElementById('homeProducts').innerHTML='<div class="empty">Katalog belum dapat dimuat. Periksa koneksi atau hubungi admin.</div>';
+      document.getElementById('products').innerHTML='<div class="empty">'+esc(e.message)+'</div>';
+      document.getElementById('homeCats').innerHTML='';
+    }
+    // Jika cache tersedia, katalog tersimpan tetap ditampilkan ketika server lambat/gagal.
+  }
+}
 loadCatalog();
 </script></body></html>
