@@ -47,8 +47,28 @@ body.modal-open{overflow:hidden!important;touch-action:none}
 <section class="page" id="productDetailPage"><button class="secondary" onclick="backFromDetail()">← Kembali ke katalog</button><div class="detailpage"><div class="detailvisual"><img alt="Foto produk" class="detailimage" id="detailImage"/></div><div class="detailcontent"><div class="tag" id="detailCategory"></div><h1 id="detailTitle">Detail Produk</h1><p class="muted tiny">Pilih variasi produk sebelum menambahkan ke keranjang.</p><div id="variation1Wrap"><label class="field">Pilih Bahan</label><div class="variation-options" id="variation1Options"></div><div aria-live="polite" class="variation-hint" id="variation1Hint"></div></div><div id="sizeVariationWrap"></div><div id="variation3Wrap"><label class="field">Pilih Finishing</label><div class="variation-options" id="variation3Options"></div><div aria-live="polite" class="variation-hint" id="variation3Hint"></div></div>
 <div id="customSizeWrap" style="display:none"><div class="custom-size-grid"><div><label class="field" for="customWidth">Lebar (CM)</label><input class="input" id="customWidth" type="number" min="1" step="1" placeholder="Contoh: 200" oninput="updateDetail()"></div><div><label class="field" for="customHeight">Tinggi (CM)</label><input class="input" id="customHeight" type="number" min="1" step="1" placeholder="Contoh: 100" oninput="updateDetail()"></div></div></div>
 <label class="field" id="qtyLabel" for="qty">Jumlah</label><div class="qtyrow"><button aria-label="Kurangi jumlah" class="qtybtn" onclick="changeQty(-1)" type="button">−</button><input class="input" id="qty" min="1" oninput="updateDetail()" step="1" type="number" value="1"/><button aria-label="Tambah jumlah" class="qtybtn" onclick="changeQty(1)" type="button">+</button><span class="muted tiny" id="weightLabel"></span></div><div class="detailtotal"><div class="muted tiny">Total harga produk</div><strong id="detailPrice"></strong><div class="footnote" id="detailNote"></div></div><button class="primary full" id="addButton" onclick="addCart()">+ Tambah ke Keranjang</button><a class="shopee" href="#" id="shopeeButton" rel="noopener" target="_blank">ORDER VIA SHOPEE ↗</a></div></div><footer>© 2026 Aliflam Printing · Desain &amp; Percetakan</footer></section>
+
+<section class="page" id="ordersPage">
+  <div class="intro">
+    <div class="eyebrow">RIWAYAT TRANSAKSI</div>
+    <h1>Pesanan Saya</h1>
+    <p>Cari pesanan menggunakan nomor WhatsApp, nomor pesanan, atau nama produk.</p>
+  </div>
+  <div class="panel">
+    <label class="field" for="myOrderPhone">Nomor WhatsApp pemesan *</label>
+    <input class="input" id="myOrderPhone" inputmode="tel" autocomplete="tel" placeholder="Contoh: 081234567890"/>
+    <label class="field" for="myOrderId">Nomor Pesanan (opsional)</label>
+    <input class="input" id="myOrderId" placeholder="Contoh: WEB-20261108-0001"/>
+    <label class="field" for="myOrderProduct">Nama Produk (opsional)</label>
+    <input class="input" id="myOrderProduct" placeholder="Contoh: X-Banner"/>
+    <button class="primary full" id="findMyOrdersBtn" style="margin-top:14px" onclick="findMyOrders()">Cari Pesanan</button>
+    <p class="footnote">Nomor WhatsApp digunakan untuk verifikasi agar pesanan tidak bisa dilihat orang lain.</p>
+  </div>
+  <div id="myOrdersResult" style="margin-top:16px"></div>
+</section>
+
 </main>
-<nav class="bottom"><div class="bottominner"><button class="nav active" data-nav="home" onclick="navigate('home')"><span>⌂</span>Beranda</button><button class="nav" data-nav="products" onclick="navigate('products')"><span>▦</span>Produk</button></div></nav>
+<nav class="bottom"><div class="bottominner"><button class="nav active" data-nav="home" onclick="navigate('home')"><span>⌂</span>Beranda</button><button class="nav" data-nav="products" onclick="navigate('products')"><span>▦</span>Produk</button><button class="nav" data-nav="orders" onclick="navigate('orders')"><span>▤</span>Pesanan Saya</button></div></nav>
 <div class="overlay" id="cartOverlay" onclick="if(event.target===this)closeOverlay('cartOverlay')"><div class="dialog"><div class="dialoghead"><h2>Keranjang Belanja</h2><button class="close" onclick="closeOverlay('cartOverlay')">×</button></div><div id="cartItems"></div><div class="subtotal"><b>Subtotal</b><strong id="cartTotal">Rp0</strong></div><div class="twoactions"><button class="secondary" onclick="closeOverlay('cartOverlay');navigate('products')">Tambah Produk</button><button class="primary" onclick="checkoutInfo()">Lanjut Checkout</button></div><p class="footnote">Item keranjang tersimpan sementara di perangkat ini. Pesanan baru tercatat setelah checkout berhasil.</p></div></div>
 <div class="overlay" id="checkoutOverlay" onclick="if(event.target===this)closeOverlay('checkoutOverlay')"><div class="dialog"><div class="dialoghead"><h2>Checkout Pesanan</h2><button class="close" onclick="closeOverlay('checkoutOverlay')">×</button></div>
 <div class="tag">DATA PEMESAN &amp; PENGIRIMAN</div>
@@ -88,6 +108,37 @@ function refreshCategories(){names=['Semua',...Array.from(new Set(groups.map(g=>
 function saveCart(){try{localStorage.setItem('aliflam-live-cart',JSON.stringify(cart))}catch(e){}document.getElementById('cartCount').textContent=cart.reduce((a,b)=>a+b.qty,0)}
 function minPrice(g){const nums=g.variants.map(x=>x.price).filter(x=>x>0);return nums.length?Math.min(...nums):0}
 function productCard(g){const p=minPrice(g);return `<article class="product product-clickable" role="link" tabindex="0" aria-label="Lihat produk ${esc(g.name)}" onclick="openDetail('${esc(g.id)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openDetail('${esc(g.id)}')}"><img src="${IMG(g.image)}" alt="${esc(g.name)}" loading="lazy" onerror="this.style.opacity='.15'"><div class="pbody"><div class="categorylabel">${esc(classify(g))}</div><h3>${esc(g.name)}</h3><div class="price">${p?`<small>Mulai dari</small><strong>${money(p)}</strong>`:'Harga sesuai variasi'}</div><span class="product-cta">Lihat Produk <span aria-hidden="true">→</span></span></div></article>`}
+
+function formatOrderDate(value){
+  if(!value)return "-";
+  const d=new Date(value);
+  return Number.isNaN(d.getTime())?String(value):d.toLocaleString("id-ID",{dateStyle:"medium",timeStyle:"short"});
+}
+function findMyOrders(){
+  const phone=document.getElementById("myOrderPhone").value.trim();
+  const orderId=document.getElementById("myOrderId").value.trim();
+  const product=document.getElementById("myOrderProduct").value.trim();
+  const out=document.getElementById("myOrdersResult");
+  const btn=document.getElementById("findMyOrdersBtn");
+  if(!phone){out.innerHTML='<div class="empty">Masukkan nomor WhatsApp pemesan terlebih dahulu.</div>';return}
+  if(!orderId&&!product){out.innerHTML='<div class="empty">Isi nomor pesanan atau nama produk untuk mempersempit pencarian.</div>';return}
+  btn.disabled=true;btn.textContent="Mencari...";
+  out.innerHTML='<div class="empty">Sedang mencari pesanan...</div>';
+  api("lookupCustomerOrders",{whatsapp:phone,orderId:orderId,product:product}).then(r=>{
+    if(!r.ok)throw Error(r.error||"Pesanan belum dapat dicari.");
+    const orders=r.data?.orders||[];
+    if(!orders.length){out.innerHTML='<div class="empty">Pesanan tidak ditemukan. Periksa kembali nomor WhatsApp dan kata kunci pencarian.</div>';return}
+    out.innerHTML='<div class="sectionhead"><div><h2>Hasil Pencarian</h2><p>'+orders.length+' pesanan ditemukan</p></div></div>'+orders.map(o=>{
+      const items=(o.items||[]).map(it=>'<div class="cartrow"><div style="flex:1"><b>'+esc(it.productName||it.sku||"Produk")+'</b><p>'+esc(it.sku||"")+' · Qty '+Number(it.qty||0)+'</p><p>'+money(it.lineTotal||0)+'</p></div></div>').join("");
+      return '<article class="panel" style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><b>'+esc(o.orderId)+'</b><span class="tag">'+esc(o.status||"")+'</span></div><p class="tiny">Tanggal: '+esc(formatOrderDate(o.orderDate))+'</p><div class="benefit" style="display:block;margin:10px 0;padding:12px"><b>Progres Pesanan</b><p style="margin:5px 0 0;color:var(--blue);font-weight:800">'+esc(o.progress||"Belum ada pembaruan")+'</p></div>'+items+'<div class="subtotal"><b>Status Pembayaran</b><strong style="font-size:13px">'+esc(o.paymentStatus||"-")+'</strong></div><div class="subtotal"><b>Total Pembayaran</b><strong>'+money(o.grandTotal||0)+'</strong></div></article>'
+    }).join("");
+  }).catch(e=>{
+    out.innerHTML='<div class="empty">'+esc(e.message||"Terjadi kesalahan saat mencari pesanan.")+'</div>';
+  }).finally(()=>{
+    btn.disabled=false;btn.textContent="Cari Pesanan";
+  });
+}
+
 function navigate(page){document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id===page+'Page'));document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.nav===page));if(page==='products')renderProducts();window.scrollTo({top:0,behavior:'smooth'})}
 function setFilter(name){filter=name;navigate('products')}
 function renderProducts(){document.getElementById('filters').innerHTML=names.map(n=>`<button class="filter ${filter===n?'selected':''}" onclick="setFilter(decodeURIComponent('${encodeURIComponent(n)}'))">${esc(n)}</button>`).join('');const q=document.getElementById('productSearch').value.trim().toLowerCase();const arr=groups.filter(g=>(filter==='Semua'||classify(g)===filter)&&(g.name.toLowerCase().includes(q)||g.variants.some(v=>[v.sku,v.material,v.size,v.finishing,(v.sizeOptions||[]).map(x=>x.value).join(" ")].join(' ').toLowerCase().includes(q))));document.getElementById('products').innerHTML=arr.map(productCard).join('')||'<div class="empty">Produk tidak ditemukan.</div>';document.getElementById('productCount').textContent=arr.length+' produk ditemukan'}
@@ -179,5 +230,7 @@ async function loadCatalog(){
     // Jika cache tersedia, katalog tersimpan tetap ditampilkan ketika server lambat/gagal.
   }
 }
+
+document.getElementById("myOrderPhone").addEventListener("keydown",e=>{if(e.key==="Enter")findMyOrders()});document.getElementById("myOrderId").addEventListener("keydown",e=>{if(e.key==="Enter")findMyOrders()});document.getElementById("myOrderProduct").addEventListener("keydown",e=>{if(e.key==="Enter")findMyOrders()});
 loadCatalog();
 </script></body></html>
