@@ -52,17 +52,13 @@ body.modal-open{overflow:hidden!important;touch-action:none}
   <div class="intro">
     <div class="eyebrow">RIWAYAT TRANSAKSI</div>
     <h1>Pesanan Saya</h1>
-    <p>Cari pesanan menggunakan nomor WhatsApp, nomor pesanan, atau nama produk.</p>
+    <p>Lihat riwayat dan perkembangan pesanan kamu.</p>
   </div>
-  <div class="panel">
+  <div class="panel" id="myOrderSearchPanel">
     <label class="field" for="myOrderPhone">Nomor WhatsApp pemesan *</label>
     <input class="input" id="myOrderPhone" inputmode="tel" autocomplete="tel" placeholder="Contoh: 081234567890"/>
-    <label class="field" for="myOrderId">Nomor Pesanan (opsional)</label>
-    <input class="input" id="myOrderId" placeholder="Contoh: WEB-20261108-0001"/>
-    <label class="field" for="myOrderProduct">Nama Produk (opsional)</label>
-    <input class="input" id="myOrderProduct" placeholder="Contoh: X-Banner"/>
     <button class="primary full" id="findMyOrdersBtn" style="margin-top:14px" onclick="findMyOrders()">Cari Pesanan</button>
-    <p class="footnote">Nomor WhatsApp digunakan untuk verifikasi agar pesanan tidak bisa dilihat orang lain.</p>
+    <p class="footnote">Gunakan nomor WhatsApp yang sama saat melakukan pemesanan.</p>
   </div>
   <div id="myOrdersResult" style="margin-top:16px"></div>
 </section>
@@ -114,29 +110,47 @@ function formatOrderDate(value){
   const d=new Date(value);
   return Number.isNaN(d.getTime())?String(value):d.toLocaleString("id-ID",{dateStyle:"medium",timeStyle:"short"});
 }
-function findMyOrders(){
-  const phone=document.getElementById("myOrderPhone").value.trim();
-  const orderId=document.getElementById("myOrderId").value.trim();
-  const product=document.getElementById("myOrderProduct").value.trim();
+function resetMyOrderSearch(){
+  document.getElementById("myOrderSearchPanel").style.display="block";
+  document.getElementById("myOrdersResult").innerHTML="";
+  document.getElementById("myOrderPhone").value="";
+  document.getElementById("myOrderPhone").focus();
+}
+function renderMyOrders(orders){
   const out=document.getElementById("myOrdersResult");
+  const cards=orders.map(o=>{
+    const items=(o.items||[]).map(it=>'<div class="cartrow"><div style="flex:1"><b>'+esc(it.productName||it.sku||"Produk")+'</b><p>'+esc(it.sku||"")+' · Jumlah '+Number(it.qty||0)+'</p><p>'+money(it.lineTotal||0)+'</p></div></div>').join("");
+    return '<article class="panel" style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><b>'+esc(o.orderId)+'</b><span class="tag">'+esc(o.status||"")+'</span></div><p class="tiny">Tanggal pesanan: '+esc(formatOrderDate(o.orderDate))+'</p><div class="benefit" style="display:block;margin:10px 0;padding:12px"><b>PROGRES PESANAN</b><p style="margin:5px 0 0;color:var(--blue);font-weight:800">'+esc(o.progress||"Belum ada pembaruan")+'</p></div>'+items+'<div class="subtotal"><b>Status Pembayaran</b><strong style="font-size:13px">'+esc(o.paymentStatus||"-")+'</strong></div><div class="subtotal"><b>Total Pembayaran</b><strong>'+money(o.grandTotal||0)+'</strong></div></article>';
+  }).join("");
+  document.getElementById("myOrderSearchPanel").style.display="none";
+  out.innerHTML='<div class="sectionhead"><div><h2>Pesanan Ditemukan</h2><p>Berikut riwayat pesanan dari nomor WhatsApp kamu.</p></div></div>'+cards+'<button class="secondary full" onclick="resetMyOrderSearch()">Cari Pesanan Lain</button>';
+}
+async function findMyOrders(){
+  const phone=document.getElementById("myOrderPhone").value.trim();
   const btn=document.getElementById("findMyOrdersBtn");
-  if(!phone){out.innerHTML='<div class="empty">Masukkan nomor WhatsApp pemesan terlebih dahulu.</div>';return}
-  if(!orderId&&!product){out.innerHTML='<div class="empty">Isi nomor pesanan atau nama produk untuk mempersempit pencarian.</div>';return}
-  btn.disabled=true;btn.textContent="Mencari...";
-  out.innerHTML='<div class="empty">Sedang mencari pesanan...</div>';
-  api("lookupCustomerOrders",{whatsapp:phone,orderId:orderId,product:product}).then(r=>{
-    if(!r.ok)throw Error(r.error||"Pesanan belum dapat dicari.");
+  if(!phone){showNotice("Masukkan nomor WhatsApp yang digunakan saat memesan.","Nomor WhatsApp wajib diisi");return}
+  btn.disabled=true;
+  showLoading("Sedang mencari pesanan kamu...");
+  try{
+    const r=await api("lookupCustomerOrders",{whatsapp:phone});
+    if(!r.ok){
+      if(String(r.error||"").includes("ACTION_TIDAK_DIKENAL")){
+        throw Error("Fitur pencarian pesanan belum aktif di Apps Script. Deploy ulang versi Kode.gs terbaru, lalu coba kembali.");
+      }
+      throw Error(r.error||"Pesanan belum dapat dicari.");
+    }
     const orders=r.data?.orders||[];
-    if(!orders.length){out.innerHTML='<div class="empty">Pesanan tidak ditemukan. Periksa kembali nomor WhatsApp dan kata kunci pencarian.</div>';return}
-    out.innerHTML='<div class="sectionhead"><div><h2>Hasil Pencarian</h2><p>'+orders.length+' pesanan ditemukan</p></div></div>'+orders.map(o=>{
-      const items=(o.items||[]).map(it=>'<div class="cartrow"><div style="flex:1"><b>'+esc(it.productName||it.sku||"Produk")+'</b><p>'+esc(it.sku||"")+' · Qty '+Number(it.qty||0)+'</p><p>'+money(it.lineTotal||0)+'</p></div></div>').join("");
-      return '<article class="panel" style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><b>'+esc(o.orderId)+'</b><span class="tag">'+esc(o.status||"")+'</span></div><p class="tiny">Tanggal: '+esc(formatOrderDate(o.orderDate))+'</p><div class="benefit" style="display:block;margin:10px 0;padding:12px"><b>Progres Pesanan</b><p style="margin:5px 0 0;color:var(--blue);font-weight:800">'+esc(o.progress||"Belum ada pembaruan")+'</p></div>'+items+'<div class="subtotal"><b>Status Pembayaran</b><strong style="font-size:13px">'+esc(o.paymentStatus||"-")+'</strong></div><div class="subtotal"><b>Total Pembayaran</b><strong>'+money(o.grandTotal||0)+'</strong></div></article>'
-    }).join("");
-  }).catch(e=>{
-    out.innerHTML='<div class="empty">'+esc(e.message||"Terjadi kesalahan saat mencari pesanan.")+'</div>';
-  }).finally(()=>{
-    btn.disabled=false;btn.textContent="Cari Pesanan";
-  });
+    if(!orders.length){
+      showNotice("Mohon maaf, pesanan tidak ditemukan! Silahkan cek kembali nomor WhatsApp yang digunakan saat memesan atau hubungi admin kami!","Pesanan Tidak Ditemukan");
+      return;
+    }
+    renderMyOrders(orders);
+  }catch(e){
+    showNotice(e.message||"Terjadi kendala saat mencari pesanan. Silakan coba kembali.","Pencarian Pesanan");
+  }finally{
+    hideLoading();
+    btn.disabled=false;
+  }
 }
 
 function navigate(page){document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id===page+'Page'));document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.nav===page));if(page==='products')renderProducts();window.scrollTo({top:0,behavior:'smooth'})}
@@ -231,6 +245,6 @@ async function loadCatalog(){
   }
 }
 
-document.getElementById("myOrderPhone").addEventListener("keydown",e=>{if(e.key==="Enter")findMyOrders()});document.getElementById("myOrderId").addEventListener("keydown",e=>{if(e.key==="Enter")findMyOrders()});document.getElementById("myOrderProduct").addEventListener("keydown",e=>{if(e.key==="Enter")findMyOrders()});
+document.getElementById("myOrderPhone").addEventListener("keydown",e=>{if(e.key==="Enter")findMyOrders()});
 loadCatalog();
 </script></body></html>
