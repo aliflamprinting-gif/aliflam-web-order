@@ -76,11 +76,11 @@ body.modal-open{overflow:hidden!important;touch-action:none}
 <label class="field" for="checkoutNotes">Catatan (opsional)</label><textarea class="input" id="checkoutNotes" placeholder="Catatan pesanan" rows="2"></textarea>
 <div class="subtotal"><b>Subtotal produk</b><strong id="checkoutTotal"></strong></div>
 <p class="footnote">Ongkir dihitung otomatis oleh sistem berdasarkan alamat dan berat variasi produk. Pengiriman hanya untuk Pulau Jawa.</p>
-<button class="primary full" id="submitOrderBtn" onclick="submitOrder()">Kirim Pesanan</button><div class="footnote" id="checkoutResult"></div></div></div>
+<button class="primary full" id="submitOrderBtn" onclick="submitOrder()" disabled>Kirim Pesanan</button><div class="footnote" id="checkoutResult"></div></div></div>
 <div class="overlay notice-overlay" id="noticeOverlay"><div class="dialog notice-dialog"><div class="notice-symbol"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5m0-8h.01"></path></svg></div><div class="notice-copy"><div class="notice-kicker">ALIFLAM PRINTING</div><h2 id="noticeTitle">Informasi</h2><p id="noticeMessage"></p></div><div class="notice-actions"><button class="primary" onclick="closeOverlay('noticeOverlay')">Tutup</button></div></div></div>
 <div class="overlay" id="confirmOverlay"><div class="dialog notice-dialog"><div class="dialoghead"><h2 id="confirmTitle">Konfirmasi</h2><button class="close" onclick="resolveConfirm(false)">×</button></div><p id="confirmMessage"></p><div class="twoactions"><button class="secondary" onclick="resolveConfirm(false)">Batal</button><button class="danger-confirm" onclick="resolveConfirm(true)">Ya, hapus</button></div></div></div>
 <div class="loading-screen" id="loadingScreen"><div class="loading-card"><span class="loader"></span><b id="loadingText">Memuat data...</b><small>Mohon tunggu sebentar</small></div></div>
-<script src="./wilayah-data.js"></script>
+
 <script>const API='https://script.google.com/macros/s/AKfycbzzis01Cv-kWurEimDySmksL_6bvASB_sQop0X64kILzKULHWM1E2Ci7lX2PFctUA5G1w/exec';
 const IMAGE_BASE='https://aliflamprinting-gif.github.io/aliflam-web-order/assets/products/';
 let VARIANTS=[],groups=[],filter='Semua',selected=null,cart=[],localOrders=[],savedBuyer={},editingCartVid=null,selectedO1=null,selectedO2=null,selectedO3=null,selectedSizeChoices={},selectedCustom=false,detailReturnPage='products';
@@ -93,22 +93,42 @@ const IMG=x=>x?IMAGE_BASE+encodeURIComponent(String(x)).replace(/%2F/gi,'/'):'';
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 async function api(action,data={}){const response=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,data})});if(!response.ok)throw Error('Server merespons HTTP '+response.status);const result=await response.json();if(!result||typeof result!=='object')throw Error('Respons server tidak valid.');return result}
 let MASTER_DROPDOWNS={};
+let wilayahPartialPromise=null, wilayahDataPromise=null, checkoutDropdownsPromise=null;
 async function loadWilayahPartial(){
-  const mount=document.getElementById('checkoutWilayahMount');
-  if(!mount)throw Error('Wadah form alamat tidak ditemukan.');
-  const response=await fetch('./wilayah.html',{cache:'force-cache'});
-  if(!response.ok)throw Error('Modul wilayah gagal dimuat (HTTP '+response.status+').');
-  const html=await response.text();
-  const parsed=new DOMParser().parseFromString(html,'text/html');
-  const template=parsed.querySelector('template[data-aliflam-wilayah]');
-  if(!template)throw Error('Template modul wilayah tidak ditemukan.');
-  mount.innerHTML=template.innerHTML;
-  if(!Array.isArray(window.ALIFLAM_WILAYAH_DATA)||!window.ALIFLAM_WILAYAH_DATA.length)throw Error('Data wilayah statis belum berhasil dimuat.');
+  if(wilayahPartialPromise)return wilayahPartialPromise;
+  wilayahPartialPromise=(async()=>{
+    const mount=document.getElementById('checkoutWilayahMount');
+    if(!mount)throw Error('Wadah form alamat tidak ditemukan.');
+    const response=await fetch('./wilayah.html',{cache:'force-cache'});
+    if(!response.ok)throw Error('Modul wilayah gagal dimuat (HTTP '+response.status+').');
+    const html=await response.text();
+    const parsed=new DOMParser().parseFromString(html,'text/html');
+    const template=parsed.querySelector('template[data-aliflam-wilayah]');
+    if(!template)throw Error('Template modul wilayah tidak ditemukan.');
+    mount.innerHTML=template.innerHTML;
+  })().catch(error=>{wilayahPartialPromise=null;throw error;});
+  return wilayahPartialPromise;
+}
+function loadWilayahData(){
+  if(Array.isArray(window.ALIFLAM_WILAYAH_DATA)&&window.ALIFLAM_WILAYAH_DATA.length)return Promise.resolve(window.ALIFLAM_WILAYAH_DATA);
+  if(wilayahDataPromise)return wilayahDataPromise;
+  wilayahDataPromise=new Promise((resolve,reject)=>{
+    const script=document.createElement('script');
+    script.src='./wilayah-data.js';
+    script.async=true;
+    script.onload=()=>Array.isArray(window.ALIFLAM_WILAYAH_DATA)&&window.ALIFLAM_WILAYAH_DATA.length?resolve(window.ALIFLAM_WILAYAH_DATA):reject(Error('Isi data wilayah tidak valid.'));
+    script.onerror=()=>reject(Error('Data wilayah gagal diunduh dari GitHub.'));
+    document.head.appendChild(script);
+  }).catch(error=>{wilayahDataPromise=null;throw error;});
+  return wilayahDataPromise;
 }
 async function loadCheckoutDropdowns(){
+  if(checkoutDropdownsPromise)return checkoutDropdownsPromise;
   const paymentWrap=document.getElementById('checkoutPaymentOptions'),errorBox=document.getElementById('checkoutDropdownError'),submitButton=document.getElementById('submitOrderBtn');
-  try{
+  if(submitButton)submitButton.disabled=true;
+  checkoutDropdownsPromise=(async()=>{
     await loadWilayahPartial();
+    await loadWilayahData();
     if(typeof window.AliflamWilayahInit!=='function')throw Error('Mesin dropdown wilayah belum siap.');
     window.AliflamWilayahInit(savedBuyer.address||{});
     const master=await api('masterDropdowns',{});if(!master.ok)throw Error(master.error||'Master pembayaran gagal dimuat.');
@@ -116,7 +136,8 @@ async function loadCheckoutDropdowns(){
     if(!payments.length)throw Error('METODE PEMBAYARAN belum tersedia di MASTER DROPDOWN.');
     paymentWrap.innerHTML=payments.map((value,index)=>`<label class="payment-option"><input ${index===0?'checked':''} name="checkoutPayment" type="radio" value="${esc(value)}"/> ${esc(value==='TRANSFER BANK'?'Transfer Bank':value)}</label>`).join('');
     if(submitButton)submitButton.disabled=false;if(errorBox)errorBox.textContent='';
-  }catch(error){if(errorBox)errorBox.textContent=error.message||'Data checkout gagal dimuat.';console.error('Gagal memuat dropdown checkout:',error)}
+  })().catch(error=>{checkoutDropdownsPromise=null;if(errorBox)errorBox.textContent=error.message||'Data checkout gagal dimuat.';console.error('Gagal memuat dropdown checkout:',error);throw error;});
+  return checkoutDropdownsPromise;
 }
 
 function variationMeta(value,headerLabel){const raw=String(value??'').trim(),separator=raw.indexOf(':'),hasCustomLabel=separator>0;return {label:hasCustomLabel?raw.slice(0,separator).trim().toUpperCase():String(headerLabel||'VARIASI').trim().toUpperCase(),display:hasCustomLabel?raw.slice(separator+1).trim():raw}}
@@ -185,8 +206,8 @@ function addCart(){if(!selected)return;clearVariationHints();const materials=[..
 function openCart(){renderCart();openOverlay('cartOverlay')}async function removeCart(key){const item=cart.find(x=>(x.cartKey||x.vid)===key);if(!item)return;if(!await askConfirm('Hapus '+item.name+' dari keranjang?','Konfirmasi Hapus'))return;cart=cart.filter(x=>(x.cartKey||x.vid)!==key);saveCart();renderCart();showNotice('Produk berhasil dihapus dari keranjang.','Berhasil')}
 function editCart(key){const item=cart.find(x=>(x.cartKey||x.vid)===key);if(!item)return;editingCartVid=key;closeOverlay('cartOverlay');openDetail(item.id);selectedO1=item.o1||null;selectedO3=item.o3||null;selectedSizeChoices={...(item.sizeChoices||{})};selectedCustom=!!item.customBanner;selectedO2=null;document.getElementById('qty').value=item.qty;if(item.customBanner){document.getElementById('customWidth').value=item.width;document.getElementById('customHeight').value=item.height}renderVariationOptions();updateDetail();document.getElementById('addButton').textContent='✎ Simpan Perubahan'}
 function renderCart(){document.getElementById('cartItems').innerHTML=cart.length?cart.map(x=>{const key=x.cartKey||x.vid,detail=x.customBanner?[x.width+' × '+x.height+' cm',x.o3].filter(Boolean).join(' · '):[x.sku,x.o1,x.o2,x.o3].filter(Boolean).join(' · ');return `<div class="cartrow"><img src="${IMG(x.image)}" alt="" onerror="this.style.opacity='.15'"><div><b>${esc(x.name)}</b><p>${esc(detail)}</p><p>${x.customBanner?'Jumlah cetak: '+x.qty+'×':'Jumlah: '+x.qty} · <b>${money(x.qty*x.price)}</b></p><div class="cart-actions"><button class="cart-action edit" onclick="editCart('${esc(key)}')">Edit</button><button class="cart-action delete" onclick="removeCart('${esc(key)}')">Hapus</button></div></div></div>`}).join(''):'<div class="empty">Keranjang masih kosong.</div>';document.getElementById('cartTotal').textContent=money(cart.reduce((a,b)=>a+b.qty*b.price,0));document.getElementById('cartCount').textContent=cart.reduce((a,b)=>a+b.qty,0)}
-function checkoutInfo(){if(!cart.length)return showNotice('Keranjang masih kosong.');document.getElementById('checkoutTotal').textContent=money(cart.reduce((a,b)=>a+b.qty*b.price,0));document.getElementById('checkoutResult').textContent='';applySavedBuyerData();closeOverlay('cartOverlay');openOverlay('checkoutOverlay')}
-async function submitOrder(){const btn=document.getElementById('submitOrderBtn'),out=document.getElementById('checkoutResult');try{if(!cart.length)throw Error('Keranjang masih kosong.');const name=document.getElementById('checkoutName').value.trim(),phone=document.getElementById('checkoutPhone').value.trim(),email=document.getElementById('checkoutEmail').value.trim(),recipient=document.getElementById('checkoutRecipient').value.trim(),addressPhone=document.getElementById('checkoutAddressPhone').value.trim(),province=document.getElementById('checkoutProvince').value.trim().toUpperCase(),city=document.getElementById('checkoutCity').value.trim().toUpperCase(),district=document.getElementById('checkoutDistrict').value.trim().toUpperCase(),village=document.getElementById('checkoutVillage').value.trim().toUpperCase(),postalCode=document.getElementById('checkoutPostal').value.trim(),fullAddress=document.getElementById('checkoutFullAddress').value.trim(),reference=document.getElementById('checkoutReference').value.trim();if(!name||!phone||!recipient||!addressPhone||!province||!city||!district||!village||!fullAddress)throw Error('Lengkapi seluruh data pemesan dan alamat yang wajib.');if(province.toUpperCase().includes('LUAR PULAU JAWA'))throw Error('Pengiriman di luar Pulau Jawa belum tersedia. Silakan pesan melalui Shopee.');const customer={name,whatsapp:phone,email},address={recipientName:recipient,phone:addressPhone,province,city,district,village,postalCode,fullAddress,reference};const paymentMethod=document.querySelector('input[name="checkoutPayment"]:checked')?.value||'';if(!paymentMethod||(MASTER_DROPDOWNS['METODE PEMBAYARAN']||[]).indexOf(paymentMethod)<0)throw Error('Pilih metode pembayaran yang tersedia di master.');const notes=document.getElementById('checkoutNotes').value.trim();const orderItems=cart.map(x=>({productName:x.name,sku:x.sku,qty:x.qty,lineTotal:x.qty*x.price,unitPrice:x.price,variationId:x.variationId,customBanner:!!x.customBanner,width:x.width||0,height:x.height||0,detail:[x.sku,x.o1,x.o2,x.o3].filter(Boolean).join(' · ')}));const data={idempotencyKey:window.crypto?.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random(),customer,address,paymentMethod,notes,items:cart.map(x=>({productId:x.variationId,qty:x.qty,...(x.customBanner?{customSize:{width:x.width,height:x.height}}:{})}))};btn.disabled=true;btn.textContent='Mengirim pesanan...';const r=await api('createWebOrder',data);if(!r.ok)throw Error(r.error||'Pesanan belum dapat dikirim.');const order={orderId:r.data.orderId,orderDate:new Date().toISOString(),status:'BARU',progress:'MENUNGGU KONFIRMASI',paymentStatus:'BELUM BAYAR',paymentMethod,subtotal:Number(r.data.subtotal)||0,shippingCost:Number(r.data.shippingCost)||0,grandTotal:Number(r.data.grandTotal)||0,customer,address,items:orderItems,notes};localOrders.unshift(order);saveLocalOrders();saveBuyerData(customer,address);out.innerHTML=`<div class="message success"><b>Pesanan berhasil dibuat!</b><br>Nomor pesanan: <b>${esc(r.data.orderId)}</b><br>Subtotal: ${money(r.data.subtotal)}<br>Ongkir: ${money(r.data.shippingCost)}<br>Total pembayaran: <b>${money(r.data.grandTotal)}</b><br>Data pembeli dan alamat tersimpan di perangkat ini untuk pemesanan berikutnya.<br>Admin akan menghubungi kamu untuk konfirmasi selanjutnya.</div>`;cart=[];saveCart();renderCart();renderMyOrders();btn.textContent='Pesanan Terkirim';return}catch(e){out.textContent=e.message;out.style.color='#c33'}finally{btn.disabled=false;if(btn.textContent!=='Pesanan Terkirim')btn.textContent='Kirim Pesanan'}}
+async function checkoutInfo(){if(!cart.length)return showNotice('Keranjang masih kosong.');document.getElementById('checkoutTotal').textContent=money(cart.reduce((a,b)=>a+b.qty*b.price,0));document.getElementById('checkoutResult').textContent='';applySavedBuyerData();closeOverlay('cartOverlay');openOverlay('checkoutOverlay');try{await loadCheckoutDropdowns()}catch(e){document.getElementById('submitOrderBtn').disabled=true}}
+async function submitOrder(){const btn=document.getElementById('submitOrderBtn'),out=document.getElementById('checkoutResult');try{if(!window.ALIFLAM_WILAYAH_DATA||!document.getElementById('checkoutProvince'))throw Error('Form wilayah belum selesai dimuat. Tutup checkout lalu buka kembali.');if(!cart.length)throw Error('Keranjang masih kosong.');const name=document.getElementById('checkoutName').value.trim(),phone=document.getElementById('checkoutPhone').value.trim(),email=document.getElementById('checkoutEmail').value.trim(),recipient=document.getElementById('checkoutRecipient').value.trim(),addressPhone=document.getElementById('checkoutAddressPhone').value.trim(),province=document.getElementById('checkoutProvince').value.trim().toUpperCase(),city=document.getElementById('checkoutCity').value.trim().toUpperCase(),district=document.getElementById('checkoutDistrict').value.trim().toUpperCase(),village=document.getElementById('checkoutVillage').value.trim().toUpperCase(),postalCode=document.getElementById('checkoutPostal').value.trim(),fullAddress=document.getElementById('checkoutFullAddress').value.trim(),reference=document.getElementById('checkoutReference').value.trim();if(!name||!phone||!recipient||!addressPhone||!province||!city||!district||!village||!fullAddress)throw Error('Lengkapi seluruh data pemesan dan alamat yang wajib.');if(province.toUpperCase().includes('LUAR PULAU JAWA'))throw Error('Pengiriman di luar Pulau Jawa belum tersedia. Silakan pesan melalui Shopee.');const customer={name,whatsapp:phone,email},address={recipientName:recipient,phone:addressPhone,province,city,district,village,postalCode,fullAddress,reference};const paymentMethod=document.querySelector('input[name="checkoutPayment"]:checked')?.value||'';if(!paymentMethod||(MASTER_DROPDOWNS['METODE PEMBAYARAN']||[]).indexOf(paymentMethod)<0)throw Error('Pilih metode pembayaran yang tersedia di master.');const notes=document.getElementById('checkoutNotes').value.trim();const orderItems=cart.map(x=>({productName:x.name,sku:x.sku,qty:x.qty,lineTotal:x.qty*x.price,unitPrice:x.price,variationId:x.variationId,customBanner:!!x.customBanner,width:x.width||0,height:x.height||0,detail:[x.sku,x.o1,x.o2,x.o3].filter(Boolean).join(' · ')}));const data={idempotencyKey:window.crypto?.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random(),customer,address,paymentMethod,notes,items:cart.map(x=>({productId:x.variationId,qty:x.qty,...(x.customBanner?{customSize:{width:x.width,height:x.height}}:{})}))};btn.disabled=true;btn.textContent='Mengirim pesanan...';const r=await api('createWebOrder',data);if(!r.ok)throw Error(r.error||'Pesanan belum dapat dikirim.');const order={orderId:r.data.orderId,orderDate:new Date().toISOString(),status:'BARU',progress:'MENUNGGU KONFIRMASI',paymentStatus:'BELUM BAYAR',paymentMethod,subtotal:Number(r.data.subtotal)||0,shippingCost:Number(r.data.shippingCost)||0,grandTotal:Number(r.data.grandTotal)||0,customer,address,items:orderItems,notes};localOrders.unshift(order);saveLocalOrders();saveBuyerData(customer,address);out.innerHTML=`<div class="message success"><b>Pesanan berhasil dibuat!</b><br>Nomor pesanan: <b>${esc(r.data.orderId)}</b><br>Subtotal: ${money(r.data.subtotal)}<br>Ongkir: ${money(r.data.shippingCost)}<br>Total pembayaran: <b>${money(r.data.grandTotal)}</b><br>Data pembeli dan alamat tersimpan di perangkat ini untuk pemesanan berikutnya.<br>Admin akan menghubungi kamu untuk konfirmasi selanjutnya.</div>`;cart=[];saveCart();renderCart();renderMyOrders();btn.textContent='Pesanan Terkirim';return}catch(e){out.textContent=e.message;out.style.color='#c33'}finally{btn.disabled=false;if(btn.textContent!=='Pesanan Terkirim')btn.textContent='Kirim Pesanan'}}
 document.getElementById('homeSearch').addEventListener('input',e=>{document.getElementById('productSearch').value=e.target.value;filter='Semua';navigate('products')});document.getElementById('productSearch').addEventListener('input',renderProducts);
 function setTheme(t){document.documentElement.dataset.theme=t;document.getElementById('themeBtn').textContent=t==='dark'?'☀':'☾';try{localStorage.setItem('aliflam-theme',t)}catch(e){}document.querySelector('meta[name="theme-color"]').content=t==='dark'?'#0d1726':'#f5f8fc'}try{setTheme(localStorage.getItem('aliflam-theme')||'light')}catch(e){setTheme('light')}document.getElementById('themeBtn').onclick=()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');
 const CATALOG_CACHE_KEY='aliflam-catalog-cache-v1';
@@ -250,5 +271,4 @@ async function loadCatalog(){
 loadLocalData();
 renderMyOrders();
 loadCatalog();
-loadCheckoutDropdowns();
 </script></body></html>
