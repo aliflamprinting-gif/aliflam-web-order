@@ -92,57 +92,34 @@ const IMG=x=>x?IMAGE_BASE+encodeURIComponent(String(x)).replace(/%2F/gi,'/'):'';
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 async function api(action,data={}){const response=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,data})});if(!response.ok)throw Error('Server merespons HTTP '+response.status);const result=await response.json();if(!result||typeof result!=='object')throw Error('Respons server tidak valid.');return result}
 let MASTER_DROPDOWNS={};
-let WILAYAH_CACHE={province:[],city:{},district:{},village:{}};
-const WILAYAH_STORAGE_KEY='aliflam-wilayah-cache-v1';
-function setDatalist(id,values){document.getElementById(id).innerHTML=(values||[]).map(v=>`<option value="${esc(v)}"></option>`).join('')}
-function upperInput(id){const el=document.getElementById(id);el.value=el.value.toLocaleUpperCase('id-ID')}
-async function wilayahRequest(data){const r=await api('wilayahOptions',data);if(!r.ok)throw Error(r.error||'Data wilayah gagal dimuat.');return r.data.options||[]}
-async function loadWilayahLevel(level,params,cacheKey,listId){
-  if(WILAYAH_CACHE[cacheKey]&&WILAYAH_CACHE[cacheKey][params.key]){setDatalist(listId,WILAYAH_CACHE[cacheKey][params.key]);return WILAYAH_CACHE[cacheKey][params.key]}
-  const values=await wilayahRequest({level,...params});
-  if(cacheKey==='province')WILAYAH_CACHE.province=values;
-  else {WILAYAH_CACHE[cacheKey][params.key]=values;try{localStorage.setItem(WILAYAH_STORAGE_KEY,JSON.stringify(WILAYAH_CACHE))}catch(e){}}
-  setDatalist(listId,values);return values;
-}
-function exactOption(value,options){return (options||[]).find(x=>x.toUpperCase()===String(value||'').trim().toUpperCase())||''}
-function resetWilayahFrom(level){const map={city:['checkoutCity','cityOptions'],district:['checkoutDistrict','districtOptions'],village:['checkoutVillage','villageOptions']};const order=['city','district','village'];order.slice(order.indexOf(level)).forEach(k=>{const [id,list]=map[k];document.getElementById(id).value='';document.getElementById(id).disabled=true;setDatalist(list,[])});document.getElementById('checkoutPostal').value=''}
 async function loadWilayahPartial(){
   const mount=document.getElementById('checkoutWilayahMount');
   if(!mount)throw Error('Wadah form alamat tidak ditemukan.');
   const response=await fetch('./wilayah.html',{cache:'no-cache'});
   if(!response.ok)throw Error('Modul wilayah gagal dimuat (HTTP '+response.status+').');
-  mount.innerHTML=await response.text();
-  const requiredIds=['checkoutProvince','checkoutCity','checkoutDistrict','checkoutVillage','checkoutPostal','checkoutFullAddress','checkoutReference','provinceOptions','cityOptions','districtOptions','villageOptions'];
-  if(requiredIds.some(id=>!document.getElementById(id)))throw Error('Struktur modul wilayah tidak lengkap.');
+  const source=await response.text();
+  const parsed=new DOMParser().parseFromString(source,'text/html');
+  const template=parsed.querySelector('template[data-aliflam-wilayah]');
+  const moduleScript=parsed.querySelector('script[data-aliflam-wilayah-module]');
+  if(!template||!moduleScript)throw Error('File wilayah.html bukan modul wilayah GitHub yang lengkap.');
+  mount.replaceChildren(template.content.cloneNode(true));
+  const script=document.createElement('script');
+  script.textContent=moduleScript.textContent;
+  document.body.appendChild(script);
+  if(!window.AliflamWilayah)throw Error('JavaScript modul wilayah gagal diinisialisasi.');
 }
 
 async function loadCheckoutDropdowns(){
   const paymentWrap=document.getElementById('checkoutPaymentOptions'),errorBox=document.getElementById('checkoutDropdownError'),submitButton=document.getElementById('submitOrderBtn');
   try{
-    try{const saved=JSON.parse(localStorage.getItem(WILAYAH_STORAGE_KEY)||'null');if(saved&&Array.isArray(saved.province))WILAYAH_CACHE=saved}catch(e){}
     const master=await api('masterDropdowns',{});if(!master.ok)throw Error(master.error||'Master pembayaran gagal dimuat.');
     MASTER_DROPDOWNS=master.data?.options||{};const payments=MASTER_DROPDOWNS['METODE PEMBAYARAN']||[];
     if(!payments.length)throw Error('METODE PEMBAYARAN belum tersedia di MASTER DROPDOWN.');
-    const provinceValues=WILAYAH_CACHE.province.length?WILAYAH_CACHE.province:await wilayahRequest({level:'province'});
-    WILAYAH_CACHE.province=provinceValues;setDatalist('provinceOptions',provinceValues);
     paymentWrap.innerHTML=payments.map((value,index)=>`<label class="payment-option"><input ${index===0?'checked':''} name="checkoutPayment" type="radio" value="${esc(value)}"/> ${esc(value==='TRANSFER BANK'?'Transfer Bank':value)}</label>`).join('');
-    document.getElementById('checkoutProvince').addEventListener('change',onProvinceChange);
-    document.getElementById('checkoutProvince').addEventListener('input',()=>{upperInput('checkoutProvince');resetWilayahFrom('city')});
-    document.getElementById('checkoutCity').addEventListener('input',()=>{upperInput('checkoutCity');resetWilayahFrom('district')});
-    document.getElementById('checkoutCity').addEventListener('change',onCityChange);
-    document.getElementById('checkoutDistrict').addEventListener('input',()=>{upperInput('checkoutDistrict');resetWilayahFrom('village')});
-    document.getElementById('checkoutDistrict').addEventListener('change',onDistrictChange);
-    document.getElementById('checkoutVillage').addEventListener('input',()=>upperInput('checkoutVillage'));
-    document.getElementById('checkoutVillage').addEventListener('change',onVillageChange);
-    if(submitButton)submitButton.disabled=false;if(errorBox)errorBox.textContent='';await restoreSavedWilayah();
+    await window.AliflamWilayah.init({api,esc,savedBuyer});
+    if(submitButton)submitButton.disabled=false;if(errorBox)errorBox.textContent='';
   }catch(error){if(errorBox)errorBox.textContent=error.message||'Data checkout gagal dimuat.';console.error('Gagal memuat dropdown checkout:',error)}
 }
-async function onProvinceChange(){const p=exactOption(document.getElementById('checkoutProvince').value,WILAYAH_CACHE.province);document.getElementById('checkoutProvince').value=p;if(!p)return resetWilayahFrom('city');resetWilayahFrom('city');const opts=await wilayahRequest({level:'city',province:p});WILAYAH_CACHE.city[p]=opts;setDatalist('cityOptions',opts);document.getElementById('checkoutCity').disabled=false;document.getElementById('checkoutCity').placeholder='Ketik kabupaten/kota...'}
-async function onCityChange(){const p=document.getElementById('checkoutProvince').value,c=exactOption(document.getElementById('checkoutCity').value,WILAYAH_CACHE.city[p]);document.getElementById('checkoutCity').value=c;if(!c)return resetWilayahFrom('district');resetWilayahFrom('district');const opts=await wilayahRequest({level:'district',province:p,city:c});WILAYAH_CACHE.district[p+'|'+c]=opts;setDatalist('districtOptions',opts);document.getElementById('checkoutDistrict').disabled=false;document.getElementById('checkoutDistrict').placeholder='Ketik kecamatan...'}
-async function onDistrictChange(){const p=document.getElementById('checkoutProvince').value,c=document.getElementById('checkoutCity').value,d=exactOption(document.getElementById('checkoutDistrict').value,WILAYAH_CACHE.district[p+'|'+c]);document.getElementById('checkoutDistrict').value=d;if(!d)return resetWilayahFrom('village');resetWilayahFrom('village');const opts=await wilayahRequest({level:'village',province:p,city:c,district:d});WILAYAH_CACHE.village[p+'|'+c+'|'+d]=opts;setDatalist('villageOptions',opts);document.getElementById('checkoutVillage').disabled=false;document.getElementById('checkoutVillage').placeholder='Ketik desa/kelurahan...'}
-async function onVillageChange(){const p=document.getElementById('checkoutProvince').value,c=document.getElementById('checkoutCity').value,d=document.getElementById('checkoutDistrict').value,v=exactOption(document.getElementById('checkoutVillage').value,WILAYAH_CACHE.village[p+'|'+c+'|'+d]);document.getElementById('checkoutVillage').value=v;document.getElementById('checkoutPostal').value='';if(!v)return;const r=await api('wilayahPostalCode',{province:p,city:c,district:d,village:v});if(!r.ok)throw Error(r.error||'Kode pos tidak ditemukan.');document.getElementById('checkoutPostal').value=r.data.postalCode||''}
-
-async function restoreSavedWilayah(){const a=savedBuyer.address||{};if(!a.province)return;try{document.getElementById('checkoutProvince').value=a.province.toUpperCase();await onProvinceChange();document.getElementById('checkoutCity').value=(a.city||'').toUpperCase();await onCityChange();document.getElementById('checkoutDistrict').value=(a.district||'').toUpperCase();await onDistrictChange();document.getElementById('checkoutVillage').value=(a.village||'').toUpperCase();await onVillageChange()}catch(e){console.warn('Alamat tersimpan tidak dapat dipulihkan otomatis:',e)}}
 
 function variationMeta(value,headerLabel){const raw=String(value??'').trim(),separator=raw.indexOf(':'),hasCustomLabel=separator>0;return {label:hasCustomLabel?raw.slice(0,separator).trim().toUpperCase():String(headerLabel||'VARIASI').trim().toUpperCase(),display:hasCustomLabel?raw.slice(separator+1).trim():raw}}
 function mapCatalog(rows){return (rows||[]).filter(v=>v.active!==false).map(v=>{const material=String(v.material||'').trim(),size=String(v.size||'').trim(),finishing=String(v.finishing||'').trim(),rawSizeOptions=Array.isArray(v.sizeOptions)?v.sizeOptions:(size&&!/^ISI UKURAN SENDIRI$/i.test(size)?size.split('|'):[]),sizeOptions=rawSizeOptions.map(part=>{if(part&&typeof part==='object'){const rawValue=String(part.value||'').trim(),rawLabel=String(part.label||'').trim(),fromValue=variationMeta(rawValue,''),fromLabel=variationMeta(rawLabel,'');if(rawValue.includes(':'))return {label:fromValue.label,value:fromValue.display};if(rawLabel.includes(':'))return {label:fromLabel.label,value:fromLabel.display};return {label:(rawLabel||'UKURAN').toUpperCase(),value:rawValue}}const meta=variationMeta(part,'UKURAN');return {label:meta.label,value:meta.display}}).filter(x=>x.value),customSize=!!v.customSize||size.toUpperCase()==='ISI UKURAN SENDIRI';const images=Array.isArray(v.images)?v.images:[];const main=images.find(i=>i.imageId===v.mainImageId)||images[0];return {id:String(v.parentProductId||v.productId),vid:String(v.productId),cat:v.category||'Produk',name:v.productName||v.name||'Produk',sku:v.sku||'',material,materialLabel:variationMeta(material,'BAHAN').label,materialDisplay:variationMeta(material,'BAHAN').display,size,sizeOptions,finishing,finishingLabel:variationMeta(finishing,'FINISHING').label,finishingDisplay:variationMeta(finishing,'FINISHING').display,customSize,price:Number(v.unitPrice)||0,weight:Number(v.weightGram)||0,image:main?.fileName||'',active:v.active!==false,web:true,shopee:v.shopeeUrl||'',description:v.description||''}})}
