@@ -1,32 +1,11 @@
+<!-- Modul form wilayah statis Aliflam. Data dimuat dari wilayah-data.js, bukan Google Sheets/Apps Script. -->
 <template data-aliflam-wilayah>
-<label class="field" for="checkoutProvince">PROVINSI *</label><input class="input" id="checkoutProvince" list="provinceOptions" placeholder="Ketik nama provinsi..." autocomplete="off"/><datalist id="provinceOptions"></datalist>
-<label class="field" for="checkoutCity">KABUPATEN / KOTA *</label><input class="input" id="checkoutCity" list="cityOptions" placeholder="Pilih provinsi terlebih dahulu" autocomplete="off" disabled/><datalist id="cityOptions"></datalist>
-<label class="field" for="checkoutDistrict">KECAMATAN *</label><input class="input" id="checkoutDistrict" list="districtOptions" placeholder="Pilih kabupaten/kota terlebih dahulu" autocomplete="off" disabled/><datalist id="districtOptions"></datalist>
-<label class="field" for="checkoutVillage">DESA / KELURAHAN *</label><input class="input" id="checkoutVillage" list="villageOptions" placeholder="Pilih kecamatan terlebih dahulu" autocomplete="off" disabled/><datalist id="villageOptions"></datalist>
+<label class="field" for="checkoutProvince">PROVINSI *</label><input class="input" id="checkoutProvince" list="provinceOptions" placeholder="Ketik nama provinsi..." autocomplete="off"/>
+<datalist id="provinceOptions"></datalist>
+<label class="field" for="checkoutCity">KABUPATEN / KOTA *</label><select class="input" id="checkoutCity" disabled><option value="">Pilih provinsi terlebih dahulu</option></select>
+<label class="field" for="checkoutDistrict">KECAMATAN *</label><select class="input" id="checkoutDistrict" disabled><option value="">Pilih kabupaten/kota terlebih dahulu</option></select>
+<label class="field" for="checkoutVillage">DESA / KELURAHAN *</label><select class="input" id="checkoutVillage" disabled><option value="">Pilih kecamatan terlebih dahulu</option></select>
 <label class="field" for="checkoutPostal">KODE POS</label><input class="input" id="checkoutPostal" inputmode="numeric" placeholder="Terisi otomatis" readonly/>
 <label class="field" for="checkoutFullAddress">Alamat lengkap *</label><textarea class="input" id="checkoutFullAddress" placeholder="Nama jalan, nomor rumah, RT/RW, kelurahan" rows="3"></textarea>
 <label class="field" for="checkoutReference">Patokan (opsional)</label><input class="input" id="checkoutReference" placeholder="Patokan lokasi"/>
 </template>
-<script data-aliflam-wilayah-module>
-(function(){
-  'use strict';
-  const CACHE_KEY='aliflam-wilayah-cache-v1';
-  let cache={province:[],city:{},district:{},village:{}};
-  let apiCall=null, escText=null, saved={};
-  const $=id=>document.getElementById(id);
-  function setList(id,values){$(id).innerHTML=(values||[]).map(v=>`<option value="${escText(v)}"></option>`).join('')}
-  function upper(id){const el=$(id);el.value=el.value.toLocaleUpperCase('id-ID').trim()}
-  async function request(data){const r=await apiCall('wilayahOptions',data);if(!r.ok)throw Error(r.error||'Data wilayah gagal dimuat.');return r.data?.options||[]}
-  function exact(value,options){return (options||[]).find(x=>x.toUpperCase()===String(value||'').trim().toUpperCase())||''}
-  function resetFrom(level){const map={city:['checkoutCity','cityOptions'],district:['checkoutDistrict','districtOptions'],village:['checkoutVillage','villageOptions']};const order=['city','district','village'];order.slice(order.indexOf(level)).forEach(k=>{const [id,list]=map[k];$(id).value='';$(id).disabled=true;setList(list,[])});$('checkoutPostal').value=''}
-  async function provinceChange(){upper('checkoutProvince');const p=exact($('checkoutProvince').value,cache.province);$('checkoutProvince').value=p;resetFrom('city');if(!p)return;const opts=await request({level:'city',province:p});cache.city[p]=opts;setList('cityOptions',opts);$('checkoutCity').disabled=false;$('checkoutCity').placeholder='Ketik kabupaten/kota...';persist()}
-  async function cityChange(){upper('checkoutCity');const p=$('checkoutProvince').value,c=exact($('checkoutCity').value,cache.city[p]);$('checkoutCity').value=c;resetFrom('district');if(!c)return;const opts=await request({level:'district',province:p,city:c});cache.district[p+'|'+c]=opts;setList('districtOptions',opts);$('checkoutDistrict').disabled=false;$('checkoutDistrict').placeholder='Ketik kecamatan...';persist()}
-  async function districtChange(){upper('checkoutDistrict');const p=$('checkoutProvince').value,c=$('checkoutCity').value,d=exact($('checkoutDistrict').value,cache.district[p+'|'+c]);$('checkoutDistrict').value=d;resetFrom('village');if(!d)return;const opts=await request({level:'village',province:p,city:c,district:d});cache.village[p+'|'+c+'|'+d]=opts;setList('villageOptions',opts);$('checkoutVillage').disabled=false;$('checkoutVillage').placeholder='Ketik desa/kelurahan...';persist()}
-  async function villageChange(){upper('checkoutVillage');const p=$('checkoutProvince').value,c=$('checkoutCity').value,d=$('checkoutDistrict').value,v=exact($('checkoutVillage').value,cache.village[p+'|'+c+'|'+d]);$('checkoutVillage').value=v;$('checkoutPostal').value='';if(!v)return;const r=await apiCall('wilayahPostalCode',{province:p,city:c,district:d,village:v});if(!r.ok)throw Error(r.error||'Kode pos tidak ditemukan.');$('checkoutPostal').value=r.data?.postalCode||'';persist()}
-  function persist(){try{localStorage.setItem(CACHE_KEY,JSON.stringify(cache))}catch(e){}}
-  async function restore(){const a=saved.address||{};if(!a.province)return;try{$('checkoutProvince').value=(a.province||'').toUpperCase();await provinceChange();$('checkoutCity').value=(a.city||'').toUpperCase();await cityChange();$('checkoutDistrict').value=(a.district||'').toUpperCase();await districtChange();$('checkoutVillage').value=(a.village||'').toUpperCase();await villageChange();$('checkoutPostal').value=a.postalCode||$('checkoutPostal').value}catch(e){console.warn('Alamat tersimpan tidak dapat dipulihkan otomatis:',e)}}
-  async function init(deps){apiCall=deps.api;escText=deps.esc;saved=deps.savedBuyer||{};try{const old=JSON.parse(localStorage.getItem(CACHE_KEY)||'null');if(old&&Array.isArray(old.province))cache=old}catch(e){}if(!cache.province.length)cache.province=await request({level:'province'});setList('provinceOptions',cache.province);$('checkoutProvince').addEventListener('input',()=>{upper('checkoutProvince');resetFrom('city')});$('checkoutProvince').addEventListener('change',()=>provinceChange().catch(showError));$('checkoutCity').addEventListener('input',()=>{upper('checkoutCity');resetFrom('district')});$('checkoutCity').addEventListener('change',()=>cityChange().catch(showError));$('checkoutDistrict').addEventListener('input',()=>{upper('checkoutDistrict');resetFrom('village')});$('checkoutDistrict').addEventListener('change',()=>districtChange().catch(showError));$('checkoutVillage').addEventListener('input',()=>upper('checkoutVillage'));$('checkoutVillage').addEventListener('change',()=>villageChange().catch(showError));await restore()}
-  function showError(e){const box=$('checkoutDropdownError');if(box)box.textContent=e.message||'Gagal memuat wilayah.';console.error(e)}
-  window.AliflamWilayah={init};
-})();
-</script>
