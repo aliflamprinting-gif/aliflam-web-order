@@ -71,13 +71,7 @@ body.modal-open{overflow:hidden!important;touch-action:none}
 <div class="sectionhead"><h2>Alamat Pengiriman</h2></div>
 <label class="field" for="checkoutRecipient">Nama penerima *</label><input class="input" id="checkoutRecipient" placeholder="Nama penerima"/>
 <label class="field" for="checkoutAddressPhone">No. HP penerima *</label><input class="input" id="checkoutAddressPhone" inputmode="tel" placeholder="08xxxxxxxxxx"/>
-<label class="field" for="checkoutProvince">PROVINSI *</label><input class="input" id="checkoutProvince" list="provinceOptions" placeholder="Ketik nama provinsi..." autocomplete="off"/><datalist id="provinceOptions"></datalist>
-<label class="field" for="checkoutCity">KABUPATEN / KOTA *</label><input class="input" id="checkoutCity" list="cityOptions" placeholder="Pilih provinsi terlebih dahulu" autocomplete="off" disabled/><datalist id="cityOptions"></datalist>
-<label class="field" for="checkoutDistrict">KECAMATAN *</label><input class="input" id="checkoutDistrict" list="districtOptions" placeholder="Pilih kabupaten/kota terlebih dahulu" autocomplete="off" disabled/><datalist id="districtOptions"></datalist>
-<label class="field" for="checkoutVillage">DESA / KELURAHAN *</label><input class="input" id="checkoutVillage" list="villageOptions" placeholder="Pilih kecamatan terlebih dahulu" autocomplete="off" disabled/><datalist id="villageOptions"></datalist>
-<label class="field" for="checkoutPostal">KODE POS</label><input class="input" id="checkoutPostal" inputmode="numeric" placeholder="Terisi otomatis" readonly/>
-<label class="field" for="checkoutFullAddress">Alamat lengkap *</label><textarea class="input" id="checkoutFullAddress" placeholder="Nama jalan, nomor rumah, RT/RW, kelurahan" rows="3"></textarea>
-<label class="field" for="checkoutReference">Patokan (opsional)</label><input class="input" id="checkoutReference" placeholder="Patokan lokasi"/>
+<div id="checkoutWilayahMount"><div class="footnote">Memuat form alamat...</div></div>
 <div class="sectionhead"><h2>Pembayaran</h2></div><div class="payment-options" id="checkoutPaymentOptions"><span class="muted tiny">Memuat metode pembayaran...</span></div><div id="checkoutDropdownError" class="footnote" role="alert"></div>
 <label class="field" for="checkoutNotes">Catatan (opsional)</label><textarea class="input" id="checkoutNotes" placeholder="Catatan pesanan" rows="2"></textarea>
 <div class="subtotal"><b>Subtotal produk</b><strong id="checkoutTotal"></strong></div>
@@ -112,6 +106,16 @@ async function loadWilayahLevel(level,params,cacheKey,listId){
 }
 function exactOption(value,options){return (options||[]).find(x=>x.toUpperCase()===String(value||'').trim().toUpperCase())||''}
 function resetWilayahFrom(level){const map={city:['checkoutCity','cityOptions'],district:['checkoutDistrict','districtOptions'],village:['checkoutVillage','villageOptions']};const order=['city','district','village'];order.slice(order.indexOf(level)).forEach(k=>{const [id,list]=map[k];document.getElementById(id).value='';document.getElementById(id).disabled=true;setDatalist(list,[])});document.getElementById('checkoutPostal').value=''}
+async function loadWilayahPartial(){
+  const mount=document.getElementById('checkoutWilayahMount');
+  if(!mount)throw Error('Wadah form alamat tidak ditemukan.');
+  const response=await fetch('./wilayah.html',{cache:'no-cache'});
+  if(!response.ok)throw Error('Modul wilayah gagal dimuat (HTTP '+response.status+').');
+  mount.innerHTML=await response.text();
+  const requiredIds=['checkoutProvince','checkoutCity','checkoutDistrict','checkoutVillage','checkoutPostal','checkoutFullAddress','checkoutReference','provinceOptions','cityOptions','districtOptions','villageOptions'];
+  if(requiredIds.some(id=>!document.getElementById(id)))throw Error('Struktur modul wilayah tidak lengkap.');
+}
+
 async function loadCheckoutDropdowns(){
   const paymentWrap=document.getElementById('checkoutPaymentOptions'),errorBox=document.getElementById('checkoutDropdownError'),submitButton=document.getElementById('submitOrderBtn');
   try{
@@ -271,5 +275,5 @@ async function loadCatalog(){
 loadLocalData();
 renderMyOrders();
 loadCatalog();
-loadCheckoutDropdowns();
+loadWilayahPartial().then(loadCheckoutDropdowns).catch(error=>{const box=document.getElementById("checkoutDropdownError");if(box)box.textContent=error.message;const btn=document.getElementById("submitOrderBtn");if(btn)btn.disabled=true;console.error(error)});
 </script></body></html>
