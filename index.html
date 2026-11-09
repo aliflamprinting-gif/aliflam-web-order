@@ -71,7 +71,7 @@ body.modal-open{overflow:hidden!important;touch-action:none}
 <div class="sectionhead"><h2>Alamat Pengiriman</h2></div>
 <label class="field" for="checkoutRecipient">Nama penerima *</label><input class="input" id="checkoutRecipient" placeholder="Nama penerima"/>
 <label class="field" for="checkoutAddressPhone">No. HP penerima *</label><input class="input" id="checkoutAddressPhone" inputmode="tel" placeholder="08xxxxxxxxxx"/>
-<div id="checkoutWilayahMount"><div class="footnote">Memuat form alamat...</div></div>
+<div id="checkoutWilayahMount"></div>
 <div class="sectionhead"><h2>Pembayaran</h2></div><div class="payment-options" id="checkoutPaymentOptions"><span class="muted tiny">Memuat metode pembayaran...</span></div><div id="checkoutDropdownError" class="footnote" role="alert"></div>
 <label class="field" for="checkoutNotes">Catatan (opsional)</label><textarea class="input" id="checkoutNotes" placeholder="Catatan pesanan" rows="2"></textarea>
 <div class="subtotal"><b>Subtotal produk</b><strong id="checkoutTotal"></strong></div>
@@ -80,6 +80,7 @@ body.modal-open{overflow:hidden!important;touch-action:none}
 <div class="overlay notice-overlay" id="noticeOverlay"><div class="dialog notice-dialog"><div class="notice-symbol"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5m0-8h.01"></path></svg></div><div class="notice-copy"><div class="notice-kicker">ALIFLAM PRINTING</div><h2 id="noticeTitle">Informasi</h2><p id="noticeMessage"></p></div><div class="notice-actions"><button class="primary" onclick="closeOverlay('noticeOverlay')">Tutup</button></div></div></div>
 <div class="overlay" id="confirmOverlay"><div class="dialog notice-dialog"><div class="dialoghead"><h2 id="confirmTitle">Konfirmasi</h2><button class="close" onclick="resolveConfirm(false)">×</button></div><p id="confirmMessage"></p><div class="twoactions"><button class="secondary" onclick="resolveConfirm(false)">Batal</button><button class="danger-confirm" onclick="resolveConfirm(true)">Ya, hapus</button></div></div></div>
 <div class="loading-screen" id="loadingScreen"><div class="loading-card"><span class="loader"></span><b id="loadingText">Memuat data...</b><small>Mohon tunggu sebentar</small></div></div>
+<script src="./wilayah-data.js"></script>
 <script>const API='https://script.google.com/macros/s/AKfycbzzis01Cv-kWurEimDySmksL_6bvASB_sQop0X64kILzKULHWM1E2Ci7lX2PFctUA5G1w/exec';
 const IMAGE_BASE='https://aliflamprinting-gif.github.io/aliflam-web-order/assets/products/';
 let VARIANTS=[],groups=[],filter='Semua',selected=null,cart=[],localOrders=[],savedBuyer={},editingCartVid=null,selectedO1=null,selectedO2=null,selectedO3=null,selectedSizeChoices={},selectedCustom=false,detailReturnPage='products';
@@ -95,28 +96,25 @@ let MASTER_DROPDOWNS={};
 async function loadWilayahPartial(){
   const mount=document.getElementById('checkoutWilayahMount');
   if(!mount)throw Error('Wadah form alamat tidak ditemukan.');
-  const response=await fetch('./wilayah.html',{cache:'no-cache'});
+  const response=await fetch('./wilayah.html',{cache:'force-cache'});
   if(!response.ok)throw Error('Modul wilayah gagal dimuat (HTTP '+response.status+').');
-  const source=await response.text();
-  const parsed=new DOMParser().parseFromString(source,'text/html');
+  const html=await response.text();
+  const parsed=new DOMParser().parseFromString(html,'text/html');
   const template=parsed.querySelector('template[data-aliflam-wilayah]');
-  const moduleScript=parsed.querySelector('script[data-aliflam-wilayah-module]');
-  if(!template||!moduleScript)throw Error('File wilayah.html bukan modul wilayah GitHub yang lengkap.');
-  mount.replaceChildren(template.content.cloneNode(true));
-  const script=document.createElement('script');
-  script.textContent=moduleScript.textContent;
-  document.body.appendChild(script);
-  if(!window.AliflamWilayah)throw Error('JavaScript modul wilayah gagal diinisialisasi.');
+  if(!template)throw Error('Template modul wilayah tidak ditemukan.');
+  mount.innerHTML=template.innerHTML;
+  if(!Array.isArray(window.ALIFLAM_WILAYAH_DATA)||!window.ALIFLAM_WILAYAH_DATA.length)throw Error('Data wilayah statis belum berhasil dimuat.');
 }
-
 async function loadCheckoutDropdowns(){
   const paymentWrap=document.getElementById('checkoutPaymentOptions'),errorBox=document.getElementById('checkoutDropdownError'),submitButton=document.getElementById('submitOrderBtn');
   try{
+    await loadWilayahPartial();
+    if(typeof window.AliflamWilayahInit!=='function')throw Error('Mesin dropdown wilayah belum siap.');
+    window.AliflamWilayahInit(savedBuyer.address||{});
     const master=await api('masterDropdowns',{});if(!master.ok)throw Error(master.error||'Master pembayaran gagal dimuat.');
     MASTER_DROPDOWNS=master.data?.options||{};const payments=MASTER_DROPDOWNS['METODE PEMBAYARAN']||[];
     if(!payments.length)throw Error('METODE PEMBAYARAN belum tersedia di MASTER DROPDOWN.');
     paymentWrap.innerHTML=payments.map((value,index)=>`<label class="payment-option"><input ${index===0?'checked':''} name="checkoutPayment" type="radio" value="${esc(value)}"/> ${esc(value==='TRANSFER BANK'?'Transfer Bank':value)}</label>`).join('');
-    await window.AliflamWilayah.init({api,esc,savedBuyer});
     if(submitButton)submitButton.disabled=false;if(errorBox)errorBox.textContent='';
   }catch(error){if(errorBox)errorBox.textContent=error.message||'Data checkout gagal dimuat.';console.error('Gagal memuat dropdown checkout:',error)}
 }
@@ -252,5 +250,5 @@ async function loadCatalog(){
 loadLocalData();
 renderMyOrders();
 loadCatalog();
-loadWilayahPartial().then(loadCheckoutDropdowns).catch(error=>{const box=document.getElementById("checkoutDropdownError");if(box)box.textContent=error.message;const btn=document.getElementById("submitOrderBtn");if(btn)btn.disabled=true;console.error(error)});
+loadCheckoutDropdowns();
 </script></body></html>
