@@ -1,0 +1,11 @@
+<!-- Modul form wilayah statis Aliflam. Data dimuat dari wilayah-data.js, bukan Google Sheets/Apps Script. -->
+<template data-aliflam-wilayah>
+<label class="field" for="checkoutProvince">PROVINSI *</label><input class="input" id="checkoutProvince" list="provinceOptions" placeholder="Ketik nama provinsi..." autocomplete="off"/>
+<datalist id="provinceOptions"></datalist>
+<label class="field" for="checkoutCity">KABUPATEN / KOTA *</label><select class="input" id="checkoutCity" disabled><option value="">Pilih provinsi terlebih dahulu</option></select>
+<label class="field" for="checkoutDistrict">KECAMATAN *</label><select class="input" id="checkoutDistrict" disabled><option value="">Pilih kabupaten/kota terlebih dahulu</option></select>
+<label class="field" for="checkoutVillage">DESA / KELURAHAN *</label><select class="input" id="checkoutVillage" disabled><option value="">Pilih kecamatan terlebih dahulu</option></select>
+<label class="field" for="checkoutPostal">KODE POS</label><input class="input" id="checkoutPostal" inputmode="numeric" placeholder="Terisi otomatis" readonly/>
+<label class="field" for="checkoutFullAddress">Alamat lengkap *</label><textarea class="input" id="checkoutFullAddress" placeholder="Nama jalan, nomor rumah, RT/RW, kelurahan" rows="3"></textarea>
+<label class="field" for="checkoutReference">Patokan (opsional)</label><input class="input" id="checkoutReference" placeholder="Patokan lokasi"/>
+</template>
