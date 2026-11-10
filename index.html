@@ -247,13 +247,24 @@ async function loadWilayahPartial(){
   wilayahPartialPromise=(async()=>{
     const mount=document.getElementById('checkoutWilayahMount');
     if(!mount)throw Error('Wadah form alamat tidak ditemukan.');
-    const response=await fetch('./wilayah.html',{cache:'force-cache'});
-    if(!response.ok)throw Error('Modul wilayah gagal dimuat (HTTP '+response.status+').');
-    const html=await response.text();
-    const parsed=new DOMParser().parseFromString(html,'text/html');
-    const template=parsed.querySelector('template[data-aliflam-wilayah]');
-    if(!template)throw Error('Template modul wilayah tidak ditemukan.');
-    mount.innerHTML=template.innerHTML;
+    const response=await fetch('./wilayah.html?v=20261111',{cache:'no-cache'});
+    if(response.ok){
+      const html=await response.text();
+      const parsed=new DOMParser().parseFromString(html,'text/html');
+      const template=parsed.querySelector('template[data-aliflam-wilayah]');
+      if(!template)throw Error('Template modul wilayah tidak ditemukan.');
+      mount.innerHTML=template.innerHTML;
+    }else{
+      // Fallback tetap berupa dropdown, bukan input teks.
+      mount.innerHTML=`
+        <label class="field" for="checkoutProvince">PROVINSI *</label><select class="input" id="checkoutProvince"><option value="">Pilih provinsi</option></select>
+        <label class="field" for="checkoutCity">KABUPATEN / KOTA *</label><select class="input" id="checkoutCity" disabled><option value="">Pilih provinsi terlebih dahulu</option></select>
+        <label class="field" for="checkoutDistrict">KECAMATAN *</label><select class="input" id="checkoutDistrict" disabled><option value="">Pilih kabupaten/kota terlebih dahulu</option></select>
+        <label class="field" for="checkoutVillage">DESA / KELURAHAN *</label><select class="input" id="checkoutVillage" disabled><option value="">Pilih kecamatan terlebih dahulu</option></select>
+        <label class="field" for="checkoutPostal">KODE POS</label><input class="input" id="checkoutPostal" inputmode="numeric" placeholder="Terisi otomatis" readonly>
+        <label class="field" for="checkoutFullAddress">Alamat lengkap *</label><textarea class="input" id="checkoutFullAddress" placeholder="Nama jalan, nomor rumah, RT/RW, kelurahan" rows="3"></textarea>
+        <label class="field" for="checkoutReference">Patokan (opsional)</label><input class="input" id="checkoutReference" placeholder="Patokan lokasi">`;
+    }
   })().catch(error=>{wilayahPartialPromise=null;throw error;});
   return wilayahPartialPromise;
 }
@@ -262,10 +273,10 @@ function loadWilayahData(){
   if(wilayahDataPromise)return wilayahDataPromise;
   wilayahDataPromise=new Promise((resolve,reject)=>{
     const script=document.createElement('script');
-    script.src='./wilayah-data.js';
+    script.src='./wilayah-data.js?v=20261111';
     script.async=true;
     script.onload=()=>Array.isArray(window.ALIFLAM_WILAYAH_DATA)&&window.ALIFLAM_WILAYAH_DATA.length?resolve(window.ALIFLAM_WILAYAH_DATA):reject(Error('Isi data wilayah tidak valid.'));
-    script.onerror=()=>reject(Error('Data wilayah gagal diunduh dari GitHub.'));
+    script.onerror=()=>{script.remove();reject(Error('Data wilayah gagal diunduh dari GitHub.'));};
     document.head.appendChild(script);
   }).catch(error=>{wilayahDataPromise=null;throw error;});
   return wilayahDataPromise;
