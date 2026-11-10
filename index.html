@@ -97,6 +97,28 @@ body.modal-open{overflow:hidden!important;touch-action:none}
   border-color: #c62828 !important;
 }
 
+
+/* Rincian pesanan: harga tetap satu baris di kanan, teks produk menyesuaikan */
+.checkout-success .order-detail-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+}
+.checkout-success .order-detail-item > span {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+.checkout-success .order-detail-item > strong {
+  flex: 0 0 auto;
+  min-width: max-content;
+  white-space: nowrap;
+  text-align: right;
+}
+
 </style></head><body><header><div class="wrap header"><a class="brand" href="#" onclick="navigate('home');return false"><img alt="Logo Aliflam Printing" id="logo" src="https://aliflamprinting-gif.github.io/aliflam-web-order/assets/products/LOGO.webp"/><span class="brandwords"><b>ALIFLAM PRINTING</b><small>DESAIN &amp; PERCETAKAN</small></span></a><div class="tools"><button class="iconbtn" id="themeBtn" title="Ganti tema">☾</button><button class="iconbtn" onclick="openCart()" title="Keranjang">🛒 <span class="cartcount" id="cartCount">0</span></button></div></div></header>
 <main class="wrap"><section class="page active" id="homePage"><div class="intro"><div class="eyebrow">SELAMAT DATANG DI ALIFLAM</div><h1>Mau cetak apa hari ini?</h1><p>Pilih kategori atau cari produk yang kamu butuhkan.</p></div><label class="search"><span>⌕</span><input autocomplete="off" id="homeSearch" placeholder="Cari banner, stiker, brosur..."/></label><div class="sectionhead"><div><h2>Pilih Kategori</h2><p>Temukan produk lebih cepat.</p></div><button class="link" onclick="navigate(&quot;products&quot;)">Semua kategori →</button></div><div class="categories" id="homeCats"></div><div class="sectionhead"><div><h2>Produk Pilihan</h2><p>Produk dan harga asli dari katalog WEB.</p></div><button class="link" onclick="navigate(&quot;products&quot;)">Lihat semua →</button></div><div class="products" id="homeProducts"></div><div class="sectionhead"><div><h2>Kenapa Aliflam?</h2></div></div><div class="benefits"><article class="benefit"><div>✦</div><b>Pilihan Cetak Lengkap</b><p>Berbagai kebutuhan cetak tersedia dalam satu tempat.</p></article><article class="benefit"><div>⚡</div><b>Pilih Variasi dengan Mudah</b><p>Harga menyesuaikan pilihan produk dan variasi.</p></article><article class="benefit"><div>♡</div><b>Layanan Desain</b><p>Konsultasikan kebutuhan desain dan cetakmu.</p></article></div><div class="sectionhead"><div><h2>Testimoni Pelanggan</h2><p>Area testimoni untuk ulasan asli yang akan ditambahkan.</p></div></div><footer>© 2026 Aliflam Printing · Desain &amp; Percetakan</footer></section>
 <section class="page" id="productsPage"><div class="intro"><div class="eyebrow">KATALOG PRODUK</div><h1>Semua Produk</h1><p>Pilih kategori dan produk yang kamu cari.</p></div><label class="search"><span>⌕</span><input autocomplete="off" id="productSearch" placeholder="Cari nama produk..."/></label><div class="filters" id="filters"></div><div class="products" id="products"></div><p class="footnote" id="productCount"></p></section>
