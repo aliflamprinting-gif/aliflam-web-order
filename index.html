@@ -119,6 +119,24 @@ body.modal-open{overflow:hidden!important;touch-action:none}
   text-align: right;
 }
 
+
+/* Loading checkout: ringan, ramah, dan hanya aktif saat submit pesanan */
+#loadingScreen.checkout-loading{background:rgba(8,22,38,.68);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+#loadingScreen.checkout-loading .loading-card{width:min(340px,100%);min-width:0;padding:26px 24px 22px;border:1px solid var(--line);border-radius:22px;gap:12px;text-align:center;animation:checkoutCardIn .28s cubic-bezier(.2,.8,.2,1) both}
+.checkout-loader-art{width:76px;height:76px;position:relative;display:grid;place-items:center;border-radius:24px;background:var(--blue-soft);color:var(--blue);font-size:34px;animation:checkoutFloat 2s ease-in-out infinite}
+.checkout-loader-art:before,.checkout-loader-art:after{content:"";position:absolute;inset:5px;border:2px solid color-mix(in srgb,var(--blue) 22%,transparent);border-radius:19px;animation:checkoutPulse 1.8s ease-out infinite}
+.checkout-loader-art:after{animation-delay:.9s}
+.checkout-loader-art span{position:relative;z-index:1}
+#loadingText{font:800 15px/1.4 Manrope;color:var(--ink);min-height:22px}
+#loadingScreen .loading-card small{font-size:11px;line-height:1.5;text-align:center}
+.checkout-loading-dots{display:flex;gap:5px;margin-top:1px}
+.checkout-loading-dots i{width:6px;height:6px;border-radius:50%;background:var(--blue);opacity:.35;animation:checkoutDot 1s ease-in-out infinite}
+.checkout-loading-dots i:nth-child(2){animation-delay:.15s}.checkout-loading-dots i:nth-child(3){animation-delay:.3s}
+@keyframes checkoutFloat{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-5px) rotate(3deg)}}
+@keyframes checkoutPulse{0%{transform:scale(.82);opacity:.7}100%{transform:scale(1.22);opacity:0}}
+@keyframes checkoutDot{0%,80%,100%{transform:translateY(0);opacity:.3}40%{transform:translateY(-4px);opacity:1}}
+@keyframes checkoutCardIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(prefers-reduced-motion:reduce){#loadingScreen.checkout-loading *,#loadingScreen.checkout-loading *:before,#loadingScreen.checkout-loading *:after{animation:none!important;transition:none!important}}
 </style></head><body><header><div class="wrap header"><a class="brand" href="#" onclick="navigate('home');return false"><img alt="Logo Aliflam Printing" id="logo" src="https://aliflamprinting-gif.github.io/aliflam-web-order/assets/products/LOGO.webp"/><span class="brandwords"><b>ALIFLAM PRINTING</b><small>DESAIN &amp; PERCETAKAN</small></span></a><div class="tools"><button class="iconbtn" id="themeBtn" title="Ganti tema">☾</button><button class="iconbtn" onclick="openCart()" title="Keranjang">🛒 <span class="cartcount" id="cartCount">0</span></button></div></div></header>
 <main class="wrap"><section class="page active" id="homePage"><div class="intro"><div class="eyebrow">SELAMAT DATANG DI ALIFLAM</div><h1>Mau cetak apa hari ini?</h1><p>Pilih kategori atau cari produk yang kamu butuhkan.</p></div><label class="search"><span>⌕</span><input autocomplete="off" id="homeSearch" placeholder="Cari banner, stiker, brosur..."/></label><div class="sectionhead"><div><h2>Pilih Kategori</h2><p>Temukan produk lebih cepat.</p></div><button class="link" onclick="navigate(&quot;products&quot;)">Semua kategori →</button></div><div class="categories" id="homeCats"></div><div class="sectionhead"><div><h2>Produk Pilihan</h2><p>Produk dan harga asli dari katalog WEB.</p></div><button class="link" onclick="navigate(&quot;products&quot;)">Lihat semua →</button></div><div class="products" id="homeProducts"></div><div class="sectionhead"><div><h2>Kenapa Aliflam?</h2></div></div><div class="benefits"><article class="benefit"><div>✦</div><b>Pilihan Cetak Lengkap</b><p>Berbagai kebutuhan cetak tersedia dalam satu tempat.</p></article><article class="benefit"><div>⚡</div><b>Pilih Variasi dengan Mudah</b><p>Harga menyesuaikan pilihan produk dan variasi.</p></article><article class="benefit"><div>♡</div><b>Layanan Desain</b><p>Konsultasikan kebutuhan desain dan cetakmu.</p></article></div><div class="sectionhead"><div><h2>Testimoni Pelanggan</h2><p>Area testimoni untuk ulasan asli yang akan ditambahkan.</p></div></div><footer>© 2026 Aliflam Printing · Desain &amp; Percetakan</footer></section>
 <section class="page" id="productsPage"><div class="intro"><div class="eyebrow">KATALOG PRODUK</div><h1>Semua Produk</h1><p>Pilih kategori dan produk yang kamu cari.</p></div><label class="search"><span>⌕</span><input autocomplete="off" id="productSearch" placeholder="Cari nama produk..."/></label><div class="filters" id="filters"></div><div class="products" id="products"></div><p class="footnote" id="productCount"></p></section>
@@ -181,7 +199,7 @@ body.modal-open{overflow:hidden!important;touch-action:none}
 <div class="footnote" id="checkoutResult" role="alert"></div></div></div>
 <div class="overlay notice-overlay" id="noticeOverlay"><div class="dialog notice-dialog"><div class="notice-symbol"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5m0-8h.01"></path></svg></div><div class="notice-copy"><div class="notice-kicker">ALIFLAM PRINTING</div><h2 id="noticeTitle">Informasi</h2><p id="noticeMessage"></p></div><div class="notice-actions"><button class="primary" onclick="closeOverlay('noticeOverlay')">Oke</button></div></div></div>
 <div class="overlay" id="confirmOverlay"><div class="dialog notice-dialog"><div class="dialoghead"><h2 id="confirmTitle">Konfirmasi</h2><button class="close" onclick="resolveConfirm(false)">×</button></div><p id="confirmMessage"></p><div class="twoactions"><button class="secondary" onclick="resolveConfirm(false)">Batal</button><button class="danger-confirm" onclick="resolveConfirm(true)">Ya, hapus</button></div></div></div>
-<div class="loading-screen" id="loadingScreen"><div class="loading-card"><span class="loader"></span><b id="loadingText">Memuat data...</b><small>Mohon tunggu sebentar</small></div></div>
+<div class="loading-screen" id="loadingScreen" aria-live="polite" aria-busy="false"><div class="loading-card"><div class="checkout-loader-art" aria-hidden="true"><span>🛍️</span></div><b id="loadingText">Menyiapkan pesananmu...</b><small id="loadingSubtext">Mohon tunggu sebentar, kami sedang memprosesnya.</small><div class="checkout-loading-dots" aria-hidden="true"><i></i><i></i><i></i></div></div></div>
 
 <script>
 // Checkout tidak ditutup oleh klik area luar atau tombol Escape.
@@ -344,6 +362,21 @@ function openOverlay(id){document.getElementById(id).classList.add('open');syncM
 function showNotice(message,title='Informasi'){document.getElementById('noticeTitle').textContent=title;document.getElementById('noticeMessage').textContent=message;openOverlay('noticeOverlay')}
 let confirmResolver=null;function askConfirm(message,title='Konfirmasi'){document.getElementById('confirmTitle').textContent=title;document.getElementById('confirmMessage').textContent=message;openOverlay('confirmOverlay');return new Promise(resolve=>{confirmResolver=resolve})}function resolveConfirm(answer){closeOverlay('confirmOverlay');if(confirmResolver){confirmResolver(answer);confirmResolver=null}}
 function showLoading(message='Memuat data...'){document.getElementById('loadingText').textContent=message;document.getElementById('loadingScreen').classList.add('show');document.body.classList.add('modal-open')}function hideLoading(){document.getElementById('loadingScreen').classList.remove('show');syncModalLock()}
+let checkoutLoadingTimer=null;
+const checkoutLoadingMessages=['Menyiapkan detail pesananmu...','Memeriksa produk dan variasi...','Menghitung total dan ongkir...','Menyimpan pesanan ke sistem...','Sedikit lagi, pesananmu sedang diproses...'];
+function showCheckoutLoading(){
+  const screen=document.getElementById('loadingScreen'),text=document.getElementById('loadingText'),sub=document.getElementById('loadingSubtext');
+  if(checkoutLoadingTimer)clearInterval(checkoutLoadingTimer);
+  let index=0;text.textContent=checkoutLoadingMessages[index];
+  if(sub)sub.textContent='Mohon tunggu sebentar, jangan tutup halaman ini.';
+  screen.classList.add('checkout-loading','show');screen.setAttribute('aria-busy','true');document.body.classList.add('modal-open');
+  checkoutLoadingTimer=setInterval(()=>{index=(index+1)%checkoutLoadingMessages.length;text.textContent=checkoutLoadingMessages[index]},2300);
+}
+function hideCheckoutLoading(){
+  if(checkoutLoadingTimer){clearInterval(checkoutLoadingTimer);checkoutLoadingTimer=null}
+  const screen=document.getElementById('loadingScreen');screen.classList.remove('show','checkout-loading');screen.setAttribute('aria-busy','false');syncModalLock();
+}
+
 function openDetail(id,updateUrl=true){selected=groups.find(g=>g.id===id);if(!selected)return;if(updateUrl){detailReturnPage=document.getElementById('productsPage').classList.contains('active')?'products':'home';history.pushState({product:id},'',location.pathname+location.search+'#produk/'+encodeURIComponent(id))}document.getElementById('detailTitle').textContent=selected.name;document.getElementById('detailCategory').textContent=classify(selected);document.getElementById('detailImage').src=IMG(selected.image);selectedO1=null;selectedO2=null;selectedO3=null;selectedSizeChoices={};selectedCustom=false;document.getElementById('customWidth').value='';document.getElementById('customHeight').value='';document.getElementById('customSizeWrap').style.display='none';document.getElementById('qty').value=1;const shopee=document.getElementById('shopeeButton');if(selected.shopee){shopee.href=selected.shopee;shopee.style.display='block'}else shopee.style.display='none';renderVariationOptions();updateDetail();navigate('productDetail')}
 function backFromDetail(){const target=detailReturnPage||'products';if(location.hash.startsWith('#produk/'))history.replaceState({},'',location.pathname+location.search);navigate(target)}
 function syncProductRoute(){const m=location.hash.match(/^#produk\/(.+)$/);if(m)openDetail(decodeURIComponent(m[1]),false);else if(document.getElementById('productDetailPage').classList.contains('active'))navigate(detailReturnPage||'products')}
@@ -428,8 +461,12 @@ function paymentInstructionHtml(order,paymentData={}){
   return `<div class="payment-instruction"><h3>Instruksi Pembayaran</h3><p>Metode: <b>${esc(order.paymentMethod||'-')}</b></p><p>Nominal pembayaran: <b>${money(order.grandTotal||0)}</b></p>${detail}<p class="tiny">Pastikan nominal transfer sesuai total pembayaran pesanan.</p></div>`;
 }
 async function checkoutInfo(){if(!cart.length)return showNotice('Keranjang masih kosong.');const total=money(cart.reduce((a,b)=>a+b.qty*b.price,0));document.getElementById('checkoutTotal').textContent=total; document.getElementById('checkoutResult').textContent='';document.getElementById('checkoutWizard').style.display='block';document.getElementById('checkoutSuccess').style.display='none';setCheckoutStep(1);applySavedBuyerData();closeOverlay('cartOverlay');openOverlay('checkoutOverlay');try{await loadCheckoutDropdowns()}catch(e){document.getElementById('submitOrderBtn').disabled=true}}
+let checkoutSubmitting=false;
 async function submitOrder(){
+  if(checkoutSubmitting)return;
+  checkoutSubmitting=true;
   const btn=document.getElementById('submitOrderBtn'),out=document.getElementById('checkoutResult');
+  btn.disabled=true;
   try{
     if(!window.ALIFLAM_WILAYAH_DATA||!document.getElementById('checkoutProvince'))throw Error('Form wilayah belum selesai dimuat. Tutup checkout lalu buka kembali.');
     if(!cart.length)throw Error('Keranjang masih kosong.');
@@ -442,7 +479,8 @@ async function submitOrder(){
     const notes=document.getElementById('checkoutNotes').value.trim();
     const orderItems=cart.map(x=>({productName:x.name,sku:x.sku,qty:x.qty,lineTotal:x.qty*x.price,unitPrice:x.price,variationId:x.variationId,customBanner:!!x.customBanner,width:x.width||0,height:x.height||0,detail:[x.sku,x.o1,x.o2,x.o3].filter(Boolean).join(' · ')}));
     const data={idempotencyKey:window.crypto?.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random(),customer,address,paymentMethod,notes,items:cart.map(x=>({productId:x.variationId,qty:x.qty,...(x.customBanner?{customSize:{width:x.width,height:x.height}}:{})}))};
-    btn.disabled=true;btn.textContent='Membuat pesanan...';out.textContent='';
+    btn.textContent='MEMPROSES PESANAN...';out.textContent='';
+    showCheckoutLoading();
     const r=await api('createWebOrder',data);if(!r.ok)throw Error(r.error||'Pesanan belum dapat dikirim.');
     const orderDate=new Date().toISOString();
     const order={orderId:r.data.orderId,orderDate,status:'BARU',progress:'MENUNGGU KONFIRMASI',paymentStatus:'BELUM BAYAR',paymentMethod,subtotal:Number(r.data.subtotal)||0,shippingCost:Number(r.data.shippingCost)||0,grandTotal:Number(r.data.grandTotal)||0,customer,address,items:orderItems,notes};
@@ -454,7 +492,7 @@ async function submitOrder(){
     document.getElementById('checkoutWizard').style.display='none';success.style.display='block';out.textContent='';
     cart=[];saveCart();renderCart();renderMyOrders();
   }catch(e){out.textContent=e.message;out.style.color='#c33';}
-  finally{btn.disabled=false;if(btn.textContent!=='BUAT PESANAN')btn.textContent='BUAT PESANAN';}
+  finally{hideCheckoutLoading();checkoutSubmitting=false;btn.disabled=false;if(btn.textContent!=='BUAT PESANAN')btn.textContent='BUAT PESANAN';}
 }
 document.getElementById('homeSearch').addEventListener('input',e=>{document.getElementById('productSearch').value=e.target.value;filter='Semua';navigate('products')});document.getElementById('productSearch').addEventListener('input',renderProducts);
 function setTheme(t){document.documentElement.dataset.theme=t;document.getElementById('themeBtn').textContent=t==='dark'?'☀':'☾';try{localStorage.setItem('aliflam-theme',t)}catch(e){}document.querySelector('meta[name="theme-color"]').content=t==='dark'?'#0d1726':'#f5f8fc'}try{setTheme(localStorage.getItem('aliflam-theme')||'light')}catch(e){setTheme('light')}document.getElementById('themeBtn').onclick=()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');
