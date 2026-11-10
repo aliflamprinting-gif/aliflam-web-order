@@ -140,7 +140,7 @@ body.modal-open{overflow:hidden!important;touch-action:none}
 </main>
 <nav class="bottom"><div class="bottominner"><button class="nav active" data-nav="home" onclick="navigate('home')"><span>⌂</span>Beranda</button><button class="nav" data-nav="products" onclick="navigate(&quot;products&quot;)"><span>▦</span>Produk</button><button class="nav" data-nav="orders" onclick="navigate('orders')"><span>▤</span>Pesanan Saya</button></div></nav>
 <div class="overlay" id="cartOverlay" onclick="if(event.target===this)closeOverlay('cartOverlay')"><div class="dialog"><div class="dialoghead"><h2>Keranjang Belanja</h2><button class="close" onclick="closeOverlay('cartOverlay')">×</button></div><div id="cartItems"></div><div class="subtotal"><b>Subtotal</b><strong id="cartTotal">Rp0</strong></div><div class="twoactions"><button class="secondary" onclick="closeOverlay('cartOverlay');navigate('products')">Tambah Produk</button><button class="primary" onclick="checkoutInfo()">Lanjut Checkout</button></div><p class="footnote">Keranjang tersimpan di perangkat ini. Riwayat pesanan tersimpan setelah checkout berhasil.</p></div></div>
-<div class="overlay" id="checkoutOverlay" onclick="if(event.target===this)closeOverlay('checkoutOverlay')"><div class="dialog checkout-dialog"><div class="checkout-header">
+<div class="overlay" id="checkoutOverlay"><div class="dialog checkout-dialog"><div class="checkout-header">
   <div class="checkout-header-icon" aria-hidden="true">
     <svg viewBox="0 0 24 24"><path d="M6 7h12l1.2 13H4.8L6 7Z"></path><path d="M9 8V6a3 3 0 0 1 6 0v2"></path><path d="M9 12h6"></path></svg>
   </div>
@@ -183,7 +183,25 @@ body.modal-open{overflow:hidden!important;touch-action:none}
 <div class="overlay" id="confirmOverlay"><div class="dialog notice-dialog"><div class="dialoghead"><h2 id="confirmTitle">Konfirmasi</h2><button class="close" onclick="resolveConfirm(false)">×</button></div><p id="confirmMessage"></p><div class="twoactions"><button class="secondary" onclick="resolveConfirm(false)">Batal</button><button class="danger-confirm" onclick="resolveConfirm(true)">Ya, hapus</button></div></div></div>
 <div class="loading-screen" id="loadingScreen"><div class="loading-card"><span class="loader"></span><b id="loadingText">Memuat data...</b><small>Mohon tunggu sebentar</small></div></div>
 
-<script>const API='https://script.google.com/macros/s/AKfycbzzis01Cv-kWurEimDySmksL_6bvASB_sQop0X64kILzKULHWM1E2Ci7lX2PFctUA5G1w/exec';
+<script>
+// Checkout tidak ditutup oleh klik area luar atau tombol Escape.
+document.addEventListener('click', function(event){
+  const overlay=document.getElementById('checkoutOverlay');
+  if(overlay && overlay.classList.contains('open') && event.target===overlay){
+    event.preventDefault();
+    event.stopPropagation();
+  }
+}, true);
+document.addEventListener('keydown', function(event){
+  const overlay=document.getElementById('checkoutOverlay');
+  if(overlay && overlay.classList.contains('open') && (event.key==='Escape' || event.key==='Esc')){
+    event.preventDefault();
+    event.stopPropagation();
+    if(event.stopImmediatePropagation) event.stopImmediatePropagation();
+  }
+}, true);
+
+const API='https://script.google.com/macros/s/AKfycbzzis01Cv-kWurEimDySmksL_6bvASB_sQop0X64kILzKULHWM1E2Ci7lX2PFctUA5G1w/exec';
 const IMAGE_BASE='https://aliflamprinting-gif.github.io/aliflam-web-order/assets/products/';
 let VARIANTS=[],groups=[],filter='Semua',selected=null,cart=[],localOrders=[],savedBuyer={},editingCartVid=null,selectedO1=null,selectedO2=null,selectedO3=null,selectedSizeChoices={},selectedCustom=false,detailReturnPage='products';
 const CART_STORAGE_KEY='aliflam-live-cart';
