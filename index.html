@@ -435,7 +435,7 @@ function buildWhatsAppOrderMessage(order){
     '',
     `NO PESANAN: ${order.orderId||'-'}`,
     `TANGGAL PESANAN: ${formatOrderDate(order.orderDate)}`,
-    `TOTAL HARGA: ${money(order.grandTotal||0)}`,
+    `TOTAL HARGA + ONGKIR: ${money(order.grandTotal||0)}`,
     `METODE PEMBAYARAN: ${order.paymentMethod||'-'}`,
     '',
     'RINCIAN PESANAN:',
