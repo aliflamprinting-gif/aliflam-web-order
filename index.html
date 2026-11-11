@@ -74,14 +74,20 @@ body.modal-open{overflow:hidden!important;touch-action:none}
 /* Validasi kolom wajib: tandai merah sampai pengguna memperbaikinya. */
 .checkout-dialog .input.invalid-field,
 .checkout-dialog select.invalid-field,
-.checkout-dialog textarea.invalid-field{
+.checkout-dialog textarea.invalid-field,
+.manual-address-dialog .input.invalid-field,
+.manual-address-dialog select.invalid-field,
+.manual-address-dialog textarea.invalid-field{
   border:1.5px solid #dc2626 !important;
   background:color-mix(in srgb,#dc2626 5%,var(--card)) !important;
   box-shadow:0 0 0 3px #dc26261a;
 }
 .checkout-dialog .input.invalid-field:focus,
 .checkout-dialog select.invalid-field:focus,
-.checkout-dialog textarea.invalid-field:focus{outline:2px solid #dc262655;outline-offset:1px}
+.checkout-dialog textarea.invalid-field:focus,
+.manual-address-dialog .input.invalid-field:focus,
+.manual-address-dialog select.invalid-field:focus,
+.manual-address-dialog textarea.invalid-field:focus{outline:2px solid #dc262655;outline-offset:1px}
 
 .checkout-dialog{padding:0;overflow-x:hidden}
 .checkout-header{position:relative;display:flex;align-items:center;gap:13px;padding:18px 18px 20px;background:#142D49;color:#fff}
