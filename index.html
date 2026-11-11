@@ -13,6 +13,7 @@ body.modal-open{overflow:hidden!important;touch-action:none}
 .loader{width:32px;height:32px;border:3px solid var(--line);border-top-color:var(--blue);border-radius:50%;animation:spin .75s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .notice-actions{display:flex;width:100%;margin-top:18px}.notice-actions .primary{display:block;width:100%;flex:1}
+#noticeOverlay{z-index:80!important}
 .notice-overlay{backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);background:rgba(3,12,24,.72)}
 .notice-dialog{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;width:min(420px,100%);padding:26px 22px 20px;border-radius:24px;background:linear-gradient(155deg,var(--card),var(--soft));border:1px solid color-mix(in srgb,var(--blue) 30%,var(--line));box-shadow:0 24px 80px #0006;overflow:hidden}
 .notice-dialog:before{content:"";position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--blue),#58d2ff)}
@@ -231,7 +232,7 @@ body.modal-open{overflow:hidden!important;touch-action:none}
       </button>
     </div>
 
-    <div class="checkout-actions"><button class="secondary" type="button" onclick="checkoutBack(2)">Kembali</button><button class="primary" type="button" onclick="openManualAddressPopup()">Lanjutkan</button></div>
+    <div class="checkout-actions"><button class="secondary" type="button" onclick="checkoutBack(2)">Kembali</button><button class="primary" type="button" onclick="continueCheckoutAddressMethod()">Lanjutkan</button></div>
   </section>
   <section class="checkout-step" data-checkout-step="3">
     <p class="muted tiny">Pilih metode pembayaran yang akan kamu gunakan.</p>
@@ -248,7 +249,7 @@ body.modal-open{overflow:hidden!important;touch-action:none}
 <div class="footnote" id="checkoutResult" role="alert"></div></div></div>
 <div class="overlay" id="manualAddressOverlay" style="z-index:40" aria-hidden="true"><div class="dialog manual-address-dialog" role="dialog" aria-modal="true" aria-labelledby="manualAddressTitle">
   <div class="dialoghead"><h2 id="manualAddressTitle">ISI ALAMAT MANUAL</h2><button class="close" type="button" aria-label="Tutup" onclick="closeManualAddressPopup()">×</button></div>
-  <div id="checkoutWilayahMount" hidden></div>
+  <div id="checkoutWilayahMount"></div>
   <div class="checkout-actions"><button class="secondary" type="button" onclick="closeManualAddressPopup()">Kembali</button><button class="primary" type="button" onclick="checkoutNext(2)">Lanjutkan</button></div>
 </div></div>
 <div class="overlay" id="pasteAddressOverlay" style="z-index:40" aria-hidden="true"><div class="dialog paste-address-dialog" role="dialog" aria-modal="true" aria-labelledby="pasteAddressTitle">
@@ -327,6 +328,7 @@ async function loadWilayahPartial(){
   wilayahPartialPromise=(async()=>{
     const mount=document.getElementById('checkoutWilayahMount');
     if(!mount)throw Error('Wadah form alamat tidak ditemukan.');
+    mount.removeAttribute('hidden');
     const response=await fetch('./wilayah.html?v=20261111',{cache:'no-cache'});
     if(response.ok){
       const html=await response.text();
@@ -496,18 +498,22 @@ function setCheckoutAddressMethod(method){
   const manual=document.getElementById('checkoutManualMethod'),paste=document.getElementById('checkoutPasteMethod');
   if(manual){manual.classList.toggle('selected',method==='manual');manual.setAttribute('aria-pressed',String(method==='manual'));}
   if(paste){paste.classList.toggle('selected',method==='paste');paste.setAttribute('aria-pressed',String(method==='paste'));}
-  if(method==='manual')openManualAddressPopup();
-  if(method==='paste')openPasteAddressPopup();
+}
+function continueCheckoutAddressMethod(){
+  if(checkoutAddressMethod==='manual'){openManualAddressPopup();return;}
+  if(checkoutAddressMethod==='paste'){openPasteAddressPopup();return;}
+  showNotice('Pilih metode pengisian alamat terlebih dahulu.');
 }
 function openManualAddressPopup(){
   if(checkoutAddressMethod!=='manual')checkoutAddressMethod='manual';
   const manual=document.getElementById('checkoutManualMethod');
   if(manual){manual.classList.add('selected');manual.setAttribute('aria-pressed','true');}
   const mount=document.getElementById('checkoutWilayahMount');
-  if(mount)mount.hidden=false;
+  if(mount)mount.removeAttribute('hidden');
   const overlay=document.getElementById('manualAddressOverlay');if(!overlay)return;
-  overlay.classList.add('open');overlay.setAttribute('aria-hidden','false');
-  syncModalLock();
+  overlay.style.zIndex='50';
+  openOverlay('manualAddressOverlay');
+  overlay.setAttribute('aria-hidden','false');
 }
 function closeManualAddressPopup(){
   const overlay=document.getElementById('manualAddressOverlay');if(!overlay)return;
@@ -589,7 +595,7 @@ function paymentInstructionHtml(order,paymentData={}){
   }
   return `<div class="payment-instruction"><h3>Instruksi Pembayaran</h3><p>Metode: <b>${esc(order.paymentMethod||'-')}</b></p><p>Nominal pembayaran: <b>${money(order.grandTotal||0)}</b></p>${detail}<p class="tiny">Pastikan nominal transfer sesuai total pembayaran pesanan.</p></div>`;
 }
-async function checkoutInfo(){if(!cart.length)return showNotice('Keranjang masih kosong.');const total=money(cart.reduce((a,b)=>a+b.qty*b.price,0));document.getElementById('checkoutTotal').textContent=total; document.getElementById('checkoutResult').textContent='';document.getElementById('checkoutWizard').style.display='block';document.getElementById('checkoutSuccess').style.display='none';checkoutAddressMethod='';const manual=document.getElementById('checkoutManualMethod'),paste=document.getElementById('checkoutPasteMethod'),mount=document.getElementById('checkoutWilayahMount');[manual,paste].forEach(el=>{if(el){el.classList.remove('selected');el.setAttribute('aria-pressed','false')}});if(mount)mount.hidden=true;closeManualAddressPopup();closePasteAddressPopup();setCheckoutStep(1);applySavedBuyerData();closeOverlay('cartOverlay');openOverlay('checkoutOverlay');try{await loadCheckoutDropdowns()}catch(e){document.getElementById('submitOrderBtn').disabled=true}}
+async function checkoutInfo(){if(!cart.length)return showNotice('Keranjang masih kosong.');const total=money(cart.reduce((a,b)=>a+b.qty*b.price,0));document.getElementById('checkoutTotal').textContent=total; document.getElementById('checkoutResult').textContent='';document.getElementById('checkoutWizard').style.display='block';document.getElementById('checkoutSuccess').style.display='none';checkoutAddressMethod='';const manual=document.getElementById('checkoutManualMethod'),paste=document.getElementById('checkoutPasteMethod');[manual,paste].forEach(el=>{if(el){el.classList.remove('selected');el.setAttribute('aria-pressed','false')}});closeManualAddressPopup();closePasteAddressPopup();setCheckoutStep(1);applySavedBuyerData();closeOverlay('cartOverlay');openOverlay('checkoutOverlay');try{await loadCheckoutDropdowns()}catch(e){document.getElementById('submitOrderBtn').disabled=true}}
 let checkoutSubmitting=false;
 async function submitOrder(){
   if(checkoutSubmitting)return;
