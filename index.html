@@ -585,33 +585,73 @@ function formatOrderDate(value){
   const d=new Date(value);
   return Number.isNaN(d.getTime())?String(value):d.toLocaleString("id-ID",{dateStyle:"medium",timeStyle:"short"});
 }
-function getOrderProductImage(item){
-  // Data dari verifyOrderPin dapat memakai productId, bukan variationId.
-  // Terima URL gambar langsung maupun nama file katalog.
-  const rawImage=String(item?.image||'').trim();
-  if(rawImage){
-    if(/^(https?:)?\/\//i.test(rawImage)||/^data:image\//i.test(rawImage)||rawImage.startsWith('/'))return rawImage;
-    return IMG(rawImage);
-  }
+function getOrderProductImageCandidates(item){
+  const candidates=[];
+  const add=value=>{
+    const image=String(value||'').trim();
+    if(!image)return;
+    const url=/^(https?:)?\/\//i.test(image)||/^data:image\//i.test(image)||/^blob:/i.test(image)||image.startsWith('/')?image:IMG(image);
+    if(url&&!candidates.includes(url))candidates.push(url);
+  };
 
+  // Prioritaskan gambar yang tersimpan pada rincian order.
+  add(item?.image);
+
+  // Jika gambar order tidak valid, cocokkan kembali dengan katalog.
   const productIds=[item?.variationId,item?.productId,item?.vid,item?.id]
     .filter(value=>value!==undefined&&value!==null&&String(value).trim()!=='')
     .map(String);
-  const sku=imageKey(item?.sku);
+  const normalizeSku=value=>imageKey(value)
+    .replace(/\s*\[[^\]]*\]\s*/g,'')
+    .replace(/\s+/g,'');
+  const sku=normalizeSku(item?.sku);
+  const matches=VARIANTS.filter(v=>{
+    const idMatch=productIds.includes(String(v.vid))||productIds.includes(String(v.id));
+    const variantSku=normalizeSku(v.sku);
+    const skuMatch=!!sku&&!!variantSku&&(variantSku===sku||sku.startsWith(variantSku));
+    return idMatch||skuMatch;
+  });
 
-  const variant=VARIANTS.find(v=>
-    productIds.includes(String(v.vid)) ||
-    productIds.includes(String(v.productId)) ||
-    (sku&&imageKey(v.sku)===sku)
-  );
-  if(variant?.image)return IMG(variant.image);
+  // Utamakan kecocokan ID, lalu SKU; ambil semua kandidat agar gambar rusak
+  // pada satu variasi tetap bisa jatuh ke gambar produk induk/variasi lain.
+  matches.sort((a,b)=>{
+    const score=v=>{
+      if(productIds.includes(String(v.vid))||productIds.includes(String(v.id)))return 0;
+      if(normalizeSku(v.sku)===sku)return 1;
+      return 2;
+    };
+    return score(a)-score(b);
+  });
+  matches.forEach(v=>add(v.image));
 
-  const group=groups.find(g=>g.variants.some(v=>
-    productIds.includes(String(v.vid)) ||
-    productIds.includes(String(v.productId)) ||
-    (sku&&imageKey(v.sku)===sku)
-  ));
-  return group?.image?IMG(group.image):'';
+  const matchedGroups=groups.filter(g=>g.variants.some(v=>matches.includes(v)));
+  matchedGroups.forEach(g=>add(g.image));
+
+  return candidates;
+}
+function getOrderProductImage(item){
+  return getOrderProductImageCandidates(item)[0]||'';
+}
+function renderOrderProductImage(item){
+  const candidates=getOrderProductImageCandidates(item);
+  if(!candidates.length)return '<div style="width:58px;height:58px;flex:0 0 58px;border-radius:9px;background:var(--soft);display:grid;place-items:center;color:var(--muted)">▧</div>';
+  return '<img src="'+esc(candidates[0])+'" data-image-candidates="'+esc(JSON.stringify(candidates))+'" data-image-index="0" alt="" loading="lazy" onerror="retryOrderProductImage(this)">';
+}
+function retryOrderProductImage(image){
+  if(!image)return;
+  let candidates=[];
+  try{candidates=JSON.parse(image.dataset.imageCandidates||'[]')}catch(e){}
+  const next=(Number(image.dataset.imageIndex)||0)+1;
+  if(next<candidates.length){
+    image.dataset.imageIndex=String(next);
+    image.src=candidates[next];
+    return;
+  }
+  // Semua sumber gambar gagal: tampilkan placeholder, bukan ikon gambar rusak.
+  const placeholder=document.createElement('div');
+  placeholder.style.cssText='width:58px;height:58px;flex:0 0 58px;border-radius:9px;background:var(--soft);display:grid;place-items:center;color:var(--muted)';
+  placeholder.textContent='▧';
+  image.replaceWith(placeholder);
 }
 function renderMyOrders(){
   const out=document.getElementById('myOrdersResult');
@@ -624,8 +664,7 @@ function renderMyOrders(){
   if(!filtered.length){out.innerHTML='<div class="empty">Pesanan tidak ditemukan. Coba kata kunci lain.</div>';return}
   out.innerHTML='<div class="sectionhead"><div><h2>'+filtered.length+' Pesanan Tersimpan</h2><p>Data riwayat berasal dari penyimpanan browser ini.</p></div></div>'+filtered.map(o=>{
     const items=(o.items||[]).map(it=>{
-      const image=getOrderProductImage(it);
-      return '<div class="order-history-product">'+(image?'<img src="'+esc(image)+'" alt="" loading="lazy"':'<div style="width:58px;height:58px;flex:0 0 58px;border-radius:9px;background:var(--soft);display:grid;place-items:center;color:var(--muted)">▧</div>')+'<div class="order-history-product-info"><b>'+esc(it.productName||it.name||it.sku||'Produk')+'</b><small>'+esc(it.sku||'')+' · Jumlah '+Number(it.qty||0)+'</small></div><strong class="order-history-product-price">'+money(it.lineTotal||0)+'</strong></div>';
+      return '<div class="order-history-product">'+renderOrderProductImage(it)+'<div class="order-history-product-info"><b>'+esc(it.productName||it.name||it.sku||'Produk')+'</b><small>'+esc(it.sku||'')+' · Jumlah '+Number(it.qty||0)+'</small></div><strong class="order-history-product-price">'+money(it.lineTotal||0)+'</strong></div>';
     }).join('');
     return '<article class="panel order-history-card"><div class="order-history-head"><div><b>'+esc(o.orderId||'-')+'</b><p class="order-history-date">Tanggal pesanan: '+esc(formatOrderDate(o.orderDate))+'</p></div><span class="order-history-status">'+esc(o.status||'BARU')+'</span></div><div class="order-history-products">'+items+'</div><button class="order-history-more" type="button" onclick="openMyOrderDetail(&quot;'+encodeURIComponent(String(o.orderId||''))+'&quot;)">LIHAT SELENGKAPNYA <span aria-hidden="true">→</span></button></article>';
   }).join('');
@@ -691,8 +730,7 @@ function renderMyOrderDetail(orderId,verifiedOrder=null){
   heading.textContent=order.orderId||'Detail Pesanan';
   const address=order.address||{},customer=order.customer||{};
   const items=(order.items||[]).map((it,i)=>{
-    const image=getOrderProductImage(it);
-    return '<div class="order-detail-item">'+(image?'<img src="'+esc(image)+'" alt="" loading="lazy">':'<div style="width:58px;height:58px;flex:0 0 58px;border-radius:9px;background:var(--soft);display:grid;place-items:center;color:var(--muted)">▧</div>')+'<div><b>'+esc(it.productName||it.name||'Produk')+'</b><small>'+esc(it.detail||it.sku||'-')+'<br>Jumlah: '+Number(it.qty||0)+'</small></div><strong>'+money(it.lineTotal||0)+'</strong></div>';
+    return '<div class="order-detail-item">'+renderOrderProductImage(it)+'<div><b>'+esc(it.productName||it.name||'Produk')+'</b><small>'+esc(it.detail||it.sku||'-')+'<br>Jumlah: '+Number(it.qty||0)+'</small></div><strong>'+money(it.lineTotal||0)+'</strong></div>';
   }).join('');
   const fullAddress=[address.fullAddress,address.reference,address.village,address.district,address.city,address.province,address.postalCode].filter(Boolean).join(', ');
   out.innerHTML='<div class="panel order-detail-card"><h3>INFORMASI PESANAN</h3><div class="order-detail-row"><span>NO PESANAN</span><strong>'+esc(order.orderId||'-')+'</strong></div><div class="order-detail-row"><span>TANGGAL PESANAN</span><strong>'+esc(formatOrderDate(order.orderDate))+'</strong></div><div class="order-detail-row"><span>PROGRES PESANAN</span><strong style="color:var(--blue)">'+esc(order.progress||'MENUNGGU KONFIRMASI')+'</strong></div><div class="order-detail-row"><span>STATUS PEMBAYARAN</span><strong>'+esc(order.paymentStatus||'BELUM BAYAR')+'</strong></div></div><div class="panel order-detail-card"><h3>PRODUK YANG DIPESAN</h3>'+items+'</div><div class="panel order-detail-card"><h3>RINGKASAN PEMBAYARAN</h3><div class="order-detail-row"><span>HARGA BARANG</span><strong>'+money(order.subtotal||0)+'</strong></div><div class="order-detail-row"><span>HARGA ONGKIR</span><strong>'+money(order.shippingCost||0)+'</strong></div><div class="order-detail-row"><span>TOTAL PEMBAYARAN</span><strong style="color:var(--blue);font-size:15px">'+money(order.grandTotal||0)+'</strong></div><div class="order-detail-row"><span>METODE PEMBAYARAN</span><strong>'+esc(order.paymentMethod||'-')+'</strong></div></div><div class="panel order-detail-card"><h3>ALAMAT PENGIRIMAN</h3><div class="order-detail-row"><span>NAMA PENERIMA</span><strong>'+esc(address.recipientName||'-')+'</strong></div><div class="order-detail-row"><span>NO HP PENERIMA</span><strong>'+esc(address.phone||'-')+'</strong></div><div class="order-detail-address">'+esc(fullAddress||'-')+'</div></div>'+(order.notes?'<div class="panel order-detail-card"><h3>CATATAN PESANAN</h3><div class="order-detail-address">'+esc(order.notes)+'</div></div>':'');
