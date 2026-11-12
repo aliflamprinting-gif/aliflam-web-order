@@ -642,11 +642,24 @@ function closeOutsideJavaShopeePopup(){
 }
 function normalizeAddressText(value){
   return String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase()
+    .replace(/\bKAB(?:UPATEN)?\.?(?=\s|$)/g,'KABUPATEN')
+    .replace(/\bKEC(?:AMATAN)?\.?(?=\s|$)/g,'KECAMATAN')
+    .replace(/\bDES(?:A)?\.?(?=\s|$)/g,'DESA')
+    .replace(/\bKEL(?:URAHAN)?\.?(?=\s|$)/g,'KELURAHAN')
+    .replace(/\bPROV(?:INSI)?\.?(?=\s|$)/g,'PROVINSI')
     .replace(/[^A-Z0-9]+/g,' ').replace(/\s+/g,' ').trim();
 }
 function findRegionNameInText(text,names){
-  const normalized=normalizeAddressText(text);
+  const raw=String(text||'');
+  const chunks=raw.split(/[,\n]+/).map(part=>normalizeAddressText(part)).filter(Boolean);
+  const normalized=normalizeAddressText(raw);
   const candidates=[...new Set((names||[]).filter(Boolean))].sort((a,b)=>String(b).length-String(a).length);
+  for(const name of candidates){
+    const candidate=normalizeAddressText(name);
+    if(!candidate)continue;
+    const exactInChunk=chunks.some(chunk=>(` ${chunk} `).includes(` ${candidate} `));
+    if(exactInChunk)return name;
+  }
   for(const name of candidates){
     const candidate=normalizeAddressText(name);
     if(candidate && (` ${normalized} `).includes(` ${candidate} `))return name;
