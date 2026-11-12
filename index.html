@@ -611,13 +611,13 @@ function renderMyOrderDetail(orderId){
 function openMyOrderDetail(orderId){
   const id=decodeURIComponent(String(orderId||''));
   location.hash='pesanan/'+encodeURIComponent(id);
-  showMyOrderDetail(id,false);
+  showMyOrderDetail(id,true);
 }
 function showMyOrderDetail(orderId,scroll=true){
   document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id==='orderDetailPage'));
   document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.nav==='orders'));
   renderMyOrderDetail(orderId);
-  if(scroll)window.scrollTo({top:0,behavior:'smooth'});
+  if(scroll)window.scrollTo({top:0,left:0,behavior:'auto'});
 }
 function backToMyOrders(){
   location.hash='pesanan';
@@ -625,7 +625,7 @@ function backToMyOrders(){
 }
 function handleOrderRoute(){
   const match=location.hash.match(/^#pesanan\/(.+)$/);
-  if(match){showMyOrderDetail(decodeURIComponent(match[1]),false);return true}
+  if(match){showMyOrderDetail(decodeURIComponent(match[1]),true);return true}
   return false;
 }
 function navigate(page){
