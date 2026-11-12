@@ -694,7 +694,7 @@ function handleOrderRoute(){
 }
 function navigate(page){
   if(page==='orders'){location.hash='pesanan'}
-  else if(page==='home'||page==='products'){if(/^#pesanan(?:\/|$)/.test(location.hash))history.replaceState(null,'',location.pathname+location.search)}
+  else if(page==='home'||page==='products'){if(/^#(?:pesanan(?:\/|$)|produk\/)/.test(location.hash))history.replaceState(null,'',location.pathname+location.search)}
   document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id===page+'Page'));
   document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.nav===page));
   if(page==='products')renderProducts();
