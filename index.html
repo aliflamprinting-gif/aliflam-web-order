@@ -951,6 +951,8 @@ function buildWhatsAppOrderMessage(order){
   return [
     'Hallo saya sudah membuat pesanan di website, berikut detailnya :',
     '',
+    `NO PESANAN: ${order.orderId||'-'}`,
+    `TANGGAL PESANAN: ${order.orderDate?new Date(order.orderDate).toLocaleString('id-ID'):'-'}`,
     `NAMA PEMBELI: ${order.customer?.name||'-'}`,
     `NO HP: ${order.customer?.whatsapp||'-'}`,
     '-------------------------',
@@ -984,6 +986,22 @@ function paymentInstructionHtml(order,paymentData={}){
 }
 async function checkoutInfo(){if(!cart.length)return showNotice('Keranjang masih kosong.');const total=money(cart.reduce((a,b)=>a+b.qty*b.price,0));document.getElementById('checkoutTotal').textContent=total; document.getElementById('checkoutResult').textContent='';document.getElementById('checkoutWizard').style.display='block';document.getElementById('checkoutSuccess').style.display='none';checkoutAddressMethod='';const manual=document.getElementById('checkoutManualMethod'),paste=document.getElementById('checkoutPasteMethod');[manual,paste].forEach(el=>{if(el){el.classList.remove('selected');el.setAttribute('aria-pressed','false')}});closeManualAddressPopup();closePasteAddressPopup();setCheckoutStep(1);applySavedBuyerData();closeOverlay('cartOverlay');openOverlay('checkoutOverlay');try{await loadCheckoutDropdowns()}catch(e){document.getElementById('submitOrderBtn').disabled=true}}
 let checkoutSubmitting=false;
+function getCheckoutAttemptKey(payload){
+  const fingerprint=JSON.stringify(payload);
+  try{
+    const saved=JSON.parse(sessionStorage.getItem('ALIFLAM_PENDING_CHECKOUT')||'null');
+    if(saved&&saved.fingerprint===fingerprint&&saved.key)return saved.key;
+  }catch(e){}
+  const key=window.crypto?.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random();
+  try{sessionStorage.setItem('ALIFLAM_PENDING_CHECKOUT',JSON.stringify({fingerprint,key}));}catch(e){}
+  return key;
+}
+function clearCheckoutAttemptKey(key){
+  try{
+    const saved=JSON.parse(sessionStorage.getItem('ALIFLAM_PENDING_CHECKOUT')||'null');
+    if(saved&&saved.key===key)sessionStorage.removeItem('ALIFLAM_PENDING_CHECKOUT');
+  }catch(e){}
+}
 async function submitOrder(){
   if(checkoutSubmitting)return;
   checkoutSubmitting=true;
@@ -1000,17 +1018,19 @@ async function submitOrder(){
     if(!paymentMethod||(MASTER_DROPDOWNS['METODE PEMBAYARAN']||[]).indexOf(paymentMethod)<0)throw Error('Pilih metode pembayaran yang tersedia di master.');
     const notes=document.getElementById('checkoutNotes').value.trim();
     const orderItems=cart.map(x=>({productName:x.name,sku:x.sku,image:x.image||'',qty:x.qty,lineTotal:x.qty*x.price,unitPrice:x.price,variationId:x.variationId,customBanner:!!x.customBanner,width:x.width||0,height:x.height||0,detail:[x.sku,x.o1,x.o2,x.o3].filter(Boolean).join(' · ')}));
-    const data={idempotencyKey:window.crypto?.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random(),customer,address,paymentMethod,notes,items:cart.map(x=>({productId:x.variationId,qty:x.qty,...(x.customBanner?{customSize:{width:x.width,height:x.height}}:{})}))};
+    const orderPayload={customer,address,paymentMethod,notes,items:cart.map(x=>({productId:x.variationId,qty:x.qty,...(x.customBanner?{customSize:{width:x.width,height:x.height}}:{})}))};
+    const data={...orderPayload,idempotencyKey:getCheckoutAttemptKey(orderPayload)};
     btn.textContent='MEMPROSES PESANAN...';out.textContent='';
     showCheckoutLoading();
     const r=await api('createWebOrder',data);if(!r.ok)throw Error(r.error||'Pesanan belum dapat dikirim.');
+    clearCheckoutAttemptKey(data.idempotencyKey);
     const orderDate=new Date().toISOString();
     const order={orderId:r.data.orderId,orderDate,status:'BARU',progress:'MENUNGGU KONFIRMASI',paymentStatus:'BELUM BAYAR',paymentMethod,subtotal:Number(r.data.subtotal)||0,shippingCost:Number(r.data.shippingCost)||0,grandTotal:Number(r.data.grandTotal)||0,customer,address,items:orderItems,notes};
     localOrders.unshift(order);saveLocalOrders();saveBuyerData(customer,address);
     const whatsappText=buildWhatsAppOrderMessage(order);
     const whatsappUrl='https://wa.me/6281617905237?text='+encodeURIComponent(whatsappText);
     const success=document.getElementById('checkoutSuccess');
-    success.innerHTML=`<div class="checkout-success"><div class="checkout-success-heading"><div class="checkout-success-mark" aria-hidden="true"><svg viewBox="0 0 52 52"><circle class="checkout-success-circle" cx="26" cy="26" r="23"></circle><path class="checkout-success-check" d="M14 27l8 8 17-18"></path></svg></div><h2>PESANAN BERHASIL DIBUAT</h2><p>Silahkan klik tombol WhatsApp dibawah untuk melanjutkan pembayaran dan konsultasi lebih lanjut.</p></div><div class="checkout-buyer-summary"><div class="checkout-summary-row"><span>NAMA PEMBELI</span><strong>${esc(order.customer.name||'-')}</strong></div><div class="checkout-summary-row"><span>NO HP</span><strong>${esc(order.customer.whatsapp||'-')}</strong></div></div><div class="checkout-price-summary"><div class="checkout-summary-row"><span>HARGA BARANG</span><strong>${money(order.subtotal)}</strong></div><div class="checkout-summary-row"><span>HARGA ONGKIR</span><strong>${money(order.shippingCost)}</strong></div><div class="checkout-summary-row checkout-grand-total"><span>TOTAL PEMBAYARAN</span><strong>${money(order.grandTotal)}</strong></div><div class="checkout-summary-row"><span>METODE PEMBAYARAN</span><strong>${esc(order.paymentMethod||'-')}</strong></div></div><div class="order-info order-detail-list"><b>RINCIAN PESANAN</b>${order.items.map((item,i)=>`<div class="order-detail-item"><span>${i+1}. ${esc(item.productName||'Produk')}<small>${esc(item.detail||item.sku||'-')} · Qty ${Number(item.qty)||0}</small></span><strong>${money(item.lineTotal||0)}</strong></div>`).join('')}</div><a class="wa-button" href="${whatsappUrl}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.7a8.5 8.5 0 0 1-12.6 7.4L3 20.5l1.4-4.7A8.5 8.5 0 1 1 20.5 11.7Z"></path><path d="M8.5 8.2c.2-.5.5-.5.8-.5h.5c.2 0 .4.1.5.4l.8 1.8c.1.2.1.4-.1.6l-.6.7c-.2.2-.2.4-.1.6.4.8 1.1 1.5 1.9 1.9.2.1.4.1.6-.1l.8-.9c.2-.2.4-.2.6-.1l1.7.8c.3.1.4.3.4.5 0 .3-.2 1.1-.7 1.5-.5.5-1.2.7-2 .6-1-.1-2.2-.7-3.4-1.8-1.4-1.2-2.3-2.8-2.5-3.7-.2-.8 0-1.5.8-2.3Z"></path></svg>LANJUT KONSULTASI VIA WHATSAPP</a><button class="checkout-orders-button full" type="button" onclick="closeOverlay('checkoutOverlay');navigate('orders')">LIHAT PESANAN SAYA</button></div>`;
+    success.innerHTML=`<div class="checkout-success"><div class="checkout-success-heading"><div class="checkout-success-mark" aria-hidden="true"><svg viewBox="0 0 52 52"><circle class="checkout-success-circle" cx="26" cy="26" r="23"></circle><path class="checkout-success-check" d="M14 27l8 8 17-18"></path></svg></div><h2>PESANAN BERHASIL DIBUAT</h2><p>Silahkan klik tombol WhatsApp dibawah untuk melanjutkan pembayaran dan konsultasi lebih lanjut.</p></div><div class="checkout-buyer-summary"><div class="checkout-summary-row"><span>NAMA PEMBELI</span><strong>${esc(order.customer.name||'-')}</strong></div><div class="checkout-summary-row"><span>NO HP</span><strong>${esc(order.customer.whatsapp||'-')}</strong></div></div><div class="checkout-price-summary"><div class="checkout-summary-row"><span>HARGA BARANG</span><strong>${money(order.subtotal)}</strong></div><div class="checkout-summary-row"><span>HARGA ONGKIR</span><strong>${money(order.shippingCost)}</strong></div><div class="checkout-summary-row checkout-grand-total"><span>TOTAL PEMBAYARAN</span><strong>${money(order.grandTotal)}</strong></div><div class="checkout-summary-row"><span>METODE PEMBAYARAN</span><strong>${esc(order.paymentMethod||'-')}</strong></div></div>${paymentInstructionHtml(order)}<div class="order-info order-detail-list"><b>RINCIAN PESANAN</b>${order.items.map((item,i)=>`<div class="order-detail-item"><span>${i+1}. ${esc(item.productName||'Produk')}<small>${esc(item.detail||item.sku||'-')} · Qty ${Number(item.qty)||0}</small></span><strong>${money(item.lineTotal||0)}</strong></div>`).join('')}</div><a class="wa-button" href="${whatsappUrl}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.7a8.5 8.5 0 0 1-12.6 7.4L3 20.5l1.4-4.7A8.5 8.5 0 1 1 20.5 11.7Z"></path><path d="M8.5 8.2c.2-.5.5-.5.8-.5h.5c.2 0 .4.1.5.4l.8 1.8c.1.2.1.4-.1.6l-.6.7c-.2.2-.2.4-.1.6.4.8 1.1 1.5 1.9 1.9.2.1.4.1.6-.1l.8-.9c.2-.2.4-.2.6-.1l1.7.8c.3.1.4.3.4.5 0 .3-.2 1.1-.7 1.5-.5.5-1.2.7-2 .6-1-.1-2.2-.7-3.4-1.8-1.4-1.2-2.3-2.8-2.5-3.7-.2-.8 0-1.5.8-2.3Z"></path></svg>LANJUT KONSULTASI VIA WHATSAPP</a><button class="checkout-orders-button full" type="button" onclick="closeOverlay('checkoutOverlay');navigate('orders')">LIHAT PESANAN SAYA</button></div>`;
     document.getElementById('checkoutWizard').style.display='none';success.style.display='block';out.textContent='';
     cart=[];saveCart();renderCart();renderMyOrders();
   }catch(e){out.textContent=e.message;out.style.color='#c33';}
