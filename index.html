@@ -295,6 +295,17 @@ body.modal-open{overflow:hidden!important;touch-action:none}
 .order-history-product-info small{display:block;color:var(--muted);font-size:9px;margin-top:4px}
 .order-history-product-price{font-size:10px;font-weight:800;white-space:nowrap}
 .order-history-more{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;min-height:39px;border:1px solid #138be5;border-radius:9px;background:#138be5;color:#fff;font-size:10px;font-weight:800}
+.order-pin-gate{max-width:520px;margin:10px auto;padding:22px 16px;border:1px solid var(--line);border-radius:14px;background:var(--card);text-align:center}
+.order-pin-icon{font-size:27px;line-height:1;margin-bottom:10px}
+.order-pin-gate h3{font:800 15px Manrope;margin:0 0 7px;color:var(--ink)}
+.order-pin-gate>p{font-size:11px;color:var(--muted);margin:0 0 16px;line-height:1.5}
+.order-pin-inputs{display:flex;justify-content:center;gap:7px;margin:0 auto 14px}
+.order-pin-input{width:39px;height:43px;min-width:0;border:1px solid var(--line);border-radius:9px;background:var(--card);color:var(--ink);text-align:center;font:800 17px Manrope;outline:none}
+.order-pin-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px color-mix(in srgb,var(--blue) 15%,transparent)}
+.order-pin-submit{width:100%;min-height:42px;border:0;border-radius:22px;background:var(--blue);color:#fff;font-size:11px;font-weight:800;cursor:pointer}
+.order-pin-submit:disabled{background:var(--soft);color:var(--muted);cursor:not-allowed}
+.order-pin-error{min-height:16px;margin:0 0 10px;color:#dc2626;font-size:10px;font-weight:700}
+@media(max-width:360px){.order-pin-inputs{gap:5px}.order-pin-input{width:36px;height:41px}}
 .order-detail-top{display:flex;align-items:center;gap:10px;margin-bottom:14px}
 .order-detail-top .secondary{flex:0 0 auto}
 .order-detail-top h2{font-size:15px;overflow-wrap:anywhere}
@@ -594,11 +605,64 @@ function renderMyOrders(){
     return '<article class="panel order-history-card"><div class="order-history-head"><div><b>'+esc(o.orderId||'-')+'</b><p class="order-history-date">Tanggal pesanan: '+esc(formatOrderDate(o.orderDate))+'</p></div><span class="order-history-status">'+esc(o.status||'BARU')+'</span></div><div class="order-history-products">'+items+'</div><button class="order-history-more" type="button" onclick="openMyOrderDetail(&quot;'+encodeURIComponent(String(o.orderId||''))+'&quot;)">LIHAT SELENGKAPNYA <span aria-hidden="true">→</span></button></article>';
   }).join('');
 }
-function renderMyOrderDetail(orderId){
+function renderOrderPinGate(orderId,errorMessage=""){
   const out=document.getElementById('myOrderDetailContent');
-  const order=localOrders.find(o=>String(o.orderId)===String(orderId));
   const heading=document.getElementById('orderDetailHeading');
-  if(!order){heading.textContent='Pesanan tidak ditemukan';out.innerHTML='<div class="empty">Data pesanan ini tidak tersedia di penyimpanan perangkat.</div>';return}
+  heading.textContent=orderId||'Verifikasi Pesanan';
+  out.innerHTML='<div class="order-pin-gate"><div class="order-pin-icon" aria-hidden="true">🔒</div><h3>VERIFIKASI PIN PESANAN</h3><p>Masukkan PIN 6 digit untuk melihat detail pesanan.</p><div class="order-pin-inputs" id="orderPinInputs">'+Array.from({length:6},(_,i)=>'<input class="order-pin-input" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="'+(i===0?'one-time-code':'off')+'" aria-label="Digit PIN '+(i+1)+'" oninput="handleOrderPinInput(this,'+i+')" onkeydown="handleOrderPinKeydown(event,'+i+')" onpaste="handleOrderPinPaste(event)">').join('')+'</div><div class="order-pin-error" id="orderPinError" role="alert">'+esc(errorMessage)+'</div><button class="order-pin-submit" id="orderPinSubmit" type="button" disabled onclick="submitOrderPin(\''+esc(orderId)+'\')">VERIFIKASI PIN</button></div>';
+  const first=out.querySelector('.order-pin-input');
+  if(first)first.focus({preventScroll:true});
+}
+function handleOrderPinInput(input,index){
+  input.value=String(input.value||"").replace(/[^0-9]/g,"").slice(-1);
+  const fields=[...document.querySelectorAll('#orderPinInputs .order-pin-input')];
+  if(input.value && fields[index+1])fields[index+1].focus();
+  const button=document.getElementById('orderPinSubmit');
+  if(button)button.disabled=fields.length!==6||fields.some(field=>!field.value);
+}
+function handleOrderPinPaste(event){
+  const pasted=String((event.clipboardData||window.clipboardData).getData('text')||"").replace(/[^0-9]/g,"").slice(0,6);
+  if(!pasted)return;
+  event.preventDefault();
+  const fields=[...document.querySelectorAll('#orderPinInputs .order-pin-input')];
+  fields.forEach((field,index)=>field.value=pasted[index]||"");
+  const button=document.getElementById('orderPinSubmit');
+  if(button)button.disabled=pasted.length!==6;
+  const next=fields[Math.min(pasted.length,5)];
+  if(next)next.focus();
+}
+function handleOrderPinKeydown(event,index){
+  const fields=[...document.querySelectorAll('#orderPinInputs .order-pin-input')];
+  if(event.key==="Backspace" && !event.target.value && fields[index-1])fields[index-1].focus();
+  if(event.key==="ArrowLeft" && fields[index-1]){event.preventDefault();fields[index-1].focus()}
+  if(event.key==="ArrowRight" && fields[index+1]){event.preventDefault();fields[index+1].focus()}
+  if(event.key==="Enter"){event.preventDefault();const button=document.getElementById('orderPinSubmit');if(button&&!button.disabled)button.click()}
+}
+async function submitOrderPin(orderId){
+  const fields=[...document.querySelectorAll('#orderPinInputs .order-pin-input')];
+  const pin=fields.map(field=>field.value).join("");
+  const button=document.getElementById('orderPinSubmit');
+  const error=document.getElementById('orderPinError');
+  if(!/^[0-9]{6}$/.test(pin)){if(error)error.textContent="Masukkan PIN lengkap 6 digit.";return}
+  if(button){button.disabled=true;button.textContent="MEMERIKSA..."}
+  if(error)error.textContent="";
+  try{
+    const response=await api("verifyOrderPin",{orderId:orderId,pin:pin});
+    if(!response.ok||!response.data||!response.data.order)throw new Error(response.error||"PIN_SALAH_ATAU_PESANAN_TIDAK_DITEMUKAN");
+    renderMyOrderDetail(orderId,response.data.order);
+    window.scrollTo({top:0,left:0,behavior:"auto"});
+  }catch(err){
+    if(error)error.textContent=String(err.message||"PIN salah. Detail pesanan masih terkunci.").includes("PIN_SALAH")?"PIN salah. Detail pesanan masih terkunci.":String(err.message||"Verifikasi gagal.");
+    fields.forEach(field=>field.value="");
+    if(button){button.disabled=true;button.textContent="VERIFIKASI PIN"}
+    if(fields[0])fields[0].focus({preventScroll:true});
+  }
+}
+function renderMyOrderDetail(orderId,verifiedOrder=null){
+  const out=document.getElementById('myOrderDetailContent');
+  const order=verifiedOrder||localOrders.find(o=>String(o.orderId)===String(orderId));
+  const heading=document.getElementById('orderDetailHeading');
+  if(!order){renderOrderPinGate(orderId);return}
   heading.textContent=order.orderId||'Detail Pesanan';
   const address=order.address||{},customer=order.customer||{};
   const items=(order.items||[]).map((it,i)=>{
