@@ -159,7 +159,7 @@ body.modal-open{overflow:hidden!important;touch-action:none}
 @media(prefers-reduced-motion:reduce){#loadingScreen.checkout-loading *,#loadingScreen.checkout-loading *:before,#loadingScreen.checkout-loading *:after{animation:none!important;transition:none!important}}
 
 /* Tahap pilihan metode pengisian alamat checkout */
-.checkout-recipient-note{margin:7px 0 18px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--soft);color:#dc2626;font-size:10px;font-weight:800;line-height:1.55}
+.checkout-recipient-note{margin:7px 0 18px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--soft);color:#f28c00;font-size:10px;font-weight:800;line-height:1.55}
 .checkout-address-method{display:grid;gap:9px;margin:18px 0 14px}
 .checkout-address-method-label{margin:0 0 1px!important}
 .checkout-address-method-btn{width:100%;display:flex;align-items:center;gap:11px;text-align:left;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);min-height:68px}
@@ -177,7 +177,7 @@ body.modal-open{overflow:hidden!important;touch-action:none}
 .manual-address-dialog .checkout-actions{position:sticky;bottom:-18px;background:var(--card);padding:12px 0 2px;margin-top:18px}
 .manual-address-dialog #checkoutWilayahMount{display:block}
 .manual-address-dialog #checkoutWilayahMount[hidden]{display:block!important}
-.paste-address-intro{font-size:11px;margin:0 0 12px}
+.paste-clipboard-btn{position:relative;z-index:2;pointer-events:auto;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:44px;margin:0 0 13px;padding:11px 14px;border:1px solid #16a34a;border-radius:10px;background:#16a34a;color:#fff;font-size:12px;font-weight:800;cursor:pointer}.paste-clipboard-btn:hover{background:#15803d;border-color:#15803d}.paste-clipboard-btn:disabled{opacity:.65;cursor:wait}
 .paste-address-dialog textarea{min-height:135px;resize:vertical}
 .paste-address-stage-note{font-size:10px;line-height:1.5;margin:9px 0 0;padding:9px 10px;border-radius:9px;background:var(--soft);color:var(--muted)}
 @media(max-width:420px){.paste-address-dialog{padding:16px;width:calc(100% - 8px)}.manual-address-dialog{padding:16px;width:calc(100% - 8px);max-height:90vh}.manual-address-dialog .checkout-actions{bottom:-16px}.checkout-address-method-btn{padding:10px;gap:9px}}
@@ -253,6 +253,24 @@ body.modal-open{overflow:hidden!important;touch-action:none}
 </div>
 <div id="checkoutSuccess" style="display:none"></div>
 <div class="footnote" id="checkoutResult" role="alert"></div></div></div>
+<div class="overlay" id="javaShippingGateOverlay" style="z-index:45" aria-hidden="true">
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="javaShippingGateTitle" style="width:min(460px,100%)">
+    <div class="dialoghead"><h2 id="javaShippingGateTitle">KONFIRMASI WILAYAH PENGIRIMAN</h2></div>
+    <p style="margin:0 0 14px">Apakah alamat pengiriman kamu berada di Pulau Jawa?</p>
+    <div style="display:grid;gap:9px">
+      <button class="primary full" type="button" onclick="confirmJavaShippingGate(true)">YA, SAYA DI PULAU JAWA</button>
+      <button class="secondary full" type="button" style="background:#dc2626;border-color:#dc2626;color:#fff" onclick="confirmJavaShippingGate(false)">TIDAK, SAYA DI LUAR PULAU JAWA</button>
+    </div>
+  </div>
+</div>
+<div class="overlay" id="outsideJavaShopeeOverlay" style="z-index:46" aria-hidden="true">
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="outsideJavaShopeeTitle" style="width:min(500px,100%)">
+    <div class="dialoghead"><h2 id="outsideJavaShopeeTitle">INFORMASI PENGIRIMAN</h2><button class="close" type="button" aria-label="Tutup" onclick="closeOutsideJavaShopeePopup()">×</button></div>
+    <p style="margin:0 0 12px;line-height:1.65">Mohon maaf, saat ini kami belum bisa menerima orderan selain pulau jawa. Silahkan order di shopee dan klik link dibawah ini untuk melanjutkan pesanan</p>
+    <div id="outsideJavaShopeeProducts" style="display:grid;gap:9px"></div>
+    <button class="secondary full" type="button" style="margin-top:15px" onclick="closeOutsideJavaShopeePopup()">Tutup</button>
+  </div>
+</div>
 <div class="overlay" id="manualAddressOverlay" style="z-index:40" aria-hidden="true"><div class="dialog manual-address-dialog" role="dialog" aria-modal="true" aria-labelledby="manualAddressTitle">
   <div class="dialoghead"><h2 id="manualAddressTitle">ISI ALAMAT MANUAL</h2><button class="close" type="button" aria-label="Tutup" onclick="closeManualAddressPopup()">×</button></div>
   <div id="checkoutWilayahMount"></div>
@@ -260,11 +278,11 @@ body.modal-open{overflow:hidden!important;touch-action:none}
 </div></div>
 <div class="overlay" id="pasteAddressOverlay" style="z-index:40" aria-hidden="true"><div class="dialog paste-address-dialog" role="dialog" aria-modal="true" aria-labelledby="pasteAddressTitle">
   <div class="dialoghead"><h2 id="pasteAddressTitle">TEMPELKAN ALAMAT</h2><button class="close" type="button" aria-label="Tutup" onclick="closePasteAddressPopup()">×</button></div>
-  <p class="paste-address-intro">Tempel teks alamat yang kamu salin dari WhatsApp, marketplace, atau sumber lainnya.</p>
+  <button class="paste-clipboard-btn" type="button" onclick="pasteAddressFromClipboard()">📋 TEMPEL ALAMAT</button>
   <label class="field" for="checkoutPastedAddress">TEKS ALAMAT</label>
   <textarea class="input" id="checkoutPastedAddress" rows="6" placeholder="Tempel alamat lengkap di sini..."></textarea>
   <p class="paste-address-stage-note">Pemeriksaan dan pengenalan otomatis alamat akan dilanjutkan pada tahap berikutnya.</p>
-  <div class="checkout-actions"><button class="secondary" type="button" onclick="closePasteAddressPopup()">Kembali</button><button class="primary" type="button" onclick="closePasteAddressPopup()">Selesai</button></div>
+  <div class="checkout-actions"><button class="secondary" type="button" onclick="closePasteAddressPopup()">Kembali</button><button class="primary" type="button" onclick="processPastedAddress()">Selesai</button></div>
 </div></div>
 <div class="overlay notice-overlay" id="noticeOverlay"><div class="dialog notice-dialog"><div class="notice-symbol"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5m0-8h.01"></path></svg></div><div class="notice-copy"><div class="notice-kicker">ALIFLAM PRINTING</div><h2 id="noticeTitle">Informasi</h2><p id="noticeMessage"></p></div><div class="notice-actions"><button class="primary" onclick="closeOverlay('noticeOverlay')">Oke</button></div></div></div>
 <div class="overlay" id="confirmOverlay"><div class="dialog notice-dialog"><div class="dialoghead"><h2 id="confirmTitle">Konfirmasi</h2><button class="close" onclick="resolveConfirm(false)">×</button></div><p id="confirmMessage"></p><div class="twoactions"><button class="secondary" onclick="resolveConfirm(false)">Batal</button><button class="danger-confirm" onclick="resolveConfirm(true)">Ya, hapus</button></div></div></div>
@@ -532,12 +550,156 @@ function openPasteAddressPopup(){
   document.body.classList.add('modal-open');
   const input=document.getElementById('checkoutPastedAddress');if(input)setTimeout(()=>input.focus({preventScroll:true}),50);
 }
+function focusPasteAddressTextarea(){
+  const textarea=document.getElementById('checkoutPastedAddress');
+  if(!textarea)return;
+  textarea.focus({preventScroll:true});
+  const length=textarea.value.length;
+  textarea.setSelectionRange(length,length);
+}
+async function pasteAddressFromClipboard(){
+  const textarea=document.getElementById('checkoutPastedAddress');
+  const button=document.querySelector('.paste-clipboard-btn');
+  if(!textarea)return;
+  const originalLabel='📋 TEMPEL ALAMAT';
+  if(!navigator.clipboard||typeof navigator.clipboard.readText!=='function'){
+    showNotice('Browser ini tidak menyediakan akses tempel otomatis. Silakan gunakan Ctrl + V atau menu Tempel pada kolom alamat.');
+    textarea.focus();
+    return;
+  }
+  try{
+    if(button){button.disabled=true;button.textContent='MEMBACA CLIPBOARD...';}
+    const copiedText=await navigator.clipboard.readText();
+    if(!copiedText.trim()){
+      showNotice('Clipboard masih kosong. Salin alamat terlebih dahulu, lalu tekan TEMPEL ALAMAT.');
+      textarea.focus();
+      return;
+    }
+    textarea.value=copiedText;
+    textarea.dispatchEvent(new Event('input',{bubbles:true}));
+    textarea.focus();
+    textarea.setSelectionRange(textarea.value.length,textarea.value.length);
+  }catch(error){
+    showNotice('Akses clipboard belum diizinkan. Pilih Izinkan pada permintaan browser agar alamat bisa ditempel otomatis.');
+    textarea.focus();
+  }finally{
+    if(button){button.disabled=false;button.textContent=originalLabel;}
+  }
+}
 function closePasteAddressPopup(){
   const overlay=document.getElementById('pasteAddressOverlay');if(!overlay)return;
   overlay.classList.remove('open');overlay.setAttribute('aria-hidden','true');
   if(!document.querySelector('.overlay.open'))document.body.classList.remove('modal-open');
 }
 
+function openJavaShippingGate(){
+  const overlay=document.getElementById('javaShippingGateOverlay');
+  if(!overlay)return;
+  overlay.classList.add('open');
+  overlay.setAttribute('aria-hidden','false');
+  document.body.classList.add('modal-open');
+}
+function closeJavaShippingGate(){
+  const overlay=document.getElementById('javaShippingGateOverlay');
+  if(!overlay)return;
+  overlay.classList.remove('open');
+  overlay.setAttribute('aria-hidden','true');
+  if(!document.querySelector('.overlay.open'))document.body.classList.remove('modal-open');
+}
+function confirmJavaShippingGate(isJava){
+  closeJavaShippingGate();
+  if(isJava){
+    setCheckoutStep(2);
+    return;
+  }
+  renderOutsideJavaShopeeProducts();
+  const overlay=document.getElementById('outsideJavaShopeeOverlay');
+  if(overlay){
+    overlay.classList.add('open');
+    overlay.setAttribute('aria-hidden','false');
+    document.body.classList.add('modal-open');
+  }
+}
+function renderOutsideJavaShopeeProducts(){
+  const wrap=document.getElementById('outsideJavaShopeeProducts');
+  if(!wrap)return;
+  wrap.innerHTML=cart.map(item=>{
+    const product=groups.find(group=>String(group.id)===String(item.id));
+    const url=String(product?.shopee||'').trim();
+    const name=esc(item.name||product?.name||'Produk');
+    return `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px;border:1px solid var(--line);border-radius:11px;background:var(--soft)">
+      <b style="font-size:11px;line-height:1.45;min-width:0;overflow-wrap:anywhere">${name}</b>
+      ${url?`<a href="${esc(url)}" target="_blank" rel="noopener" class="shopee" style="width:auto;flex:0 0 auto;margin:0;padding:10px 12px">ORDER DI SHOPEE ↗</a>`:`<span style="font-size:10px;color:var(--muted);text-align:right">Link Shopee belum tersedia</span>`}
+    </div>`;
+  }).join('')||'<p class="muted tiny">Keranjang tidak berisi produk.</p>';
+}
+function closeOutsideJavaShopeePopup(){
+  const overlay=document.getElementById('outsideJavaShopeeOverlay');
+  if(!overlay)return;
+  overlay.classList.remove('open');
+  overlay.setAttribute('aria-hidden','true');
+  if(!document.querySelector('.overlay.open'))document.body.classList.remove('modal-open');
+}
+function normalizeAddressText(value){
+  return String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase()
+    .replace(/[^A-Z0-9]+/g,' ').replace(/\s+/g,' ').trim();
+}
+function findRegionNameInText(text,names){
+  const normalized=normalizeAddressText(text);
+  const candidates=[...new Set((names||[]).filter(Boolean))].sort((a,b)=>String(b).length-String(a).length);
+  for(const name of candidates){
+    const candidate=normalizeAddressText(name);
+    if(candidate && (` ${normalized} `).includes(` ${candidate} `))return name;
+  }
+  return '';
+}
+function recognizePastedAddress(raw){
+  const data=window.ALIFLAM_WILAYAH_DATA||[];
+  const provinceName=findRegionNameInText(raw,data.map(x=>x.n));
+  const province=data.find(x=>x.n===provinceName);
+  if(!province)return {province:'',city:'',district:'',village:'',postal:'',complete:false};
+  const cityName=findRegionNameInText(raw,province.c.map(x=>x.n));
+  const city=province.c.find(x=>x.n===cityName);
+  if(!city)return {province:province.n,city:'',district:'',village:'',postal:'',complete:false};
+  const districtName=findRegionNameInText(raw,city.d.map(x=>x.n));
+  const district=city.d.find(x=>x.n===districtName);
+  if(!district)return {province:province.n,city:city.n,district:'',village:'',postal:'',complete:false};
+  const villageName=findRegionNameInText(raw,district.v.map(x=>x[0]));
+  const village=district.v.find(x=>x[0]===villageName);
+  return {province:province.n,city:city.n,district:district.n,village:village?.[0]||'',postal:village?.[1]||'',complete:!!village};
+}
+async function processPastedAddress(){
+  const textarea=document.getElementById('checkoutPastedAddress');
+  const raw=String(textarea?.value||'').trim();
+  if(!raw)return showNotice('Tempel atau tulis alamat lengkap terlebih dahulu.');
+  try{
+    await loadWilayahPartial();
+    await loadWilayahData();
+    if(typeof window.AliflamWilayahInit!=='function')throw Error('Mesin dropdown wilayah belum siap.');
+    window.AliflamWilayahInit({});
+    const result=recognizePastedAddress(raw);
+    const setValue=(id,value)=>{const el=document.getElementById(id);if(el&&value!==undefined){el.value=value;el.dispatchEvent(new Event('change',{bubbles:true}));}};
+    if(result.province){
+      setValue('checkoutProvince',result.province);
+      if(result.city)setValue('checkoutCity',result.city);
+      if(result.district)setValue('checkoutDistrict',result.district);
+      if(result.village)setValue('checkoutVillage',result.village);
+    }
+    setValue('checkoutFullAddress',raw);
+    if(result.postal)setValue('checkoutPostal',result.postal);
+    checkoutAddressMethod='manual';
+    setCheckoutAddressMethod('manual');
+    closePasteAddressPopup();
+    if(!result.complete){
+      openManualAddressPopup();
+      showNotice('Sebagian wilayah belum berhasil dikenali. Hasil yang ditemukan sudah diisikan. Silakan lengkapi atau koreksi pilihan wilayah pada form alamat.');
+      return;
+    }
+    checkoutNext(2);
+  }catch(error){
+    showNotice(error.message||'Pengenalan alamat gagal. Silakan lengkapi alamat secara manual.');
+  }
+}
 function checkoutNext(from){
   const val=id=>(document.getElementById(id)?.value||'').trim();
   const out=document.getElementById('checkoutResult');if(out){out.textContent='';out.style.color='';}
@@ -546,9 +708,10 @@ function checkoutNext(from){
     if(missing.length){markCheckoutInvalid(missing,'Kolom yang wajib diisi ditandai merah.');return;}
     document.getElementById('checkoutRecipient').value=val('checkoutName');
     document.getElementById('checkoutAddressPhone').value=val('checkoutPhone');
+    openJavaShippingGate();
+    return;
   }
   if(from===2){
-    if(checkoutAddressMethod==='paste')return showNotice('Pengenalan dan pengisian otomatis dari alamat yang ditempelkan akan tersedia pada tahap berikutnya. Untuk sementara, pilih ISI ALAMAT MANUAL.');
     if(checkoutAddressMethod!=='manual')return showNotice('Pilih metode pengisian alamat terlebih dahulu.');
     if(!window.ALIFLAM_WILAYAH_DATA||!document.getElementById('checkoutProvince'))return showNotice('Data wilayah belum selesai dimuat. Tunggu sebentar lalu coba lagi.');
     const required=['checkoutRecipient','checkoutAddressPhone','checkoutProvince','checkoutCity','checkoutDistrict','checkoutVillage','checkoutFullAddress'];
