@@ -582,10 +582,31 @@ function formatOrderDate(value){
   return Number.isNaN(d.getTime())?String(value):d.toLocaleString("id-ID",{dateStyle:"medium",timeStyle:"short"});
 }
 function getOrderProductImage(item){
-  if(item?.image)return IMG(item.image);
-  const variant=VARIANTS.find(v=>String(v.vid)===String(item?.variationId)||String(v.sku)===String(item?.sku));
+  // Data dari verifyOrderPin dapat memakai productId, bukan variationId.
+  // Terima URL gambar langsung maupun nama file katalog.
+  const rawImage=String(item?.image||'').trim();
+  if(rawImage){
+    if(/^(https?:)?\/\//i.test(rawImage)||/^data:image\//i.test(rawImage)||rawImage.startsWith('/'))return rawImage;
+    return IMG(rawImage);
+  }
+
+  const productIds=[item?.variationId,item?.productId,item?.vid,item?.id]
+    .filter(value=>value!==undefined&&value!==null&&String(value).trim()!=='')
+    .map(String);
+  const sku=imageKey(item?.sku);
+
+  const variant=VARIANTS.find(v=>
+    productIds.includes(String(v.vid)) ||
+    productIds.includes(String(v.productId)) ||
+    (sku&&imageKey(v.sku)===sku)
+  );
   if(variant?.image)return IMG(variant.image);
-  const group=groups.find(g=>g.variants.some(v=>String(v.vid)===String(item?.variationId)||String(v.sku)===String(item?.sku)));
+
+  const group=groups.find(g=>g.variants.some(v=>
+    productIds.includes(String(v.vid)) ||
+    productIds.includes(String(v.productId)) ||
+    (sku&&imageKey(v.sku)===sku)
+  ));
   return group?.image?IMG(group.image):'';
 }
 function renderMyOrders(){
