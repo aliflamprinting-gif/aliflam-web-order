@@ -1015,6 +1015,13 @@ html:not([data-theme="dark"]) .bottom .nav.active small{
 }
 
 
+.order-sync-spinner{
+  display:inline-block;width:14px;height:14px;margin-right:7px;vertical-align:-2px;
+  border:2px solid currentColor;border-right-color:transparent;border-radius:50%;
+  animation:orderSyncSpin .7s linear infinite;
+}
+@keyframes orderSyncSpin{to{transform:rotate(360deg)}}
+
 /* ORDER DETAIL 2.0 — compact status highlight, section markers, readable type */
 .order-status-highlight{
   display:flex;align-items:center;justify-content:space-between;gap:10px;
@@ -1793,7 +1800,11 @@ function renderMyOrderTabCounts(){
   });
 }
 async function syncCustomerOrderStatuses(showFeedback=false){
-  if(myOrderSyncBusy)return;
+  // Jika sinkronisasi sudah berjalan dari halaman Pesanan Saya, tunggu proses yang sama selesai.
+  if(myOrderSyncBusy){
+    while(myOrderSyncBusy) await new Promise(resolve=>setTimeout(resolve,80));
+    return;
+  }
   if(!localOrders.length){renderMyOrders();return}
   const phone=String(savedBuyer?.customer?.whatsapp||localOrders.find(o=>o.customer?.whatsapp)?.customer?.whatsapp||'').trim();
   if(!phone){
@@ -1947,7 +1958,16 @@ async function showMyOrderDetail(orderId,scroll=true){
   renderMyOrderDetail(orderId);
   if(scroll)window.scrollTo({top:0,left:0,behavior:'auto'});
 
-  // Perbarui status dari database sebelum menampilkan hasil akhirnya.
+  // Beri tahu pelanggan bahwa status sedang diperiksa ke database.
+  const detailContent=document.getElementById('myOrderDetailContent');
+  const loading=document.createElement('div');
+  loading.className='customer-order-sync';
+  loading.setAttribute('role','status');
+  loading.setAttribute('aria-live','polite');
+  loading.innerHTML='<span class="order-sync-spinner" aria-hidden="true"></span> Memeriksa status terbaru pesanan...';
+  if(detailContent)detailContent.prepend(loading);
+
+  // Tunggu sinkronisasi aktif atau jalankan sinkronisasi baru.
   await syncCustomerOrderStatuses(false);
   renderMyOrderDetail(orderId);
 }
