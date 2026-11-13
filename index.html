@@ -190,10 +190,11 @@ body.modal-open{overflow:hidden!important;touch-action:none}
 .finishing-info-btn{display:inline-flex;flex:0 0 auto;align-items:center;gap:4px;padding:0;border:0;background:transparent;color:var(--blue);font-size:9px;font-weight:800;letter-spacing:0;line-height:1.3;white-space:nowrap;cursor:pointer}
 .finishing-info-btn span{font-size:15px;line-height:1}.finishing-info-btn:hover{color:#0874c5;text-decoration:underline}.finishing-info-btn:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
 #finishingInfoOverlay{z-index:55;background:rgba(0,0,0,.76);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
-#finishingInfoOverlay .finishing-info-dialog{position:relative;width:min(560px,100%);max-height:92vh;overflow:auto;padding:12px;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 20px 70px #0006}
-.finishing-info-dialog .close{position:absolute;top:10px;right:10px;z-index:2;width:34px;height:34px;border-radius:50%;box-shadow:0 2px 10px #0003}
-.finishing-info-image{display:block;width:100%;height:auto;max-height:calc(92vh - 24px);object-fit:contain;border-radius:9px}
-@media(max-width:420px){#finishingInfoOverlay .finishing-info-dialog{padding:8px;border-radius:13px}.finishing-info-dialog .close{top:8px;right:8px}}
+#finishingInfoOverlay .finishing-info-dialog{position:relative;display:flex;flex-direction:column;gap:10px;width:min(560px,100%);max-height:92vh;overflow:auto;padding:12px;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 20px 70px #0006}
+.finishing-info-image{display:block;width:100%;height:auto;max-height:calc(92vh - 88px);object-fit:contain;border-radius:9px}
+.finishing-info-confirm{display:flex;align-items:center;justify-content:center;flex:0 0 auto;width:100%;min-height:42px;padding:10px 16px;border:0;border-radius:10px;background:var(--print-spectrum);color:#fff;font:900 12px/1 Manrope,sans-serif;letter-spacing:.8px;box-shadow:0 5px 16px rgba(0,0,0,.16);cursor:pointer}
+.finishing-info-confirm:active{transform:scale(.985)}
+@media(max-width:420px){#finishingInfoOverlay .finishing-info-dialog{padding:8px;border-radius:13px;gap:8px}.finishing-info-image{max-height:calc(92vh - 82px)}.finishing-info-confirm{min-height:40px}}
 
 
 /* FIX FINAL: label dan tautan info finishing wajib satu baris */
@@ -327,22 +328,1111 @@ body.modal-open{overflow:hidden!important;touch-action:none}
 .order-detail-item b{font-size:11px}
 .order-detail-item small{display:block;color:var(--muted);font-size:9px;margin-top:4px;line-height:1.45}
 .order-detail-item strong{font-size:11px;white-space:nowrap}
-</style></head><body><header><div class="wrap header"><a class="brand" href="#" onclick="navigate('home');return false"><img alt="Logo Aliflam Printing" id="logo" src="https://aliflamprinting-gif.github.io/aliflam-web-order/assets/products/LOGO.webp"/><span class="brandwords"><b>ALIFLAM PRINTING</b><small>DESAIN &amp; PERCETAKAN</small></span></a><div class="tools"><button class="iconbtn" id="themeBtn" title="Ganti tema">☾</button><button class="iconbtn" onclick="openCart()" title="Keranjang">🛒 <span class="cartcount" id="cartCount">0</span></button></div></div></header>
-<main class="wrap"><section class="page active" id="homePage"><div class="intro"><div class="eyebrow">SELAMAT DATANG DI ALIFLAM</div><h1>Mau cetak apa hari ini?</h1><p>Pilih kategori atau cari produk yang kamu butuhkan.</p></div><label class="search"><span>⌕</span><input autocomplete="off" id="homeSearch" placeholder="Cari banner, stiker, brosur..."/></label><div class="sectionhead"><div><h2>Pilih Kategori</h2><p>Temukan produk lebih cepat.</p></div><button class="link" onclick="navigate(&quot;products&quot;)">Semua kategori →</button></div><div class="categories" id="homeCats"></div><div class="sectionhead"><div><h2>Produk Pilihan</h2><p>Produk dan harga asli dari katalog WEB.</p></div><button class="link" onclick="navigate(&quot;products&quot;)">Lihat semua →</button></div><div class="products" id="homeProducts"></div><div class="sectionhead"><div><h2>Kenapa Aliflam?</h2></div></div><div class="benefits"><article class="benefit"><div>✦</div><b>Pilihan Cetak Lengkap</b><p>Berbagai kebutuhan cetak tersedia dalam satu tempat.</p></article><article class="benefit"><div>⚡</div><b>Pilih Variasi dengan Mudah</b><p>Harga menyesuaikan pilihan produk dan variasi.</p></article><article class="benefit"><div>♡</div><b>Layanan Desain</b><p>Konsultasikan kebutuhan desain dan cetakmu.</p></article></div><div class="sectionhead"><div><h2>Testimoni Pelanggan</h2><p>Area testimoni untuk ulasan asli yang akan ditambahkan.</p></div></div><footer>© 2026 Aliflam Printing · Desain &amp; Percetakan</footer></section>
-<section class="page" id="productsPage"><div class="intro"><div class="eyebrow">KATALOG PRODUK</div><h1>Semua Produk</h1><p>Pilih kategori dan produk yang kamu cari.</p></div><label class="search"><span>⌕</span><input autocomplete="off" id="productSearch" placeholder="Cari nama produk..."/></label><div class="filters" id="filters"></div><div class="products" id="products"></div><p class="footnote" id="productCount"></p></section>
-<section class="page" id="productDetailPage"><button class="secondary" onclick="backFromDetail()">← Kembali ke katalog</button><div class="detailpage"><div class="detailvisual"><img alt="Foto produk" class="detailimage" id="detailImage"/></div><div class="detailcontent"><div class="tag" id="detailCategory"></div><h1 id="detailTitle">Detail Produk</h1><p class="muted tiny">Pilih variasi produk sebelum menambahkan ke keranjang.</p><div id="variation1Wrap"><label class="field">Pilih Bahan</label><div class="variation-options" id="variation1Options"></div><div aria-live="polite" class="variation-hint" id="variation1Hint"></div></div><div id="sizeVariationWrap"></div><div id="variation3Wrap"><div class="finishing-label-row"><label class="field">Pilih Finishing</label><button class="finishing-info-btn" id="finishingInfoBtn" type="button" onclick="openFinishingInfo()">LIHAT CONTOH</button></div><div class="variation-options" id="variation3Options"></div><div aria-live="polite" class="variation-hint" id="variation3Hint"></div></div>
+
+/* UI UPGRADE ALIFLAM — homepage only; no checkout/catalog logic changed. */
+.home-hero{
+  position:relative;isolation:isolate;overflow:hidden;
+  display:flex;flex-direction:column;justify-content:space-between;gap:24px;
+  min-height:300px;margin:8px 0 18px;padding:clamp(24px,5vw,48px);
+  border:1px solid #2878d044;border-radius:24px;
+  background:radial-gradient(circle at 88% 18%,#70c4ff55 0,transparent 31%),linear-gradient(125deg,#123f70 0%,#1769aa 54%,#2878d0 100%);
+  box-shadow:0 18px 44px #14558b22;color:#fff;
+}
+.home-hero:after{
+  content:"";position:absolute;z-index:-1;width:310px;height:310px;right:-115px;bottom:-190px;
+  border:1px solid #ffffff2b;border-radius:50%;box-shadow:0 0 0 28px #ffffff0b,0 0 0 58px #ffffff08;
+}
+.home-hero-copy{max-width:760px}
+.home-hero-kicker{display:flex;align-items:center;gap:8px;margin-bottom:15px;color:#d7edff;font-size:10px;font-weight:800;letter-spacing:1.7px}
+.home-hero-kicker-dot{width:7px;height:7px;border-radius:50%;background:#7ed3ff;box-shadow:0 0 0 4px #ffffff1c}
+.home-hero h1{max-width:720px;margin:0;color:#fff;font:800 clamp(27px,4.7vw,43px)/1.13 Manrope,sans-serif;letter-spacing:-1.25px}
+.home-hero-copy>p{max-width:650px;margin:14px 0 0;color:#e5f3ff;font-size:13px;line-height:1.75}
+.home-hero-copy>p.home-hero-support{margin-top:7px;color:#c5e3fa;font-size:12px}
+.home-hero-actions{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-top:22px}
+.home-hero-actions button{min-height:44px;padding:0 17px;border-radius:11px;font-size:12px;font-weight:800;transition:transform .16s ease,background .16s ease}
+.home-hero-actions button:active{transform:scale(.98)}
+.home-hero-primary{display:inline-flex;align-items:center;gap:14px;border:1px solid #fff;background:#fff;color:#155b98}
+.home-hero-primary span{font-size:18px;line-height:1}
+.home-hero-primary:hover{background:#eaf5ff}
+.home-hero-secondary{border:1px solid #ffffff75;background:#ffffff12;color:#fff}
+.home-hero-secondary:hover{background:#ffffff22}
+.home-hero-points{display:flex;flex-wrap:wrap;gap:9px 22px;padding-top:17px;border-top:1px solid #ffffff35}
+.home-hero-points span{display:inline-flex;align-items:center;gap:7px;color:#e8f5ff;font-size:10px;font-weight:700}
+.home-hero-points b{display:grid;place-items:center;width:17px;height:17px;border-radius:50%;background:#ffffff20;color:#fff;font-size:10px}
+.home-benefits-head{align-items:end;margin-top:31px}
+.home-benefits-head .eyebrow{margin-bottom:6px}
+.home-benefits-head h2{font-size:19px}
+.home-benefits-head p{margin:5px 0 0;font-size:11px}
+.home-benefits .benefit{position:relative;min-height:148px;padding:18px;border-radius:16px;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+.home-benefits .benefit:hover{transform:translateY(-2px);border-color:#2878d066;box-shadow:0 10px 24px #14558b12}
+.home-benefit-icon{display:grid;place-items:center;width:38px;height:38px;margin-bottom:13px;border-radius:12px;background:var(--blue-soft);color:var(--blue);font-size:20px;font-weight:800}
+.home-benefits .benefit b{font:800 12px Manrope,sans-serif}
+.home-benefits .benefit p{font-size:11px;line-height:1.65;margin:7px 0 0}
+@media(max-width:650px){
+  .home-hero{min-height:0;gap:20px;margin:5px 0 16px;padding:23px 19px;border-radius:19px}
+  .home-hero-kicker{font-size:9px;letter-spacing:1.35px;margin-bottom:12px}
+  .home-hero h1{font-size:clamp(26px,7.2vw,34px);letter-spacing:-.8px}
+  .home-hero-copy>p{font-size:12px;line-height:1.65;margin-top:11px}
+  .home-hero-copy>p.home-hero-support{font-size:11px}
+  .home-hero-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:18px}
+  .home-hero-actions button{justify-content:center;min-height:43px;padding:0 10px;font-size:11px}
+  .home-hero-points{gap:8px 13px;padding-top:14px}
+  .home-hero-points span{font-size:9px}
+  .home-benefits .benefit{min-height:0;padding:15px}
+  .home-benefit-icon{width:34px;height:34px;margin-bottom:10px}
+}
+@media(prefers-reduced-motion:reduce){.home-hero-actions button,.home-benefits .benefit{transition:none}}
+
+
+
+/* ALIFLAM — navy header & bottom navigation */
+header{background:#102b4c;border-bottom:1px solid #24476c;box-shadow:0 4px 18px rgba(8,28,52,.12)}
+header .brandwords b{color:#fff}
+header .brandwords small{color:#b8cbe0}
+header .iconbtn{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);color:#fff}
+header .cartcount{color:#9ed5ff}
+.bottom{background:#102b4c;border-top:1px solid #24476c;box-shadow:0 -5px 22px rgba(8,28,52,.16)}
+.bottom .nav{color:#c2d2e4;min-height:48px;padding:4px 2px;border-radius:12px;transition:color .16s ease,background-color .16s ease}
+.bottom .nav span{display:inline-grid;place-items:center;min-width:30px;min-height:27px;font-size:22px;transform:scale(1);transition:transform .16s ease,text-shadow .16s ease}
+.bottom .nav.active{color:#fff;background:rgba(255,255,255,.11)}
+.bottom .nav.active span{transform:scale(1.18);text-shadow:0 0 12px rgba(117,195,255,.55)}
+.bottom .nav:active span{transform:scale(1.24)}
+@media(prefers-reduced-motion:reduce){.bottom .nav,.bottom .nav span{transition:none}}
+
+
+/* ALIFLAM STARTUP LOADER — ringan, hanya CSS */
+.startup-loader{position:fixed;inset:0;z-index:10050;display:flex;align-items:center;justify-content:center;padding:22px;background:linear-gradient(145deg,#071a30,#102f52 58%,#0b2340);color:#fff;opacity:1;visibility:visible;transition:opacity .32s ease,visibility .32s ease}
+.startup-loader.is-hidden{opacity:0;visibility:hidden;pointer-events:none}
+.startup-loader-card{width:min(310px,100%);display:flex;flex-direction:column;align-items:center;text-align:center;padding:28px 22px 24px;border:1px solid rgba(255,255,255,.13);border-radius:23px;background:rgba(255,255,255,.075);box-shadow:0 20px 60px rgba(0,0,0,.2);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.startup-loader-logo{width:112px;height:112px;object-fit:contain;margin-bottom:16px;filter:drop-shadow(0 7px 20px rgba(0,0,0,.24));animation:startupFloat 2.2s ease-in-out infinite}
+@media(max-width:420px){.startup-loader-logo{width:100px;height:100px}}
+.startup-loader-title{font:800 15px/1.35 Manrope,sans-serif;letter-spacing:.25px}
+.startup-loader-caption{font:500 11px/1.5 'DM Sans',sans-serif;color:rgba(255,255,255,.7);margin-top:6px}
+.startup-loader-track{width:150px;height:4px;margin-top:20px;border-radius:9px;overflow:hidden;background:rgba(255,255,255,.17)}
+.startup-loader-track:after{content:"";display:block;width:42%;height:100%;border-radius:9px;background:#68c7ff;animation:startupProgress 1.15s ease-in-out infinite}
+@keyframes startupProgress{0%{transform:translateX(-110%)}100%{transform:translateX(360%)}}
+@keyframes startupFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@media(prefers-reduced-motion:reduce){.startup-loader-logo,.startup-loader-track:after{animation:none}.startup-loader-track:after{width:65%}.startup-loader{transition:none}}
+
+/* ALIFLAM — tema Light: header & navigasi biru muda, teks dan ikon gelap */
+html:not([data-theme="dark"]) header{
+  background:#dceeff;
+  border-bottom:1px solid #bfd9f2;
+  box-shadow:0 4px 18px rgba(27,70,112,.08);
+}
+html:not([data-theme="dark"]) header .brandwords b{color:#10243a}
+html:not([data-theme="dark"]) header .brandwords small{color:#334b63}
+html:not([data-theme="dark"]) header .iconbtn{
+  background:rgba(255,255,255,.58);
+  border:1px solid #b8d3ed;
+  color:#10243a;
+}
+html:not([data-theme="dark"]) header .cartcount{color:#10243a}
+html:not([data-theme="dark"]) .bottom{
+  background:#dceeff;
+  border-top:1px solid #bfd9f2;
+  box-shadow:0 -5px 22px rgba(27,70,112,.10);
+}
+html:not([data-theme="dark"]) .bottom .nav{color:#263b52}
+html:not([data-theme="dark"]) .bottom .nav.active{
+  color:#071b31;
+  background:rgba(255,255,255,.62);
+}
+html:not([data-theme="dark"]) .bottom .nav.active span{
+  text-shadow:0 0 10px rgba(255,255,255,.9);
+}
+
+
+
+/* ALIFLAM PRINTING — identitas CMYK colorful, tetap premium */
+:root{
+  --print-cyan:#00AEEF;
+  --print-magenta:#EC008C;
+  --print-yellow:#FFD600;
+  --print-ink:#202124;
+  --print-spectrum:linear-gradient(100deg,#00AEEF 0%,#2878E8 28%,#EC008C 62%,#FFD600 100%);
+}
+
+/* Garis spektrum tipis sebagai identitas header dan navigasi */
+header{position:sticky}
+header:after{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:3px;
+  background:var(--print-spectrum);background-size:200% 100%;
+  animation:printSpectrum 8s linear infinite;
+}
+.bottom{position:fixed}
+.bottom:before{
+  content:"";position:absolute;left:0;right:0;top:0;height:3px;
+  background:var(--print-spectrum);background-size:200% 100%;
+  animation:printSpectrum 8s linear infinite;
+}
+@keyframes printSpectrum{0%{background-position:0% 50%}100%{background-position:200% 50%}}
+
+/* Aksen warna cetak pada elemen penting, bukan seluruh komponen */
+.eyebrow,.tag{color:var(--print-magenta)}
+.price,.detailtotal strong,.subtotal strong{color:#087fc0}
+.category:hover .cat-icon{background:linear-gradient(135deg,rgba(0,174,239,.16),rgba(236,0,140,.12))}
+.cat-icon{position:relative}
+.product{transition:border-color .18s ease,transform .18s ease,box-shadow .18s ease}
+.product:hover{border-color:rgba(0,174,239,.42);box-shadow:0 9px 25px rgba(23,66,105,.09)}
+.product .categorylabel{color:#b52a83}
+.product-cta{color:#087fc0}
+.primary,.home-hero-primary{
+  background:linear-gradient(105deg,#087fc0 0%,#176fd1 48%,#bd278c 100%);
+  box-shadow:0 7px 18px rgba(19,115,190,.17);
+  transition:transform .16s ease,box-shadow .16s ease,filter .16s ease;
+}
+.primary:hover,.home-hero-primary:hover{filter:saturate(1.12);box-shadow:0 9px 22px rgba(19,115,190,.24);transform:translateY(-1px)}
+.primary:active,.home-hero-primary:active{transform:scale(.98)}
+.filter.selected{background:linear-gradient(105deg,#087fc0,#bd278c);border-color:transparent}
+.link{color:#087fc0}
+.home-hero-kicker-dot{background:var(--print-magenta);box-shadow:0 0 0 4px rgba(236,0,140,.12)}
+.home-benefit-icon{background:linear-gradient(135deg,rgba(0,174,239,.14),rgba(236,0,140,.12));color:#087fc0}
+.nav.active span{color:var(--print-magenta)}
+header .cartcount{color:var(--print-yellow)}
+
+/* Tema Light: warna CMYK hadir sebagai aksen di atas permukaan biru muda */
+html:not([data-theme="dark"]) header:after,
+html:not([data-theme="dark"]) .bottom:before{height:3px}
+html:not([data-theme="dark"]) .bottom .nav.active span{color:#d50078}
+html:not([data-theme="dark"]) header .cartcount{color:#b52a83}
+
+/* Tema Dark: aksen CMYK dibuat lebih terang agar tetap terbaca */
+html[data-theme="dark"] .eyebrow,
+html[data-theme="dark"] .tag{color:#ff69bd}
+html[data-theme="dark"] .price,
+html[data-theme="dark"] .detailtotal strong,
+html[data-theme="dark"] .subtotal strong,
+html[data-theme="dark"] .link{color:#55c9ff}
+html[data-theme="dark"] .nav.active span{color:#ff75c3}
+
+/* Loader awal: identitas percetakan CMYK dengan gerak lembut */
+.startup-loader{
+  background:
+    radial-gradient(ellipse at 18% 18%,rgba(0,174,239,.25),transparent 34%),
+    radial-gradient(ellipse at 82% 22%,rgba(236,0,140,.22),transparent 32%),
+    radial-gradient(ellipse at 76% 86%,rgba(255,214,0,.16),transparent 30%),
+    linear-gradient(145deg,#071a30,#102f52 58%,#0b2340);
+}
+.startup-loader-card{position:relative;overflow:hidden;border-color:rgba(255,255,255,.2)}
+.startup-loader-card:before{
+  content:"";position:absolute;top:0;left:0;right:0;height:4px;
+  background:var(--print-spectrum);background-size:200% 100%;
+  animation:printSpectrum 4s linear infinite;
+}
+.startup-loader-logo{filter:drop-shadow(0 7px 18px rgba(0,174,239,.22)) drop-shadow(0 3px 12px rgba(236,0,140,.15))}
+.startup-loader-track{background:rgba(255,255,255,.18)}
+.startup-loader-track:after{background:var(--print-spectrum);background-size:200% 100%}
+@media(prefers-reduced-motion:reduce){
+  header:after,.bottom:before,.startup-loader-card:before{animation:none;background-position:50% 50%}
+  .product,.primary,.home-hero-primary{transition:none}
+}
+
+
+/* Contrast fix: readable label on the colorful primary hero button */
+.home-hero-primary{
+  color:#fff !important;
+  border-color:rgba(255,255,255,.72) !important;
+  text-shadow:0 1px 2px rgba(0,35,75,.28);
+}
+.home-hero-primary span,
+.home-hero-primary strong,
+.home-hero-primary svg{color:#fff !important;fill:currentColor}
+
+
+/* Revisi visual: aksen CMYK flat, statis, bukan animasi loading */
+header:after,
+.bottom:before{
+  animation:none !important;
+  background-position:50% 50% !important;
+  background-size:100% 100% !important;
+}
+/* Nama kategori pada kartu produk: pink tegas dan bold */
+.product .categorylabel{
+  color:#d50078 !important;
+  font-weight:800 !important;
+}
+
+
+/* ALIFLAM PRINT STUDIO — hero bernuansa kertas dan proses cetak */
+.home-hero{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  border:1px solid #e7d9c7 !important;
+  border-radius:20px !important;
+  background:
+    radial-gradient(circle at 92% 88%,rgba(0,174,239,.11) 0 2px,transparent 2.8px) 0 0/12px 12px,
+    radial-gradient(circle at 8% 8%,rgba(236,0,140,.045),transparent 28%),
+    linear-gradient(135deg,#fffdf7 0%,#f8f1e5 100%) !important;
+  box-shadow:0 14px 34px rgba(72,48,25,.10) !important;
+  color:#202124 !important;
+}
+.home-hero:before{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  right:14px;
+  bottom:58px;
+  width:116px;
+  height:116px;
+  border-radius:50%;
+  opacity:.62;
+  background:
+    radial-gradient(circle at 50% 50%,transparent 0 25px,rgba(0,174,239,.85) 26px 29px,transparent 30px 39px,rgba(236,0,140,.72) 40px 43px,transparent 44px),
+    radial-gradient(circle,rgba(32,33,36,.30) 1px,transparent 1.5px) 0 0/7px 7px;
+  transform:rotate(-12deg);
+}
+.home-hero:after{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  width:90px;
+  height:90px;
+  right:-24px;
+  top:-30px;
+  border:10px solid rgba(0,174,239,.16);
+  border-right-color:rgba(236,0,140,.25);
+  border-bottom-color:rgba(255,214,0,.38);
+  border-radius:18px;
+  transform:rotate(22deg);
+  box-shadow:0 0 0 8px rgba(255,255,255,.45),0 0 0 17px rgba(32,33,36,.035);
+}
+.home-hero-copy{position:relative;z-index:1;max-width:760px}
+.home-hero-kicker{
+  color:#a90068 !important;
+  letter-spacing:1.55px !important;
+}
+.home-hero-kicker-dot{
+  background:#ec008c !important;
+  box-shadow:0 0 0 4px rgba(236,0,140,.12) !important;
+}
+.home-hero h1{
+  color:#17191d !important;
+  text-shadow:none !important;
+}
+.home-hero-copy>p{color:#41444a !important}
+.home-hero-copy>p.home-hero-support{color:#66636a !important}
+.home-hero-actions button{box-shadow:0 4px 12px rgba(32,33,36,.08)}
+.home-hero-primary{
+  background:#202124 !important;
+  color:#fff !important;
+  border:1px solid #202124 !important;
+  position:relative;
+  overflow:hidden;
+}
+.home-hero-primary:after{
+  content:"";
+  position:absolute;
+  left:0;right:0;bottom:0;height:4px;
+  background:linear-gradient(90deg,#00AEEF 0 25%,#EC008C 25% 50%,#FFD600 50% 75%,#202124 75% 100%);
+}
+.home-hero-primary:hover{background:#34363a !important}
+.home-hero-secondary{
+  color:#202124 !important;
+  border:1px solid #b9aa98 !important;
+  background:rgba(255,255,255,.58) !important;
+}
+.home-hero-secondary:hover{background:#fff !important}
+.home-hero-points{border-top:1px solid #dfd3c4 !important}
+.home-hero-points span{color:#41444a !important}
+.home-hero-points b{
+  color:#fff !important;
+  background:#00AEEF !important;
+}
+@media(max-width:650px){
+  .home-hero:before{right:5px;bottom:52px;width:88px;height:88px;opacity:.32}
+  .home-hero:after{right:-32px;top:-35px;opacity:.75}
+}
+@media(prefers-reduced-motion:reduce){
+  .home-hero:before,.home-hero:after{transform:none}
+}
+
+
+/* Copy update: GRATIS DESAIN & REVISI + checklist colorful */
+.home-hero .hero-free-design{
+  display:inline-block;
+  margin:5px 0 3px;
+  padding:5px 10px 6px;
+  border-radius:8px;
+  background:linear-gradient(100deg,#EC008C 0%,#C41483 58%,#8D2AB8 100%);
+  color:#fff !important;
+  font-size:.78em;
+  line-height:1.18;
+  letter-spacing:-.45px;
+  font-weight:900;
+  box-shadow:0 4px 0 rgba(115,18,91,.13);
+  -webkit-box-decoration-break:clone;
+  box-decoration-break:clone;
+}
+.home-hero .hero-subheadline{
+  display:block;
+  margin-top:7px;
+  font-size:.78em;
+  line-height:1.2;
+  letter-spacing:-.55px;
+  font-weight:800;
+  color:#202124 !important;
+}
+.home-hero-points span{
+  color:#202124 !important;
+  font-weight:900 !important;
+  text-transform:uppercase;
+  letter-spacing:.25px;
+}
+.home-hero-points span b{
+  flex:0 0 19px;
+  width:19px;height:19px;
+  color:#fff !important;
+  font-size:11px;
+  font-weight:900;
+}
+.home-hero-points span:nth-child(1) b{background:#00AEEF !important}
+.home-hero-points span:nth-child(2) b{background:#EC008C !important}
+.home-hero-points span:nth-child(3) b{background:#E2B900 !important;color:#202124 !important}
+@media(max-width:650px){
+  .home-hero .hero-free-design{font-size:.72em;padding:5px 8px}
+  .home-hero .hero-subheadline{font-size:.76em}
+  .home-hero-points span{font-size:9px;letter-spacing:.1px}
+}
+
+
+/* PRINT PRODUCT SHOWCASE — kategori colorful CMYK */
+.categories{
+  display:grid !important;
+  grid-template-columns:repeat(5,minmax(0,1fr)) !important;
+  gap:11px !important;
+  margin-top:12px;
+}
+.category.category-cmyk{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:space-between;
+  min-width:0;
+  min-height:132px;
+  overflow:hidden;
+  padding:14px 12px 12px !important;
+  border:1px solid var(--line);
+  border-radius:16px !important;
+  background:var(--card);
+  text-align:left !important;
+  box-shadow:0 5px 16px rgba(20,35,55,.045);
+  transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+}
+.category.category-cmyk:before{
+  content:"";
+  position:absolute;
+  width:78px;height:78px;
+  right:-27px;top:-29px;
+  border-radius:50%;
+  background:var(--category-accent);
+  opacity:.10;
+}
+.category.category-cmyk:after{
+  content:"";
+  position:absolute;
+  left:0;top:0;bottom:0;width:4px;
+  background:var(--category-accent);
+}
+.category.category-cmyk .cat-icon{
+  display:grid;
+  place-items:center;
+  width:46px;height:46px;
+  margin:0 0 15px !important;
+  border-radius:14px;
+  background:color-mix(in srgb,var(--category-accent) 13%,var(--card));
+  color:var(--category-accent);
+  font-size:23px;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--category-accent) 18%,transparent);
+  transition:transform .18s ease;
+}
+.category-copy{display:flex;flex-direction:column;gap:5px;min-width:0;position:relative;z-index:1}
+.category.category-cmyk .category-copy b{
+  color:var(--ink);
+  font-size:10px;
+  line-height:1.25;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.12px;
+}
+.category.category-cmyk .category-copy small{
+  color:var(--muted);
+  font-size:9px;
+  line-height:1.35;
+  font-weight:600;
+}
+.category-arrow{
+  position:absolute;right:11px;bottom:11px;
+  color:var(--category-accent);
+  font-size:15px;font-weight:900;
+  opacity:.8;
+}
+.category-tone-1{--category-accent:#00AEEF}
+.category-tone-2{--category-accent:#EC008C}
+.category-tone-3{--category-accent:#C5A500}
+.category-tone-4{--category-accent:#F07824}
+.category-tone-5{--category-accent:#8052C7}
+.category.category-cmyk:hover,
+.category.category-cmyk:focus-visible{
+  transform:translateY(-3px);
+  border-color:var(--category-accent);
+  box-shadow:0 10px 23px color-mix(in srgb,var(--category-accent) 16%,transparent);
+  outline:none;
+}
+.category.category-cmyk:hover .cat-icon,
+.category.category-cmyk:focus-visible .cat-icon{transform:scale(1.08)}
+.category.category-cmyk:active{transform:scale(.98)}
+@media(max-width:750px){
+  .categories{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:10px !important}
+  .category.category-cmyk{min-height:126px;padding:13px 12px 12px !important}
+  .category.category-cmyk:first-child{grid-column:span 2;min-height:112px;flex-direction:row;align-items:center;justify-content:flex-start;gap:14px}
+  .category.category-cmyk:first-child .cat-icon{width:54px;height:54px;flex:0 0 54px;margin:0 !important;font-size:27px}
+  .category.category-cmyk:first-child .category-copy b{font-size:12px}
+  .category.category-cmyk:first-child .category-copy small{font-size:10px}
+  .category.category-cmyk:first-child .category-arrow{right:14px;bottom:15px;font-size:18px}
+}
+@media(prefers-reduced-motion:reduce){
+  .category.category-cmyk,.category.category-cmyk .cat-icon{transition:none}
+}
+
+
+/* COLORFUL SECTION IDENTITY — adaptive untuk Light & Dark */
+.sectionhead-cmyk{
+  position:relative;
+  align-items:center !important;
+  padding:11px 12px;
+  margin:22px 0 12px !important;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:color-mix(in srgb,var(--card) 88%,var(--section-accent) 12%);
+  box-shadow:0 4px 14px rgba(20,35,55,.035);
+}
+.sectionhead-cmyk:before{
+  content:"";
+  position:absolute;
+  left:0;top:10px;bottom:10px;
+  width:3px;border-radius:0 4px 4px 0;
+  background:var(--section-accent);
+}
+.section-title-group,.intro-title-group{
+  display:flex;align-items:center;gap:11px;min-width:0;
+}
+.section-title-group>div,.intro-title-group>div{min-width:0}
+.section-icon{
+  display:grid;place-items:center;
+  flex:0 0 40px;width:40px;height:40px;
+  border-radius:12px;
+  color:var(--section-accent);
+  background:color-mix(in srgb,var(--section-accent) 15%,var(--card));
+  border:1px solid color-mix(in srgb,var(--section-accent) 26%,transparent);
+  font-size:21px;font-weight:900;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.04);
+}
+.sectionhead-cmyk h2{margin:0;color:var(--ink);font-weight:900;letter-spacing:-.25px}
+.sectionhead-cmyk p{margin:4px 0 0 !important;color:var(--muted)}
+.sectionhead-cmyk .link{align-self:center;color:var(--section-accent)}
+.section-tone-cyan{--section-accent:#00AEEF}
+.section-tone-magenta{--section-accent:#EC008C}
+.section-tone-yellow{--section-accent:#C19D00}
+.section-tone-orange{--section-accent:#F07824}
+.section-tone-purple{--section-accent:#9464D8}
+.intro-cmyk{
+  position:relative;overflow:hidden;
+  margin:8px 0 16px !important;
+  padding:15px 14px;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:color-mix(in srgb,var(--card) 91%,var(--section-accent) 9%);
+}
+.intro-cmyk:after{
+  content:"";
+  position:absolute;right:-28px;top:-42px;
+  width:112px;height:112px;border-radius:50%;
+  border:14px solid color-mix(in srgb,var(--section-accent) 13%,transparent);
+  box-shadow:0 0 0 10px color-mix(in srgb,var(--section-accent) 5%,transparent);
+  pointer-events:none;
+}
+.intro-cmyk .intro-title-group{position:relative;z-index:1}
+.intro-cmyk .section-icon{width:46px;height:46px;flex-basis:46px;font-size:23px}
+.intro-cmyk h1{margin:2px 0 0;font-weight:900;letter-spacing:-.5px}
+.intro-cmyk p{margin:5px 0 0;color:var(--muted)}
+.intro-cmyk .eyebrow{color:var(--section-accent);font-weight:900}
+@media(max-width:560px){
+  .sectionhead-cmyk{padding:10px 10px;margin-top:20px !important}
+  .section-icon{flex-basis:36px;width:36px;height:36px;border-radius:11px;font-size:19px}
+  .section-title-group{gap:9px}
+  .sectionhead-cmyk h2{font-size:15px}
+  .sectionhead-cmyk p{font-size:10px}
+  .sectionhead-cmyk .link{font-size:10px}
+  .intro-cmyk{padding:13px 11px}
+  .intro-cmyk .section-icon{flex-basis:42px;width:42px;height:42px}
+  .intro-cmyk h1{font-size:21px}
+  .intro-cmyk p{font-size:11px}
+}
+@media(prefers-reduced-motion:no-preference){
+  .section-icon{transition:transform .16s ease}
+  .sectionhead-cmyk:active .section-icon{transform:scale(1.06)}
+}
+
+
+/* Tukar identitas warna Banner Spanduk dan Aneka Kartu */
+.category-tone-1{--category-accent:#8052C7 !important}
+.category-tone-5{--category-accent:#00AEEF !important}
+
+
+/* CUSTOMER ORDER TABS — empat tab pas dalam lebar layar, tanpa terpotong */
+.customer-order-tabs{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:2px;
+  overflow:visible;
+  margin:12px 0 10px;
+  padding:0 0 5px;
+  border-bottom:1px solid var(--line);
+  background:transparent;
+  border-radius:0;
+}
+.customer-order-tab{
+  position:relative;
+  min-width:0;
+  min-height:94px;
+  padding:15px 2px 10px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  border:0;
+  border-bottom:3px solid transparent;
+  border-radius:0;
+  background:transparent;
+  color:var(--muted);
+  cursor:pointer;
+  transition:background-color .16s ease,color .16s ease,border-color .16s ease;
+}
+.customer-order-tab .order-tab-icon{
+  display:grid;place-items:center;
+  width:38px;height:38px;flex:0 0 38px;
+  border-radius:12px;
+  background:color-mix(in srgb,var(--tab-accent) 13%,var(--card));
+  color:var(--tab-accent);
+}
+.customer-order-tab .order-tab-icon svg{
+  display:block;width:24px;height:24px;fill:none;stroke:currentColor;
+  stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;
+}
+.customer-order-tab>b{
+  display:block;width:100%;max-width:100%;
+  font-size:9px;line-height:1.25;font-weight:900;
+  white-space:normal;text-align:center;letter-spacing:0;
+  overflow-wrap:anywhere;color:var(--ink);
+}
+.customer-order-tab .order-tab-count{
+  position:absolute;top:4px;right:3px;
+  min-width:20px;height:20px;padding:0 4px;border-radius:20px;
+  display:grid;place-items:center;font-style:normal;
+  background:var(--tab-accent);color:#fff;font-size:10px;font-weight:900;
+  line-height:1;box-shadow:0 2px 6px color-mix(in srgb,var(--tab-accent) 25%,transparent);
+}
+.order-tab-unpaid{--tab-accent:#E7A52B}
+.order-tab-process{--tab-accent:#EC008C}
+.order-tab-shipping{--tab-accent:#00AEEF}
+.order-tab-done{--tab-accent:#22A06B}
+.customer-order-tab.active{
+  color:var(--ink);
+  border-bottom-color:var(--tab-accent);
+  background:color-mix(in srgb,var(--tab-accent) 5%,transparent);
+}
+.customer-order-tab.active .order-tab-icon{
+  background:color-mix(in srgb,var(--tab-accent) 20%,var(--card));
+}
+.customer-order-tab:active{background:color-mix(in srgb,var(--tab-accent) 10%,transparent)}
+.customer-order-tools{display:flex;align-items:center;gap:8px}
+.customer-order-tools .search{flex:1;min-width:0;margin:8px 0;height:43px}
+.customer-order-refresh{
+  flex:0 0 43px;width:43px;height:43px;border:1px solid var(--line);
+  border-radius:12px;background:var(--card);color:var(--blue);
+  font-size:23px;font-weight:800;cursor:pointer;
+  transition:transform .16s ease,background-color .16s ease;
+}
+.customer-order-refresh:active{transform:rotate(-35deg) scale(.96)}
+.customer-order-refresh:disabled{opacity:.55;cursor:wait}
+.customer-order-refresh.is-loading{animation:orderRefreshSpin .8s linear infinite}
+.customer-order-sync{min-height:15px;margin:0 2px 7px;color:var(--muted);font-size:9px;line-height:1.4}
+@keyframes orderRefreshSpin{to{transform:rotate(360deg)}}
+html[data-theme="dark"] .customer-order-tab>b{color:#f4f7fc}
+html:not([data-theme="dark"]) .customer-order-tab>b{color:#202a38}
+@media(max-width:360px){
+  .customer-order-tab{min-height:90px;padding-left:1px;padding-right:1px;gap:7px}
+  .customer-order-tab>b{font-size:8px;letter-spacing:-.1px}
+  .customer-order-tab .order-tab-icon{width:35px;height:35px;flex-basis:35px}
+  .customer-order-tab .order-tab-count{right:2px;top:4px;min-width:18px;height:18px;font-size:9px}
+}
+@media(prefers-reduced-motion:reduce){
+  .customer-order-tab,.customer-order-refresh{transition:none}
+  .customer-order-refresh.is-loading{animation:none}
+}
+
+
+/* LIGHT THEME: header dan navigasi bawah menyatu dengan background halaman */
+html:not([data-theme="dark"]) header,
+html:not([data-theme="dark"]) .bottom{
+  background:var(--bg) !important;
+  background-color:var(--bg) !important;
+  box-shadow:none;
+}
+
+
+/* LIGHT THEME: selected bottom navigation gets a visible soft CMYK pill */
+html:not([data-theme="dark"]) .bottom .nav{
+  border:1px solid transparent;
+  transition:background .16s ease,border-color .16s ease,box-shadow .16s ease,color .16s ease;
+}
+html:not([data-theme="dark"]) .bottom .nav.active{
+  color:#172334 !important;
+  background:linear-gradient(135deg,rgba(0,174,239,.16),rgba(236,0,140,.09)) !important;
+  border-color:rgba(0,174,239,.22) !important;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.55),0 3px 10px rgba(0,85,140,.09) !important;
+}
+html:not([data-theme="dark"]) .bottom .nav.active span{
+  color:#d50078 !important;
+  transform:scale(1.09);
+  text-shadow:0 2px 8px rgba(213,0,120,.16);
+}
+html:not([data-theme="dark"]) .bottom .nav.active b,
+html:not([data-theme="dark"]) .bottom .nav.active small{
+  color:#172334 !important;
+  font-weight:900 !important;
+}
+
+
+/* Tambah jarak antara filter kategori horizontal dan kartu produk pertama */
+.filters{
+  margin-bottom:9px !important;
+  padding-bottom:12px;
+}
+
+
+/* ORDER DETAIL 2.0 — compact status highlight, section markers, readable type */
+.order-status-highlight{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:12px 13px;margin:0 0 12px;border:1px solid var(--line);
+  border-left:4px solid var(--status-accent);border-radius:14px;
+  background:linear-gradient(110deg,color-mix(in srgb,var(--status-accent) 13%,var(--card)),var(--card));
+}
+.order-status-main{display:flex;align-items:center;gap:10px;min-width:0}
+.order-status-icon{
+  flex:0 0 39px;width:39px;height:39px;display:grid;place-items:center;
+  border-radius:12px;background:color-mix(in srgb,var(--status-accent) 17%,var(--card));
+  color:var(--status-accent);
+}
+.order-status-icon svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.order-status-copy{display:flex;flex-direction:column;gap:2px;min-width:0}
+.order-status-copy small{font-size:9px;font-weight:900;letter-spacing:.8px;color:var(--muted)}
+.order-status-copy strong{font-size:13px;line-height:1.25;font-weight:900;color:var(--status-accent);overflow-wrap:anywhere}
+.order-status-copy>span{font-size:10px;line-height:1.35;color:var(--muted)}
+.order-status-id{flex:0 0 auto;max-width:38%;font-size:9px;line-height:1.3;text-align:right;color:var(--muted);font-weight:800;overflow-wrap:anywhere}
+.status-unpaid{--status-accent:#E7A52B}
+.status-process{--status-accent:#EC008C}
+.status-shipping{--status-accent:#00AEEF}
+.status-done{--status-accent:#22A06B}
+.order-detail-card{padding:13px;margin-bottom:11px}
+.order-detail-section-title{
+  display:flex;align-items:center;gap:8px;
+  margin:0 0 9px;padding:0 0 9px;
+  border-bottom:1px solid var(--line);
+  font:900 12px/1.2 Manrope,sans-serif;letter-spacing:.1px;color:var(--ink);
+}
+.order-detail-section-icon{
+  flex:0 0 29px;width:29px;height:29px;display:grid;place-items:center;
+  border-radius:9px;font-size:16px;font-weight:900;
+}
+.order-section-cyan .order-detail-section-icon{color:#00AEEF;background:#00AEEF1c}
+.order-section-pink .order-detail-section-icon{color:#EC008C;background:#EC008C1c}
+.order-section-orange .order-detail-section-icon{color:#F07824;background:#F078241c}
+.order-section-purple .order-detail-section-icon{color:#8052C7;background:#8052C71c}
+.order-detail-row{font-size:12px;padding:8px 0;gap:10px}
+.order-detail-row span{flex-basis:41%;font-size:10px;line-height:1.45}
+.order-detail-row strong{font-size:12px;line-height:1.45}
+.order-detail-row.order-detail-total{padding-top:10px;margin-top:2px;border-top:1px solid var(--line)}
+.order-detail-total span{font-weight:900;color:var(--ink)}
+.order-detail-total strong{font-size:17px;color:var(--blue)}
+.order-detail-item{gap:10px;padding:10px 0}
+.order-detail-item img{width:62px;height:62px}
+.order-detail-item b{font-size:12px;line-height:1.35}
+.order-detail-item small{font-size:10px;line-height:1.5}
+.order-detail-item strong{font-size:12px}
+.order-address-centered{text-align:center;padding:3px 3px 8px}
+.order-address-name{display:block;font-size:13px;line-height:1.4;color:var(--ink)}
+.order-address-phone{display:block;margin-top:3px;font-size:12px;font-weight:800;color:var(--muted)}
+.order-address-centered .order-detail-address{margin:9px auto 0;max-width:95%;font-size:12px;line-height:1.65;text-align:center}
+.order-address-note{
+  display:flex;align-items:flex-start;gap:7px;margin-top:8px;padding:9px 10px;
+  border:1px solid #F0782433;border-radius:10px;
+  background:rgba(240,120,36,.08);color:#E87920;
+  font-size:10px;line-height:1.5;font-weight:700;
+}
+.order-address-note>span:first-child{flex:0 0 auto;font-size:14px;line-height:1.2}
+html[data-theme="dark"] .order-address-note{color:#FFAD68;background:rgba(240,120,36,.1)}
+@media(max-width:360px){
+  .order-status-highlight{padding:10px;gap:7px}
+  .order-status-icon{width:35px;height:35px;flex-basis:35px}
+  .order-status-copy strong{font-size:12px}
+  .order-status-id{font-size:8px;max-width:34%}
+  .order-detail-row span{flex-basis:38%}
+}
+
+
+/* FLOATING WHATSAPP — positioned above the fixed three-item bottom navigation */
+.aliflam-wa-fab{
+  position:fixed;z-index:24;right:max(16px,env(safe-area-inset-right));
+  bottom:calc(82px + env(safe-area-inset-bottom));
+  width:52px;height:52px;border:0;border-radius:50%;
+  display:grid;place-items:center;background:#25D366;color:#fff;
+  box-shadow:0 5px 18px rgba(37,211,102,.34),0 2px 7px rgba(0,0,0,.18);
+  cursor:pointer;transition:transform .16s ease,box-shadow .16s ease;
+}
+.aliflam-wa-fab svg{width:30px;height:30px;display:block}
+.aliflam-wa-fab:active{transform:scale(.93)}
+.aliflam-wa-overlay{z-index:40}
+.aliflam-wa-dialog{width:min(420px,100%);padding:18px}
+.aliflam-wa-dialog .dialoghead{align-items:flex-start;margin-bottom:14px}
+.aliflam-wa-dialog .dialoghead h2{font-size:18px;line-height:1.3;margin:3px 0 0}
+.aliflam-wa-choices{display:grid;gap:8px}
+.aliflam-wa-choices button{
+  width:100%;display:flex;align-items:center;gap:11px;text-align:left;
+  border:1px solid var(--line);border-radius:13px;padding:10px 11px;
+  background:var(--soft);color:var(--ink);cursor:pointer;
+}
+.aliflam-wa-choices button:active{border-color:#25D366;background:color-mix(in srgb,#25D366 10%,var(--card))}
+.aliflam-wa-choice-icon{
+  flex:0 0 36px;width:36px;height:36px;border-radius:11px;
+  display:grid;place-items:center;background:color-mix(in srgb,#25D366 13%,var(--card));
+  color:#169B50;font-size:18px;font-weight:900;
+}
+.aliflam-wa-choices button>span:nth-child(2){display:flex;flex:1;min-width:0;flex-direction:column;gap:2px}
+.aliflam-wa-choices b{font-size:12px;font-weight:900}
+.aliflam-wa-choices small{font-size:10px;line-height:1.35;color:var(--muted)}
+.aliflam-wa-arrow{font-size:23px;color:var(--muted);line-height:1}
+.aliflam-wa-form[hidden]{display:none}
+.aliflam-wa-form{display:grid;gap:9px}
+.aliflam-wa-back{justify-self:start;border:0;background:transparent;color:var(--blue);font-size:11px;font-weight:800;padding:3px 0;cursor:pointer}
+.aliflam-wa-form label{font-size:12px;line-height:1.5;font-weight:800;color:var(--ink)}
+.aliflam-wa-form textarea{
+  width:100%;resize:vertical;min-height:86px;padding:11px 12px;
+  border:1px solid var(--line);border-radius:11px;
+  background:var(--bg);color:var(--ink);font:500 12px/1.5 inherit;
+  outline:none;
+}
+.aliflam-wa-form textarea:focus{border-color:#25D366;box-shadow:0 0 0 3px #25D36622}
+.aliflam-wa-help{font-size:10px;line-height:1.45;color:var(--muted);margin:0}
+.aliflam-wa-send{width:100%;display:flex;justify-content:center;gap:8px;align-items:center;background:#20B85A!important}
+.aliflam-wa-footnote{text-align:center;color:var(--muted);font-size:9px;margin:12px 0 0}
+@media(max-width:360px){
+ .aliflam-wa-fab{width:48px;height:48px;right:14px;bottom:calc(78px + env(safe-area-inset-bottom))}
+ .aliflam-wa-fab svg{width:27px;height:27px}
+}
+@media(prefers-reduced-motion:reduce){.aliflam-wa-fab{transition:none}}
+
+
+/* WhatsApp menu labels: uppercase, bold, slightly larger */
+.aliflam-wa-choices b{
+  font-size:14px !important;
+  line-height:1.25;
+  font-weight:900 !important;
+  letter-spacing:.25px;
+  text-transform:uppercase;
+}
+.aliflam-wa-choices small{
+  font-size:10px;
+}
+
+
+/* STARTUP LOADER THEME SUPPORT — follows the user's saved Light/Dark choice */
+.startup-loader{
+  background:
+    radial-gradient(ellipse at 16% 18%,rgba(0,174,239,.17),transparent 35%),
+    radial-gradient(ellipse at 84% 22%,rgba(236,0,140,.12),transparent 34%),
+    radial-gradient(ellipse at 76% 86%,rgba(255,214,0,.12),transparent 32%),
+    linear-gradient(145deg,#f7fbff 0%,#edf5fc 58%,#f9fbff 100%);
+  color:#172334;
+}
+.startup-loader-card{
+  background:rgba(255,255,255,.84);
+  border-color:rgba(28,75,115,.15);
+  box-shadow:0 20px 60px rgba(30,75,115,.13);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+}
+.startup-loader-title{color:#172334}
+.startup-loader-caption{color:#61758c}
+.startup-loader-track{background:rgba(30,75,115,.13)}
+.startup-loader-track:after{background:var(--print-spectrum)}
+.startup-loader-logo{
+  width:132px !important;height:132px !important;
+  margin-bottom:16px;
+}
+html[data-theme="dark"] .startup-loader{
+  background:
+    radial-gradient(ellipse at 18% 18%,rgba(0,174,239,.25),transparent 34%),
+    radial-gradient(ellipse at 82% 22%,rgba(236,0,140,.22),transparent 32%),
+    radial-gradient(ellipse at 76% 86%,rgba(255,214,0,.16),transparent 30%),
+    linear-gradient(145deg,#071a30,#102f52 58%,#0b2340);
+  color:#fff;
+}
+html[data-theme="dark"] .startup-loader-card{
+  background:rgba(255,255,255,.075);
+  border-color:rgba(255,255,255,.2);
+  box-shadow:0 20px 60px rgba(0,0,0,.2);
+}
+html[data-theme="dark"] .startup-loader-title{color:#fff}
+html[data-theme="dark"] .startup-loader-caption{color:rgba(255,255,255,.7)}
+html[data-theme="dark"] .startup-loader-track{background:rgba(255,255,255,.18)}
+@media(max-width:360px){
+  .startup-loader-logo{width:120px !important;height:120px !important}
+}
+
+
+/* ALIFLAM HEADER BRAND — bold, distinctive CMYK typography */
+.brand{gap:11px}
+.brandwords{gap:4px}
+.brandwords .brand-name{
+  display:flex;align-items:baseline;gap:4px;
+  font-family:Manrope,sans-serif;font-size:15px;line-height:1;
+  font-weight:900;letter-spacing:.65px;white-space:nowrap;
+}
+.brand-name-main{color:var(--ink)}
+.brand-name-accent{
+  color:var(--print-magenta);
+  text-shadow:1px 0 0 rgba(0,174,239,.16);
+}
+.brandwords small{
+  position:relative;display:inline-block;width:max-content;max-width:100%;
+  padding-left:1px;font-size:8px;font-weight:800;
+  letter-spacing:1.55px;line-height:1.35;
+  color:var(--muted);white-space:nowrap;
+}
+.brandwords small:after{
+  content:"";display:block;width:38px;height:2px;margin-top:4px;
+  border-radius:3px;background:var(--print-spectrum);
+}
+html[data-theme="dark"] .brand-name-main{color:#f4f8ff}
+html[data-theme="dark"] .brand-name-accent{color:#ff65bd}
+html:not([data-theme="dark"]) .brand-name-main{color:#15263d}
+html:not([data-theme="dark"]) .brand-name-accent{color:#d90083}
+@media(max-width:380px){
+  .brandwords .brand-name{font-size:13px;letter-spacing:.45px;gap:3px}
+  .brandwords small{font-size:7px;letter-spacing:1.25px}
+  .brand{gap:8px}
+}
+
+
+/* FLOATING BACK TO CATALOG — appears only after scrolling down on product detail */
+.floating-catalog-back{
+  position:fixed;top:82px;left:50%;transform:translate(-50%,-10px);
+  z-index:21;display:flex;align-items:center;justify-content:center;gap:8px;
+  min-height:39px;padding:0 18px;border:1px solid color-mix(in srgb,var(--blue) 38%,var(--line));
+  border-radius:999px;background:color-mix(in srgb,var(--card) 94%,transparent);
+  color:var(--ink);font:900 10px/1 Manrope,sans-serif;letter-spacing:.65px;
+  box-shadow:0 7px 24px rgba(0,0,0,.16);backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);white-space:nowrap;cursor:pointer;
+  opacity:0;visibility:hidden;pointer-events:none;
+  transition:opacity .2s ease,transform .2s ease,visibility .2s;
+}
+.floating-catalog-back span{font-size:17px;line-height:0;color:var(--blue)}
+.floating-catalog-back.show{
+  opacity:1;visibility:visible;pointer-events:auto;transform:translate(-50%,0);
+}
+html[data-theme="dark"] .floating-catalog-back{
+  background:rgba(17,35,57,.94);border-color:rgba(0,174,239,.4);color:#f4f8ff;
+}
+@media(max-width:560px){
+  .floating-catalog-back{top:74px;min-height:37px;padding:0 15px;font-size:9px}
+}
+@media(prefers-reduced-motion:reduce){.floating-catalog-back{transition:none}}
+
+
+/* CUSTOM SIZE LABELS — match the orange uppercase finishing label */
+#customSizeWrap .field{
+  color:#f28c00!important;
+  text-transform:uppercase;
+  font-weight:800!important;
+  letter-spacing:.35px;
+}
+
+
+/* CUSTOM WIDTH & HEIGHT INPUTS — stronger values for safer size entry */
+#customSizeWrap #customWidth,
+#customSizeWrap #customHeight{
+  font-weight:900!important;
+  font-size:15px!important;
+  letter-spacing:.2px;
+  color:var(--ink)!important;
+}
+
+
+/* CART POPUP — readable product details and unified branded popup header */
+#cartOverlay .dialog{padding:0;overflow:auto}
+.cart-popup-header{
+  position:relative;display:flex;align-items:center;gap:12px;
+  padding:16px 16px 18px;background:#142D49;color:#fff;
+  border-radius:17px 17px 0 0;margin-bottom:14px;
+}
+.cart-popup-header:after{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:3px;
+  background:var(--print-spectrum);
+}
+.cart-popup-header-icon{
+  width:44px;height:44px;flex:0 0 44px;display:grid;place-items:center;
+  border-radius:13px;background:#F28C00;
+}
+.cart-popup-header-icon svg{
+  width:25px;height:25px;fill:none;stroke:#fff;stroke-width:1.8;
+  stroke-linecap:round;stroke-linejoin:round;
+}
+.cart-popup-header-copy{flex:1;min-width:0}
+.cart-popup-header-copy h2{
+  margin:0;color:#fff;font:900 17px/1.25 Manrope,sans-serif;
+}
+.cart-popup-header-copy p{
+  margin:4px 0 0;color:#D5E2F0;font-size:11px;line-height:1.4;
+}
+.cart-popup-close{
+  width:34px;height:34px;flex:0 0 34px;border:1px solid #ffffff30;
+  border-radius:10px;background:#29435F;color:#fff;
+  font-size:22px;line-height:1;cursor:pointer;
+}
+#cartItems,#cartOverlay .subtotal,#cartOverlay .twoactions,#cartOverlay .footnote{
+  margin-left:16px;margin-right:16px;
+}
+#cartItems{padding:0 0 2px}
+#cartOverlay .cartrow{gap:11px;padding:13px 0;align-items:flex-start}
+#cartOverlay .cartrow img{width:76px;height:76px;flex:0 0 76px}
+#cartOverlay .cartrow>div{min-width:0;flex:1}
+#cartOverlay .cartrow b{font-size:13px;font-weight:900;line-height:1.4}
+#cartOverlay .cartrow p{font-size:11px;line-height:1.5;margin:5px 0;color:var(--muted)}
+#cartOverlay .cartrow p b{
+  color:#F28C00!important;font-size:13px;font-weight:900;
+}
+#cartOverlay .cartrow p:last-of-type{color:var(--ink);font-size:11px}
+#cartOverlay .cartrow p:last-of-type b{color:#F28C00!important;font-size:14px}
+#cartOverlay .cart-actions{gap:8px;margin-top:9px}
+#cartOverlay .cart-action{font-size:12px;padding:9px 14px;font-weight:850}
+#cartOverlay .subtotal{padding-top:12px;border-top:1px solid var(--line)}
+#cartOverlay .subtotal b{font-size:13px;font-weight:850}
+#cartOverlay .subtotal strong{font-size:20px;color:#F28C00!important;font-weight:900}
+#cartOverlay .twoactions{gap:9px}
+#cartOverlay .twoactions button{min-height:42px;font-size:12px;font-weight:850}
+#cartOverlay .footnote{font-size:11px;line-height:1.55;margin-top:12px;margin-bottom:16px}
+#cartOverlay .empty{font-size:13px;line-height:1.55;margin:0 16px 16px}
+@media(max-width:420px){
+  .cart-popup-header{padding:14px 13px 16px;gap:10px}
+  .cart-popup-header-icon{width:40px;height:40px;flex-basis:40px}
+  .cart-popup-header-copy h2{font-size:16px}
+  .cart-popup-header-copy p{font-size:10px}
+  #cartItems,#cartOverlay .subtotal,#cartOverlay .twoactions,#cartOverlay .footnote{margin-left:13px;margin-right:13px}
+  #cartOverlay .cartrow img{width:68px;height:68px;flex-basis:68px}
+  #cartOverlay .cartrow b{font-size:12px}
+}
+
+
+.java-shipping-note{
+  margin:0 0 14px;padding:10px 12px;border-radius:10px;
+  background:rgba(242,140,0,.10);border:1px solid rgba(242,140,0,.28);
+  color:#C87500;font-size:12px;font-weight:650;line-height:1.55;
+}
+.java-shipping-note strong{font-weight:900;color:#E07800}
+
+
+/* OUTSIDE JAVA SHIPPING OPTIONS — two clear customer paths */
+#outsideJavaShopeeOverlay .dialog{padding:16px}
+.outside-java-step{padding:13px;border:1px solid var(--line);border-radius:13px;background:var(--soft)}
+.outside-java-step-title{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+.outside-java-step-title>span{
+  display:grid;place-items:center;width:25px;height:25px;flex:0 0 25px;
+  border-radius:8px;background:#F28C00;color:#fff;font-size:13px;font-weight:900
+}
+.outside-java-step-title strong{font-size:13px;font-weight:900;letter-spacing:.35px;color:var(--ink)}
+.outside-java-step>p{margin:0 0 11px;color:var(--muted);font-size:12px;line-height:1.55}
+.outside-java-divider{display:flex;align-items:center;gap:10px;margin:12px 0;color:var(--muted);font-size:10px;font-weight:900;letter-spacing:1px}
+.outside-java-divider:before,.outside-java-divider:after{content:"";height:1px;flex:1;background:var(--line)}
+.outside-java-location-label{display:block;margin:2px 0 6px;color:#F28C00;font-size:10px;font-weight:900;letter-spacing:.5px}
+#outsideJavaLocation{
+  display:block;width:100%;min-height:76px;resize:vertical;padding:11px 12px;
+  border:1px solid var(--line);border-radius:10px;background:var(--card);
+  color:var(--ink);font:600 12px/1.5 Manrope,sans-serif;outline:none
+}
+#outsideJavaLocation:focus{border-color:var(--blue);box-shadow:0 0 0 3px color-mix(in srgb,var(--blue) 15%,transparent)}
+.outside-java-wa-button{
+  display:flex;align-items:center;justify-content:center;width:100%;min-height:43px;
+  margin-top:10px;padding:10px 14px;border:0;border-radius:10px;
+  background:#16A34A;color:#fff;font:900 11px/1.3 Manrope,sans-serif;
+  letter-spacing:.45px;cursor:pointer
+}
+.outside-java-close{margin-top:12px}
+@media(max-width:420px){#outsideJavaShopeeOverlay .dialog{padding:13px}.outside-java-step{padding:11px}}
+
+
+/* Custom inline validation — avoid native browser required tooltip */
+.outside-java-location-error{margin:6px 0 0;color:#dc2626;font-size:11px;font-weight:800;line-height:1.45}
+#outsideJavaLocation.invalid{border-color:#dc2626;box-shadow:0 0 0 2px rgba(220,38,38,.12)}
+\n</style><script>
+(function(){
+  try {
+    var savedTheme = localStorage.getItem('aliflam-theme');
+    if (savedTheme === 'dark' || savedTheme === 'light') {
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    }
+  } catch (e) {}
+})();
+</script>
+
+</head><body><div class="startup-loader" id="startupLoader" role="status" aria-live="polite" aria-label="Memuat Aliflam Printing"><div class="startup-loader-card"><img class="startup-loader-logo" src="https://aliflamprinting-gif.github.io/aliflam-web-order/assets/products/LOGO.webp" alt=""/><div class="startup-loader-title">Menyiapkan Aliflam Printing</div><div class="startup-loader-caption">Sebentar ya, kami siapkan katalog dan gambar untuk kamu.</div><div class="startup-loader-track" aria-hidden="true"></div></div></div><header><div class="wrap header"><a class="brand" href="#" onclick="navigate('home');return false"><img alt="Logo Aliflam Printing" id="logo" src="https://aliflamprinting-gif.github.io/aliflam-web-order/assets/products/LOGO.webp"/><span class="brandwords"><b class="brand-name"><span class="brand-name-main">ALIFLAM</span><span class="brand-name-accent">PRINTING</span></b><small>DESAIN &amp; PERCETAKAN</small></span></a><div class="tools"><button class="iconbtn" id="themeBtn" title="Ganti tema">☾</button><button class="iconbtn" onclick="openCart()" title="Keranjang">🛒 <span class="cartcount" id="cartCount">0</span></button></div></div></header>
+<main class="wrap"><section class="page active" id="homePage"><section class="home-hero" aria-label="Tentang Aliflam Printing">
+  <div class="home-hero-copy">
+    <div class="home-hero-kicker"><span class="home-hero-kicker-dot"></span> LAYANAN PERCETAKAN ONLINE</div>
+    <h1>Solusi Cetak <span class="hero-free-design">GRATIS DESAIN &amp; REVISI</span> <span class="hero-subheadline">Untuk Kebutuhan Bisnis, Acara atau Promosimu</span></h1>
+    <p>Kami membantu kamu mencetak berbagai kebutuhan promosi dan usaha, mulai dari banner, spanduk, hingga berbagai produk cetak lainnya.</p>
+    <p class="home-hero-support">Pesan lebih mudah secara online, pilih produk sesuai kebutuhan, dan pantau pesanan dalam satu tempat.</p>
+    <div class="home-hero-actions">
+      <button class="home-hero-primary" type="button" onclick="navigate('products')">Jelajahi Katalog <span aria-hidden="true">→</span></button>
+      <button class="home-hero-secondary" type="button" onclick="navigate('orders')">Lacak Pesanan</button>
+    </div>
+  </div>
+  <div class="home-hero-points" aria-label="Keunggulan layanan">
+    <span><b>✓</b> Pemesanan online</span>
+    <span><b>✓</b> Pilihan produk &amp; variasi</span>
+    <span><b>✓</b> Pantau pesanan</span>
+  </div>
+</section><label class="search"><span>⌕</span><input autocomplete="off" id="homeSearch" placeholder="Cari banner, stiker, brosur..."/></label><div class="sectionhead sectionhead-cmyk section-tone-cyan"><div class="section-title-group"><span class="section-icon" aria-hidden="true">▦</span><div><h2>Pilih Kategori</h2><p>Temukan produk lebih cepat.</p></div></div><button class="link" onclick="navigate(&quot;products&quot;)">Semua kategori →</button></div><div class="categories" id="homeCats"></div><div class="sectionhead sectionhead-cmyk section-tone-magenta"><div class="section-title-group"><span class="section-icon" aria-hidden="true">✦</span><div><h2>Produk Pilihan</h2><p>Produk dan harga asli dari katalog WEB.</p></div></div><button class="link" onclick="navigate(&quot;products&quot;)">Lihat semua →</button></div><div class="products" id="homeProducts"></div><div class="sectionhead sectionhead-cmyk section-tone-yellow home-benefits-head"><div class="section-title-group"><span class="section-icon" aria-hidden="true">★</span><div><div class="eyebrow">PENGALAMAN BELANJA LEBIH MUDAH</div><h2>Kenapa Aliflam?</h2><p>Semua kebutuhan cetakmu, lebih praktis dalam satu tempat.</p></div></div></div><div class="benefits home-benefits"><article class="benefit"><div class="home-benefit-icon" aria-hidden="true">↗</div><b>Pemesanan Praktis</b><p>Pilih produk dan lakukan pemesanan langsung melalui website.</p></article><article class="benefit"><div class="home-benefit-icon" aria-hidden="true">▦</div><b>Pilihan Variasi</b><p>Sesuaikan bahan, ukuran, finishing, dan jumlah dari pilihan yang tersedia.</p></article><article class="benefit"><div class="home-benefit-icon" aria-hidden="true">✦</div><b>Bantuan Desain</b><p>Tersedia layanan desain dan revisi sesuai ketentuan produk.</p></article></div><footer>© 2026 Aliflam Printing · Desain &amp; Percetakan</footer></section>
+<section class="page" id="productsPage"><div class="intro intro-cmyk section-tone-orange"><div class="intro-title-group"><span class="section-icon" aria-hidden="true">▤</span><div><div class="eyebrow">KATALOG PRODUK</div><h1>Semua Produk</h1><p>Pilih kategori dan produk yang kamu cari.</p></div></div></div><label class="search"><span>⌕</span><input autocomplete="off" id="productSearch" placeholder="Cari nama produk..."/></label><div class="filters" id="filters"></div><div class="products" id="products"></div><p class="footnote" id="productCount"></p></section>
+<section class="page" id="productDetailPage"><div class="detailpage"><div class="detailvisual"><img alt="Foto produk" class="detailimage" id="detailImage"/></div><div class="detailcontent"><div class="tag" id="detailCategory"></div><h1 id="detailTitle">Detail Produk</h1><p class="muted tiny">Pilih variasi produk sebelum menambahkan ke keranjang.</p><div id="variation1Wrap"><label class="field">Pilih Bahan</label><div class="variation-options" id="variation1Options"></div><div aria-live="polite" class="variation-hint" id="variation1Hint"></div></div><div id="sizeVariationWrap"></div><div id="variation3Wrap"><div class="finishing-label-row"><label class="field">Pilih Finishing</label><button class="finishing-info-btn" id="finishingInfoBtn" type="button" onclick="openFinishingInfo()">LIHAT CONTOH</button></div><div class="variation-options" id="variation3Options"></div><div aria-live="polite" class="variation-hint" id="variation3Hint"></div></div>
 <div id="customSizeWrap" style="display:none"><div class="custom-size-grid"><div><label class="field" for="customWidth">Lebar (CM)</label><input class="input" id="customWidth" type="number" min="1" step="1" placeholder="Contoh: 200" oninput="updateDetail()"></div><div><label class="field" for="customHeight">Tinggi (CM)</label><input class="input" id="customHeight" type="number" min="1" step="1" placeholder="Contoh: 100" oninput="updateDetail()"></div></div></div>
 <label class="field" id="qtyLabel" for="qty">Jumlah</label><div class="qtyrow"><button aria-label="Kurangi jumlah" class="qtybtn" onclick="changeQty(-1)" type="button">−</button><input class="input" id="qty" min="1" oninput="updateDetail()" step="1" type="number" value="1"/><button aria-label="Tambah jumlah" class="qtybtn" onclick="changeQty(1)" type="button">+</button><span class="muted tiny" id="weightLabel"></span></div><div class="detailtotal"><div class="muted tiny">Total harga produk</div><strong id="detailPrice"></strong><div class="footnote" id="detailNote"></div></div><button class="primary full" id="addButton" onclick="addCart()">+ Tambah ke Keranjang</button><a class="shopee" href="#" id="shopeeButton" rel="noopener" target="_blank">ORDER VIA SHOPEE ↗</a></div></div><footer>© 2026 Aliflam Printing · Desain &amp; Percetakan</footer></section>
 
 <section class="page" id="ordersPage">
-  <div class="intro">
-    <div class="eyebrow">RIWAYAT TRANSAKSI</div>
-    <h1>Pesanan Saya</h1>
-    <p>Riwayat pesanan yang tersimpan di perangkat ini.</p>
+  <div class="intro intro-cmyk section-tone-purple">
+    <div class="intro-title-group"><span class="section-icon" aria-hidden="true">▧</span><div>
+      <div class="eyebrow">RIWAYAT TRANSAKSI</div>
+      <h1>Pesanan Saya</h1>
+      <p>Perbarui status pesanan langsung dari sistem Aliflam.</p>
+    </div></div>
   </div>
-  <label class="search" style="margin-top:12px"><span>⌕</span><input id="myOrderSearch" autocomplete="off" placeholder="Cari nomor pesanan atau nama produk..." oninput="renderMyOrders()"/></label>
-  <div id="myOrdersResult" style="margin-top:16px"></div>
-  <p class="footnote">Riwayat ini tersimpan di browser/perangkat yang kamu gunakan. Jika data browser dihapus atau berganti perangkat, riwayat lokal mungkin tidak tersedia.</p>
+  <div class="customer-order-tabs" id="customerOrderTabs" role="tablist" aria-label="Filter status pesanan">
+    <button class="customer-order-tab active order-tab-unpaid" type="button" role="tab" aria-selected="true" data-order-tab="BELUM BAYAR" onclick="setMyOrderTab('BELUM BAYAR')"><i class="order-tab-count" id="orderTabCountUnpaid">0</i><span class="order-tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3.5 7.5h17v11h-17z"/><path d="M3.5 9.5h17M7 4.5h10M7 13h4m-4 3h7"/></svg></span><b>BELUM BAYAR</b></button>
+    <button class="customer-order-tab order-tab-process" type="button" role="tab" aria-selected="false" data-order-tab="SEDANG DI PROSES" onclick="setMyOrderTab('SEDANG DI PROSES')"><i class="order-tab-count" id="orderTabCountProcess">0</i><span class="order-tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3.5 14 5l2.5-.2.8 2.3 2.2 1.2-.7 2.4.7 2.4-2.2 1.2-.8 2.3L14 16.5 12 18l-2-1.5-2.5.2-.8-2.3-2.2-1.2.7-2.4-.7-2.4 2.2-1.2.8-2.3L10 5z"/><circle cx="12" cy="10.8" r="3"/></svg></span><b>SEDANG DI PROSES</b></button>
+    <button class="customer-order-tab order-tab-shipping" type="button" role="tab" aria-selected="false" data-order-tab="SEDANG DIKIRIM" onclick="setMyOrderTab('SEDANG DIKIRIM')"><i class="order-tab-count" id="orderTabCountShipping">0</i><span class="order-tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2.5 6.5h12v10h-12zM14.5 10h4l3 3v3.5h-7z"/><circle cx="7" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><path d="M14.5 13h6"/></svg></span><b>SEDANG DIKIRIM</b></button>
+    <button class="customer-order-tab order-tab-done" type="button" role="tab" aria-selected="false" data-order-tab="SELESAI" onclick="setMyOrderTab('SELESAI')"><i class="order-tab-count" id="orderTabCountDone">0</i><span class="order-tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m7.5 12.2 3 3 6-6.2"/></svg></span><b>SELESAI</b></button>
+  </div>
+  <div class="customer-order-tools">
+    <label class="search"><span>⌕</span><input id="myOrderSearch" autocomplete="off" placeholder="Cari nomor pesanan atau nama produk..." oninput="renderMyOrders()"/></label>
+    <button class="customer-order-refresh" id="refreshMyOrdersBtn" type="button" onclick="syncCustomerOrderStatuses(true)" aria-label="Perbarui status pesanan" title="Perbarui status pesanan">↻</button>
+  </div>
+  <div class="customer-order-sync" id="myOrderSyncMessage" aria-live="polite">Status akan diperbarui dari database saat halaman dibuka.</div>
+  <div id="myOrdersResult" style="margin-top:12px"></div>
+  <p class="footnote">Daftar pesanan tersimpan di perangkat ini. Status terbaru disinkronkan dari database Aliflam.</p>
 </section>
 <section class="page" id="orderDetailPage">
   <div class="order-detail-top">
@@ -354,7 +1444,16 @@ body.modal-open{overflow:hidden!important;touch-action:none}
 
 </main>
 <nav class="bottom"><div class="bottominner"><button class="nav active" data-nav="home" onclick="navigate('home')"><span>⌂</span>Beranda</button><button class="nav" data-nav="products" onclick="navigate(&quot;products&quot;)"><span>▦</span>Produk</button><button class="nav" data-nav="orders" onclick="navigate('orders')"><span>▤</span>Pesanan Saya</button></div></nav>
-<div class="overlay" id="cartOverlay" onclick="if(event.target===this)closeOverlay('cartOverlay')"><div class="dialog"><div class="dialoghead"><h2>Keranjang Belanja</h2><button class="close" onclick="closeOverlay('cartOverlay')">×</button></div><div id="cartItems"></div><div class="subtotal"><b>Subtotal</b><strong id="cartTotal">Rp0</strong></div><div class="twoactions"><button class="secondary" onclick="closeOverlay('cartOverlay');navigate('products')">Tambah Produk</button><button class="primary" onclick="checkoutInfo()">Lanjut Checkout</button></div><p class="footnote">Keranjang tersimpan di perangkat ini. Riwayat pesanan tersimpan setelah checkout berhasil.</p></div></div>
+<div class="overlay" id="cartOverlay" onclick="if(event.target===this)closeOverlay('cartOverlay')"><div class="dialog"><div class="cart-popup-header">
+  <div class="cart-popup-header-icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24"><path d="M3 4h2l2.1 11.2a2 2 0 0 0 2 1.6h8.8a2 2 0 0 0 2-1.6L21 8H6"></path><circle cx="10" cy="20" r="1.4"></circle><circle cx="18" cy="20" r="1.4"></circle></svg>
+  </div>
+  <div class="cart-popup-header-copy">
+    <h2>Keranjang Belanja</h2>
+    <p>Periksa produk sebelum melanjutkan pesanan</p>
+  </div>
+  <button class="cart-popup-close" type="button" aria-label="Tutup keranjang" onclick="closeOverlay('cartOverlay')">×</button>
+</div><div id="cartItems"></div><div class="subtotal"><b>Subtotal</b><strong id="cartTotal">Rp0</strong></div><div class="twoactions"><button class="secondary" onclick="closeOverlay('cartOverlay');navigate('products')">Tambah Produk</button><button class="primary" onclick="checkoutInfo()">Lanjut Checkout</button></div><p class="footnote">Keranjang tersimpan di perangkat ini. Riwayat pesanan tersimpan setelah checkout berhasil.</p></div></div>
 <div class="overlay" id="checkoutOverlay"><div class="dialog checkout-dialog"><div class="checkout-header">
   <div class="checkout-header-icon" aria-hidden="true">
     <svg viewBox="0 0 24 24"><path d="M6 7h12l1.2 13H4.8L6 7Z"></path><path d="M9 8V6a3 3 0 0 1 6 0v2"></path><path d="M9 12h6"></path></svg>
@@ -408,7 +1507,8 @@ body.modal-open{overflow:hidden!important;touch-action:none}
 <div class="overlay" id="javaShippingGateOverlay" style="z-index:45" aria-hidden="true">
   <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="javaShippingGateTitle" style="width:min(460px,100%)">
     <div class="dialoghead"><h2 id="javaShippingGateTitle">KONFIRMASI WILAYAH PENGIRIMAN</h2></div>
-    <p style="margin:0 0 14px">Apakah alamat pengiriman kamu berada di Pulau Jawa?</p>
+    <p style="margin:0 0 7px">Apakah alamat pengiriman kamu berada di Pulau Jawa?</p>
+    <p class="java-shipping-note">Jika kamu tinggal di Sumatera, Kalimantan, Sulawesi, Papua, atau wilayah lain di luar Pulau Jawa, silakan pilih <strong>TIDAK</strong>.</p>
     <div style="display:grid;gap:9px">
       <button class="primary full" type="button" onclick="confirmJavaShippingGate(true)">YA, SAYA DI PULAU JAWA</button>
       <button class="secondary full" type="button" style="background:#dc2626;border-color:#dc2626;color:#fff" onclick="confirmJavaShippingGate(false)">TIDAK, SAYA DI LUAR PULAU JAWA</button>
@@ -418,9 +1518,21 @@ body.modal-open{overflow:hidden!important;touch-action:none}
 <div class="overlay" id="outsideJavaShopeeOverlay" style="z-index:46" aria-hidden="true">
   <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="outsideJavaShopeeTitle" style="width:min(500px,100%)">
     <div class="dialoghead"><h2 id="outsideJavaShopeeTitle">INFORMASI PENGIRIMAN</h2><button class="close" type="button" aria-label="Tutup" onclick="closeOutsideJavaShopeePopup()">×</button></div>
-    <p style="margin:0 0 12px;line-height:1.65">Mohon maaf, saat ini kami belum bisa menerima orderan selain pulau jawa. Silahkan order di shopee dan klik link dibawah ini untuk melanjutkan pesanan</p>
-    <div id="outsideJavaShopeeProducts" style="display:grid;gap:9px"></div>
-    <button class="secondary full" type="button" style="margin-top:15px" onclick="closeOutsideJavaShopeePopup()">Tutup</button>
+    <div class="outside-java-step">
+      <div class="outside-java-step-title"><span>1</span><strong>ORDER VIA SHOPEE</strong></div>
+      <p>Silakan order di Shopee dan klik halaman produk di bawah ini untuk melanjutkan pesanan.</p>
+      <div id="outsideJavaShopeeProducts" style="display:grid;gap:9px"></div>
+    </div>
+    <div class="outside-java-divider"><span>ATAU</span></div>
+    <div class="outside-java-step outside-java-admin-step">
+      <div class="outside-java-step-title"><span>2</span><strong>KONFIRMASI ADMIN</strong></div>
+      <p>Ingin cek ongkir ke daerah kamu terlebih dahulu? Masukkan kecamatan, alamat, atau link lokasi Google Maps.</p>
+      <label class="outside-java-location-label" for="outsideJavaLocation">LOKASI PENGIRIMAN KAMU</label>
+      <textarea id="outsideJavaLocation" rows="3" placeholder="Contoh: Kecamatan Medan Johor, Kota Medan atau tempel link Google Maps..." oninput="clearOutsideJavaLocationError()"></textarea>
+      <p id="outsideJavaLocationError" class="outside-java-location-error" role="alert" aria-live="polite" hidden></p>
+      <button class="outside-java-wa-button" type="button" onclick="contactAdminForOutsideJavaShipping()">LANJUTKAN KE WHATSAPP</button>
+    </div>
+    <button class="secondary full outside-java-close" type="button" onclick="closeOutsideJavaShopeePopup()">Tutup</button>
   </div>
 </div>
 <div class="overlay" id="manualAddressOverlay" style="z-index:40" aria-hidden="true"><div class="dialog manual-address-dialog" role="dialog" aria-modal="true" aria-labelledby="manualAddressTitle">
@@ -430,7 +1542,7 @@ body.modal-open{overflow:hidden!important;touch-action:none}
 </div></div>
 <div class="overlay" id="pasteAddressOverlay" style="z-index:40" aria-hidden="true"><div class="dialog paste-address-dialog" role="dialog" aria-modal="true" aria-labelledby="pasteAddressTitle">
   <div class="dialoghead"><h2 id="pasteAddressTitle">TEMPELKAN ALAMAT</h2><button class="close" type="button" aria-label="Tutup" onclick="closePasteAddressPopup()">×</button></div>
-  <button class="paste-clipboard-btn" type="button" onclick="pasteAddressFromClipboard()">📋 TEMPEL ALAMAT</button>
+  <button class="paste-clipboard-btn" type="button" onclick="pasteAddressFromClipboard()">📋 KLIK UNTUK TEMPEL ALAMAT</button>
   <label class="field" for="checkoutPastedAddress">TEKS ALAMAT</label>
   <textarea class="input" id="checkoutPastedAddress" rows="6" placeholder="Tempel alamat lengkap di sini..."></textarea>
   <p class="paste-address-stage-note">Pemeriksaan dan pengenalan otomatis alamat akan dilanjutkan pada tahap berikutnya.</p>
@@ -439,8 +1551,8 @@ body.modal-open{overflow:hidden!important;touch-action:none}
 
 <div class="overlay" id="finishingInfoOverlay" onclick="if(event.target===this)closeFinishingInfo()" aria-hidden="true">
   <div class="finishing-info-dialog" role="dialog" aria-modal="true" aria-label="Penjelasan finishing banner">
-    <button class="close" type="button" aria-label="Tutup penjelasan finishing" onclick="closeFinishingInfo()">×</button>
     <img class="finishing-info-image" src="https://aliflamprinting-gif.github.io/aliflam-web-order/assets/PENJELASAN_FINISHING.webp" alt="Penjelasan finishing banner: lipat saja, ring tiap sudut, ring permeter, dan selongsong" />
+    <button class="finishing-info-confirm" type="button" onclick="closeFinishingInfo()">OKE, SIAP</button>
   </div>
 </div>
 
@@ -469,6 +1581,7 @@ document.addEventListener('keydown', function(event){
 const API='https://script.google.com/macros/s/AKfycbzzis01Cv-kWurEimDySmksL_6bvASB_sQop0X64kILzKULHWM1E2Ci7lX2PFctUA5G1w/exec';
 const IMAGE_BASE='https://aliflamprinting-gif.github.io/aliflam-web-order/assets/products/';
 let VARIANTS=[],groups=[],filter='Semua',selected=null,cart=[],localOrders=[],savedBuyer={},editingCartVid=null,selectedO1=null,selectedO2=null,selectedO3=null,selectedSizeChoices={},selectedCustom=false,detailReturnPage='products';
+let activeMyOrderTab='BELUM BAYAR',myOrderSyncBusy=false;
 const CART_STORAGE_KEY='aliflam-live-cart';
 const ORDERS_STORAGE_KEY='aliflam-local-orders-v1';
 const BUYER_STORAGE_KEY='aliflam-buyer-data-v1';
@@ -654,16 +1767,86 @@ function retryOrderProductImage(image){
   placeholder.textContent='▧';
   image.replaceWith(placeholder);
 }
+function myOrderTabForStatus(status){
+  const value=normalizeOrderStatus(status);
+  if(['BELUM BAYAR','BARU','CEK PEMBAYARAN','MENUNGGU PEMBAYARAN','DIBATALKAN'].includes(value))return 'BELUM BAYAR';
+  if(['SEDANG DI PROSES','DIPROSES','MENUNGGU DESAIN','PRODUKSI'].includes(value))return 'SEDANG DI PROSES';
+  if(value==='SEDANG DIKIRIM')return 'SEDANG DIKIRIM';
+  if(value==='SELESAI')return 'SELESAI';
+  return 'BELUM BAYAR';
+}
+function setMyOrderTab(tab){
+  const allowed=['BELUM BAYAR','SEDANG DI PROSES','SEDANG DIKIRIM','SELESAI'];
+  if(!allowed.includes(tab))return;
+  activeMyOrderTab=tab;
+  renderMyOrders();
+}
+function renderMyOrderTabCounts(){
+  const counts={'BELUM BAYAR':0,'SEDANG DI PROSES':0,'SEDANG DIKIRIM':0,'SELESAI':0};
+  localOrders.forEach(order=>{counts[myOrderTabForStatus(order.status)]++});
+  const ids={'BELUM BAYAR':'orderTabCountUnpaid','SEDANG DI PROSES':'orderTabCountProcess','SEDANG DIKIRIM':'orderTabCountShipping','SELESAI':'orderTabCountDone'};
+  Object.entries(ids).forEach(([status,id])=>{const el=document.getElementById(id);if(el)el.textContent=counts[status]});
+  document.querySelectorAll('.customer-order-tab').forEach(button=>{
+    const active=button.dataset.orderTab===activeMyOrderTab;
+    button.classList.toggle('active',active);
+    button.setAttribute('aria-selected',String(active));
+  });
+}
+async function syncCustomerOrderStatuses(showFeedback=false){
+  if(myOrderSyncBusy)return;
+  if(!localOrders.length){renderMyOrders();return}
+  const phone=String(savedBuyer?.customer?.whatsapp||localOrders.find(o=>o.customer?.whatsapp)?.customer?.whatsapp||'').trim();
+  if(!phone){
+    const message=document.getElementById('myOrderSyncMessage');
+    if(message)message.textContent='Nomor WhatsApp pembeli tidak ditemukan. Status lokal tetap ditampilkan.';
+    renderMyOrders();return;
+  }
+  myOrderSyncBusy=true;
+  const button=document.getElementById('refreshMyOrdersBtn');
+  const message=document.getElementById('myOrderSyncMessage');
+  if(button){button.disabled=true;button.classList.add('is-loading')}
+  if(message)message.textContent='Memperbarui status pesanan...';
+  try{
+    const response=await api('lookupCustomerOrders',{whatsapp:phone});
+    if(!response.ok)throw new Error(response.error||'Status pesanan gagal diperbarui.');
+    const remoteOrders=Array.isArray(response.data?.orders)?response.data.orders:[];
+    const remoteById=new Map(remoteOrders.map(order=>[String(order.orderId||'').toUpperCase(),order]));
+    let changed=false;
+    localOrders=localOrders.map(local=>{
+      const remote=remoteById.get(String(local.orderId||'').toUpperCase());
+      if(!remote)return local;
+      const nextStatus=normalizeOrderStatus(remote.status||local.status);
+      const nextProgress=String(remote.progress??local.progress??'');
+      const nextPayment=String(remote.paymentStatus??local.paymentStatus??'');
+      if(nextStatus!==normalizeOrderStatus(local.status)||nextProgress!==String(local.progress??'')||nextPayment!==String(local.paymentStatus??''))changed=true;
+      return {...local,status:nextStatus,progress:nextProgress,paymentStatus:nextPayment};
+    });
+    if(changed)saveLocalOrders();
+    if(message)message.textContent='Status tersinkron dari database · '+new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+    renderMyOrders();
+  }catch(error){
+    if(message)message.textContent='Belum bisa memperbarui status. Menampilkan data tersimpan di perangkat.';
+    if(showFeedback)showNotice(error.message||'Status pesanan gagal diperbarui.','Sinkronisasi Pesanan');
+    renderMyOrders();
+  }finally{
+    myOrderSyncBusy=false;
+    if(button){button.disabled=false;button.classList.remove('is-loading')}
+  }
+}
 function renderMyOrders(){
   const out=document.getElementById('myOrdersResult');
+  if(!out)return;
+  renderMyOrderTabCounts();
   const query=(document.getElementById('myOrderSearch')?.value||'').trim().toLowerCase();
-  const filtered=localOrders.filter(o=>{
+  const tabOrders=localOrders.filter(o=>myOrderTabForStatus(o.status)===activeMyOrderTab);
+  const filtered=tabOrders.filter(o=>{
     const haystack=[o.orderId,...(o.items||[]).flatMap(it=>[it.productName,it.sku])].join(' ').toLowerCase();
     return !query||haystack.includes(query);
   });
   if(!localOrders.length){out.innerHTML='<div class="empty"><strong>Belum ada pesanan tersimpan.</strong><p class="tiny">Pesanan yang berhasil dibuat dari perangkat ini akan muncul di sini.</p><button class="primary" onclick="navigate(&quot;products&quot;)">Mulai Belanja</button></div>';return}
+  if(!tabOrders.length){out.innerHTML='<div class="empty"><strong>Belum ada pesanan di kategori ini.</strong><p class="tiny">Pesanan akan muncul di sini setelah statusnya diperbarui.</p></div>';return}
   if(!filtered.length){out.innerHTML='<div class="empty">Pesanan tidak ditemukan. Coba kata kunci lain.</div>';return}
-  out.innerHTML='<div class="sectionhead"><div><h2>'+filtered.length+' Pesanan Tersimpan</h2><p>Data riwayat berasal dari penyimpanan browser ini.</p></div></div>'+filtered.map(o=>{
+  out.innerHTML='<div class="sectionhead"><div><h2>'+filtered.length+' Pesanan</h2><p>Menampilkan pesanan '+esc(activeMyOrderTab.toLowerCase())+'.</p></div></div>'+filtered.map(o=>{
     const items=(o.items||[]).map(it=>{
       return '<div class="order-history-product">'+renderOrderProductImage(it)+'<div class="order-history-product-info"><b>'+esc(it.productName||it.name||it.sku||'Produk')+'</b><small>'+esc(it.sku||'')+' · Jumlah '+Number(it.qty||0)+'</small></div><strong class="order-history-product-price">'+money(it.lineTotal||0)+'</strong></div>';
     }).join('');
@@ -730,11 +1913,26 @@ function renderMyOrderDetail(orderId,verifiedOrder=null){
   if(!order){renderOrderPinGate(orderId);return}
   heading.textContent=order.orderId||'Detail Pesanan';
   const address=order.address||{},customer=order.customer||{};
+  const status=normalizeOrderStatus(order.status);
+  const statusMeta=(()=>{
+    if(['BELUM BAYAR','BARU','CEK PEMBAYARAN','MENUNGGU PEMBAYARAN','DIBATALKAN'].includes(status))return {tone:'unpaid',icon:'<path d="M3 7h18v13H3z"/><path d="M3 10h18M7 4h10M7 14h4"/>',hint:'Menunggu pembayaran atau konfirmasi pembayaran'};
+    if(['SEDANG DI PROSES','DIPROSES','MENUNGGU DESAIN','PRODUKSI'].includes(status))return {tone:'process',icon:'<path d="M12 3.5 14 5l2.5-.2.8 2.3 2.2 1.2-.7 2.4.7 2.4-2.2 1.2-.8 2.3L14 16.5 12 18l-2-1.5-2.5.2-.8-2.3-2.2-1.2.7-2.4-.7-2.4 2.2-1.2.8-2.3L10 5z"/><circle cx="12" cy="10.8" r="3"/>',hint:'Pesanan sedang dikerjakan oleh tim Aliflam'};
+    if(status==='SEDANG DIKIRIM')return {tone:'shipping',icon:'<path d="M2.5 6.5h12v10h-12zM14.5 10h4l3 3v3.5h-7z"/><circle cx="7" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><path d="M14.5 13h6"/>',hint:'Pesanan sedang dalam perjalanan menuju alamatmu'};
+    if(status==='SELESAI')return {tone:'done',icon:'<circle cx="12" cy="12" r="9"/><path d="m7.5 12.2 3 3 6-6.2"/>',hint:'Pesanan telah selesai'};
+    return {tone:'process',icon:'<path d="M12 3.5 14 5l2.5-.2.8 2.3 2.2 1.2-.7 2.4.7 2.4-2.2 1.2-.8 2.3L14 16.5 12 18l-2-1.5-2.5.2-.8-2.3-2.2-1.2.7-2.4-.7-2.4 2.2-1.2.8-2.3L10 5z"/><circle cx="12" cy="10.8" r="3"/>',hint:'Status pesanan diperbarui oleh Aliflam'};
+  })();
+  const sectionTitle=(icon,title,tone)=>'<h3 class="order-detail-section-title order-section-'+tone+'"><span class="order-detail-section-icon" aria-hidden="true">'+icon+'</span><b>'+title+'</b></h3>';
   const items=(order.items||[]).map((it,i)=>{
     return '<div class="order-detail-item">'+renderOrderProductImage(it)+'<div><b>'+esc(it.productName||it.name||'Produk')+'</b><small>'+esc(it.detail||it.sku||'-')+'<br>Jumlah: '+Number(it.qty||0)+'</small></div><strong>'+money(it.lineTotal||0)+'</strong></div>';
   }).join('');
   const fullAddress=[address.fullAddress,address.reference,address.village,address.district,address.city,address.province,address.postalCode].filter(Boolean).join(', ');
-  out.innerHTML='<div class="panel order-detail-card"><h3>INFORMASI PESANAN</h3><div class="order-detail-row"><span>NO PESANAN</span><strong>'+esc(order.orderId||'-')+'</strong></div><div class="order-detail-row"><span>TANGGAL PESANAN</span><strong>'+esc(formatOrderDate(order.orderDate))+'</strong></div><div class="order-detail-row"><span>STATUS PESANAN</span><strong style="color:var(--blue)">'+esc(normalizeOrderStatus(order.status))+'</strong></div><div class="order-detail-row"><span>PROGRES PRODUKSI</span><strong>'+esc(order.progress||'MENUNGGU KONFIRMASI')+'</strong></div><div class="order-detail-row"><span>STATUS PEMBAYARAN</span><strong>'+esc(order.paymentStatus||'BELUM LUNAS')+'</strong></div></div><div class="panel order-detail-card"><h3>PRODUK YANG DIPESAN</h3>'+items+'</div><div class="panel order-detail-card"><h3>RINGKASAN PEMBAYARAN</h3><div class="order-detail-row"><span>HARGA BARANG</span><strong>'+money(order.subtotal||0)+'</strong></div><div class="order-detail-row"><span>HARGA ONGKIR</span><strong>'+money(order.shippingCost||0)+'</strong></div><div class="order-detail-row"><span>TOTAL PEMBAYARAN</span><strong style="color:var(--blue);font-size:15px">'+money(order.grandTotal||0)+'</strong></div><div class="order-detail-row"><span>METODE PEMBAYARAN</span><strong>'+esc(order.paymentMethod||'-')+'</strong></div></div><div class="panel order-detail-card"><h3>ALAMAT PENGIRIMAN</h3><div class="order-detail-row"><span>NAMA PENERIMA</span><strong>'+esc(address.recipientName||'-')+'</strong></div><div class="order-detail-row"><span>NO HP PENERIMA</span><strong>'+esc(address.phone||'-')+'</strong></div><div class="order-detail-address">'+esc(fullAddress||'-')+'</div></div>'+(order.notes?'<div class="panel order-detail-card"><h3>CATATAN PESANAN</h3><div class="order-detail-address">'+esc(order.notes)+'</div></div>':'');
+  out.innerHTML=
+    '<div class="order-status-highlight status-'+statusMeta.tone+'"><div class="order-status-main"><span class="order-status-icon"><svg viewBox="0 0 24 24" aria-hidden="true">'+statusMeta.icon+'</svg></span><div class="order-status-copy"><small>STATUS PESANAN</small><strong>'+esc(status)+'</strong><span>'+esc(statusMeta.hint)+'</span></div></div><div class="order-status-id">'+esc(order.orderId||'-')+'</div></div>'+
+    '<div class="panel order-detail-card">'+sectionTitle("▤","INFORMASI PESANAN","cyan")+'<div class="order-detail-row"><span>NO PESANAN</span><strong>'+esc(order.orderId||'-')+'</strong></div><div class="order-detail-row"><span>TANGGAL PESANAN</span><strong>'+esc(formatOrderDate(order.orderDate))+'</strong></div><div class="order-detail-row"><span>PROGRES PRODUKSI</span><strong>'+esc(order.progress||'MENUNGGU KONFIRMASI')+'</strong></div><div class="order-detail-row"><span>STATUS PEMBAYARAN</span><strong>'+esc(order.paymentStatus||'BELUM LUNAS')+'</strong></div></div>'+
+    '<div class="panel order-detail-card">'+sectionTitle("▦","PRODUK YANG DIPESAN","pink")+items+'</div>'+
+    '<div class="panel order-detail-card">'+sectionTitle("▧","RINGKASAN PEMBAYARAN","orange")+'<div class="order-detail-row"><span>HARGA BARANG</span><strong>'+money(order.subtotal||0)+'</strong></div><div class="order-detail-row"><span>HARGA ONGKIR</span><strong>'+money(order.shippingCost||0)+'</strong></div><div class="order-detail-row order-detail-total"><span>TOTAL PEMBAYARAN</span><strong>'+money(order.grandTotal||0)+'</strong></div><div class="order-detail-row"><span>METODE PEMBAYARAN</span><strong>'+esc(order.paymentMethod||'-')+'</strong></div></div>'+
+    '<div class="panel order-detail-card">'+sectionTitle("⌖","ALAMAT PENGIRIMAN","purple")+'<div class="order-address-centered"><strong class="order-address-name">'+esc(address.recipientName||'-')+'</strong><span class="order-address-phone">'+esc(address.phone||'-')+'</span><p class="order-detail-address">'+esc(fullAddress||'-')+'</p></div><div class="order-address-note"><span aria-hidden="true">ⓘ</span><span>Pastikan alamatmu sesuai, karena kesesuaian alamat akan mempermudah kurir menemukan alamat penerima</span></div></div>'+
+    (order.notes?'<div class="panel order-detail-card">'+sectionTitle("✎","CATATAN PESANAN","orange")+'<div class="order-detail-address">'+esc(order.notes)+'</div></div>':'');
 }
 function openMyOrderDetail(orderId){
   const id=decodeURIComponent(String(orderId||''));
@@ -756,18 +1954,27 @@ function handleOrderRoute(){
   if(match){showMyOrderDetail(decodeURIComponent(match[1]),true);return true}
   return false;
 }
+
+function updateFloatingCatalogBack(){
+  const button=document.getElementById('floatingCatalogBack');
+  const detail=document.getElementById('productDetailPage');
+  if(!button||!detail)return;
+  button.classList.toggle('show',detail.classList.contains('active')&&window.scrollY>180);
+}
+window.addEventListener('scroll',updateFloatingCatalogBack,{passive:true});
+
 function navigate(page){
   if(page==='orders'){location.hash='pesanan'}
   else if(page==='home'||page==='products'){if(/^#(?:pesanan(?:\/|$)|produk\/)/.test(location.hash))history.replaceState(null,'',location.pathname+location.search)}
   document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id===page+'Page'));
   document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.nav===page));
   if(page==='products')renderProducts();
-  if(page==='orders')renderMyOrders();
-  window.scrollTo({top:0,behavior:'smooth'});
+  if(page==='orders'){renderMyOrders();syncCustomerOrderStatuses(false);}
+  window.scrollTo({top:0,behavior:'smooth'});updateFloatingCatalogBack();
 }
 function setFilter(name){filter=name;navigate('products')}
 function renderProducts(){document.getElementById('filters').innerHTML=names.map(n=>`<button class="filter ${filter===n?'selected':''}" onclick="setFilter(decodeURIComponent('${encodeURIComponent(n)}'))">${esc(n)}</button>`).join('');const q=document.getElementById('productSearch').value.trim().toLowerCase();const arr=groups.filter(g=>(filter==='Semua'||classify(g)===filter)&&(g.name.toLowerCase().includes(q)||g.variants.some(v=>[v.sku,v.material,v.size,v.finishing,(v.sizeOptions||[]).map(x=>x.value).join(" ")].join(' ').toLowerCase().includes(q))));document.getElementById('products').innerHTML=arr.map(productCard).join('')||'<div class="empty">Produk tidak ditemukan.</div>';document.getElementById('productCount').textContent=arr.length+' produk ditemukan'}
-function renderHome(){document.getElementById('homeCats').innerHTML=names.slice(1,6).map((n,i)=>`<button class="category" onclick="setFilter(decodeURIComponent('${encodeURIComponent(n)}'))"><span class="cat-icon">${icons[i+1]}</span><b>${esc(n)}</b></button>`).join('');const featured=groups.slice(0,8);document.getElementById('homeProducts').innerHTML=featured.map(productCard).join('')||'<div class="empty">Produk belum tersedia.</div>'}
+function renderHome(){const categoryDescriptions=['Cetak banner & spanduk promosi','X-banner, roll banner & display','Stiker label, produk & kemasan','Brosur, flyer & media promosi','Kartu nama dan kebutuhan kartu'];document.getElementById('homeCats').innerHTML=names.slice(1,6).map((n,i)=>`<button class="category category-cmyk category-tone-${i+1}" onclick="setFilter(decodeURIComponent('${encodeURIComponent(n)}'))"><span class="cat-icon">${icons[i+1]}</span><span class="category-copy"><b>${esc(n)}</b><small>${categoryDescriptions[i]||'Pilihan produk percetakan'}</small></span><span class="category-arrow" aria-hidden="true">↗</span></button>`).join('');const featured=groups.slice(0,8);document.getElementById('homeProducts').innerHTML=featured.map(productCard).join('')||'<div class="empty">Produk belum tersedia.</div>'}
 function syncModalLock(){const any=[...document.querySelectorAll('.overlay')].some(x=>x.classList.contains('open'));document.body.classList.toggle('modal-open',any)}
 function openOverlay(id){document.getElementById(id).classList.add('open');syncModalLock()}function closeOverlay(id){document.getElementById(id).classList.remove('open');syncModalLock()}
 function openFinishingInfo(){const overlay=document.getElementById('finishingInfoOverlay');if(!overlay)return;overlay.classList.add('open');overlay.setAttribute('aria-hidden','false');syncModalLock()}
@@ -887,7 +2094,7 @@ async function pasteAddressFromClipboard(){
   const textarea=document.getElementById('checkoutPastedAddress');
   const button=document.querySelector('.paste-clipboard-btn');
   if(!textarea)return;
-  const originalLabel='📋 TEMPEL ALAMAT';
+  const originalLabel='📋 KLIK UNTUK TEMPEL ALAMAT';
   if(!navigator.clipboard||typeof navigator.clipboard.readText!=='function'){
     showNotice('Browser ini tidak menyediakan akses tempel otomatis. Silakan gunakan Ctrl + V atau menu Tempel pada kolom alamat.');
     textarea.focus();
@@ -897,7 +2104,7 @@ async function pasteAddressFromClipboard(){
     if(button){button.disabled=true;button.textContent='MEMBACA CLIPBOARD...';}
     const copiedText=await navigator.clipboard.readText();
     if(!copiedText.trim()){
-      showNotice('Clipboard masih kosong. Salin alamat terlebih dahulu, lalu tekan TEMPEL ALAMAT.');
+      showNotice('Clipboard masih kosong. Salin alamat terlebih dahulu, lalu tekan KLIK UNTUK TEMPEL ALAMAT.');
       textarea.focus();
       return;
     }
@@ -959,6 +2166,27 @@ function renderOutsideJavaShopeeProducts(){
     </div>`;
   }).join('')||'<p class="muted tiny">Keranjang tidak berisi produk.</p>';
 }
+
+function clearOutsideJavaLocationError(){
+  const field=document.getElementById('outsideJavaLocation');
+  const error=document.getElementById('outsideJavaLocationError');
+  if(error){error.hidden=true;error.textContent='';}
+  if(field)field.classList.remove('invalid');
+}
+function contactAdminForOutsideJavaShipping(){
+  const field=document.getElementById('outsideJavaLocation');
+  const location=String(field?.value||'').trim();
+  if(!location){
+    const error=document.getElementById('outsideJavaLocationError');
+    if(error){error.textContent='Yuk, isi kecamatan, alamat, atau link Google Maps kamu dulu.';error.hidden=false;}
+    if(field){field.classList.add('invalid');field.focus();}
+    return;
+  }
+  const message='Hallo kak, saya di luar pulau jawa dengan lokasi saya : "'+location+'". Apakah bisa dibantu cek untuk ongkirnya? agar saya bisa menentukan order di shopee atau tetap order di website.';
+  const url='https://wa.me/6281617905237?text='+encodeURIComponent(message);
+  window.open(url,'_blank','noopener');
+}
+
 function closeOutsideJavaShopeePopup(){
   const overlay=document.getElementById('outsideJavaShopeeOverlay');
   if(!overlay)return;
@@ -1208,10 +2436,147 @@ async function loadCatalog(){
   }
 }
 
+async function waitForWindowReady(){
+  if(document.readyState==='complete')return;
+  await new Promise(resolve=>window.addEventListener('load',resolve,{once:true}));
+}
+async function waitForVisibleImages(){
+  const images=[...document.querySelectorAll('img')].filter(img=>img.getAttribute('src'));
+  await Promise.race([
+    Promise.all(images.map(img=>img.complete?Promise.resolve():new Promise(resolve=>{img.addEventListener('load',resolve,{once:true});img.addEventListener('error',resolve,{once:true})}))),
+    new Promise(resolve=>setTimeout(resolve,4500))
+  ]);
+}
+async function startInitialLoading(){
+  const started=Date.now();
+  const loader=document.getElementById('startupLoader');
+  try{
+    // Jangan tahan pengguna menunggu semua gambar; katalog boleh menyusul di belakang.
+    await Promise.race([
+      loadCatalog(),
+      new Promise(resolve=>setTimeout(resolve,2500))
+    ]);
+  }finally{
+    const remaining=Math.max(0,350-(Date.now()-started));
+    setTimeout(()=>{if(loader)loader.classList.add('is-hidden');},remaining);
+  }
+}
+
+
+const ALIFLAM_WA_NUMBER='6281617905237';
+let aliflamWaTopic='';
+function openAliflamWhatsApp(){
+  const overlay=document.getElementById('aliflamWhatsAppOverlay');
+  if(!overlay)return;
+  document.getElementById('aliflamWaChoices').hidden=false;
+  document.getElementById('aliflamWaForm').hidden=true;
+  document.getElementById('aliflamWaField').value='';
+  aliflamWaTopic='';
+  overlay.classList.add('open');
+  syncModalLock();
+}
+function closeAliflamWhatsApp(){
+  const overlay=document.getElementById('aliflamWhatsAppOverlay');
+  if(!overlay)return;
+  overlay.classList.remove('open');
+  syncModalLock();
+}
+function backToAliflamWaChoices(){
+  document.getElementById('aliflamWaChoices').hidden=false;
+  document.getElementById('aliflamWaForm').hidden=true;
+  document.getElementById('aliflamWaField').value='';
+  aliflamWaTopic='';
+}
+function selectAliflamWaTopic(topic){
+  aliflamWaTopic=topic;
+  const choices=document.getElementById('aliflamWaChoices');
+  const form=document.getElementById('aliflamWaForm');
+  const label=document.getElementById('aliflamWaFieldLabel');
+  const field=document.getElementById('aliflamWaField');
+  const help=document.getElementById('aliflamWaHelp');
+  choices.hidden=true;form.hidden=false;
+  field.value='';
+  if(topic==='Produk'){
+    label.textContent='Produk apa yang ingin kamu tanyakan?';
+    field.placeholder='Contoh: Banner FC340 ukuran 200 × 100 cm';
+    help.textContent='Tulis nama atau spesifikasi produk yang ingin kamu tanyakan.';
+    field.required=true;
+  }else if(topic==='Pengiriman Instan'){
+    label.textContent='Masukan kecamatan tempat kamu berada atau tempel link Google Maps alamatmu disini :';
+    field.placeholder='Contoh: Kecamatan Cibitung, Bekasi atau link Google Maps';
+    help.textContent='Minimal tulis nama kecamatan agar admin bisa membantu mengecek jangkauan pengiriman instan.';
+    field.required=true;
+  }else{
+    label.textContent=topic==='File Desain'?'Ada yang ingin kamu tanyakan tentang file desain?':'';
+    field.placeholder=topic==='File Desain'?'Contoh: format file, ukuran desain, atau cara mengirim file':'';
+    help.textContent=topic==='File Desain'?'Ceritakan singkat kebutuhan file desainmu.':'Kamu akan langsung diarahkan ke WhatsApp dengan pesan yang sudah disiapkan.';
+    field.required=topic==='File Desain';
+  }
+  if(topic==='Cara Order'||topic==='Cara Bayar')sendAliflamWhatsApp();
+  else field.focus();
+}
+function sendAliflamWhatsApp(){
+  let message='';
+  if(aliflamWaTopic==='Produk'){
+    const product=document.getElementById('aliflamWaField').value.trim();
+    if(!product){document.getElementById('aliflamWaField').focus();return}
+    message='Hallo admin aliflam printing, saya mau menanyakan produk "'+product+'" yang tertera di website';
+  }else if(aliflamWaTopic==='Cara Order'){
+    message='Hallo admin aliflam printing, bagaimana cara saya agar bisa memesan produk di website?';
+  }else if(aliflamWaTopic==='Cara Bayar'){
+    message='Hallo admin aliflam printing, jika saya sudah membuat pesanan di web, bagaimana saya melakukan pembayarannya?';
+  }else if(aliflamWaTopic==='File Desain'){
+    const detail=document.getElementById('aliflamWaField').value.trim();
+    if(!detail){document.getElementById('aliflamWaField').focus();return}
+    message='Hallo admin aliflam printing, saya ingin bertanya tentang file desain: '+detail;
+  }else if(aliflamWaTopic==='Pengiriman Instan'){
+    const locationText=document.getElementById('aliflamWaField').value.trim();
+    if(!locationText){document.getElementById('aliflamWaField').focus();return}
+    message='Hallo admin aliflam printing, saya ingin menanyakan layanan pengiriman instan. Lokasi saya: '+locationText+'. Apakah alamat saya bisa dijangkau?';
+  }else return;
+  const url='https://wa.me/'+ALIFLAM_WA_NUMBER+'?text='+encodeURIComponent(message);
+  window.open(url,'_blank','noopener,noreferrer');
+  closeAliflamWhatsApp();
+}
+
 loadLocalData();
 renderMyOrders();
 if(!handleOrderRoute() && location.hash==='#pesanan')navigate('orders');
 window.addEventListener('hashchange',()=>{if(!handleOrderRoute() && location.hash==='#pesanan')navigate('orders')});
-loadCatalog();
+startInitialLoading();
 document.addEventListener('DOMContentLoaded',bindCheckoutPhoneInputs);
-</script></body></html>
+</script>
+<button class="aliflam-wa-fab" type="button" onclick="openAliflamWhatsApp()" aria-label="Hubungi Aliflam Printing melalui WhatsApp" title="Chat WhatsApp Aliflam">
+  <svg viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M16.02 3.2c-7.05 0-12.78 5.7-12.78 12.72 0 2.25.6 4.45 1.74 6.38L3.1 28.8l6.7-1.75a12.9 12.9 0 0 0 6.2 1.58h.01c7.04 0 12.77-5.7 12.78-12.72a12.6 12.6 0 0 0-3.74-8.98 12.75 12.75 0 0 0-9.03-3.73Zm0 23.26h-.01a10.7 10.7 0 0 1-5.45-1.48l-.39-.23-3.98 1.04 1.06-3.86-.25-.4a10.55 10.55 0 0 1-1.63-5.61c0-5.86 4.78-10.62 10.66-10.62 2.84 0 5.52 1.1 7.53 3.11a10.53 10.53 0 0 1 3.12 7.51c0 5.86-4.78 10.62-10.66 10.62Zm5.85-7.95c-.32-.16-1.9-.94-2.2-1.05-.3-.1-.51-.16-.73.16-.21.32-.84 1.05-1.03 1.27-.19.21-.38.24-.7.08-.32-.16-1.35-.5-2.57-1.58-.95-.84-1.59-1.88-1.78-2.2-.18-.32-.02-.49.14-.65.14-.14.32-.38.48-.57.16-.19.21-.32.32-.54.1-.21.05-.4-.03-.56-.08-.16-.73-1.75-1-2.4-.27-.63-.54-.54-.73-.55h-.62c-.22 0-.57.08-.86.4-.3.32-1.13 1.1-1.13 2.68s1.16 3.1 1.32 3.31c.16.21 2.28 3.47 5.52 4.86.77.33 1.37.53 1.84.68.77.24 1.47.21 2.02.13.62-.1 1.9-.78 2.17-1.53.27-.75.27-1.4.19-1.53-.08-.13-.3-.21-.62-.37Z"/></svg>
+</button>
+<div class="overlay aliflam-wa-overlay" id="aliflamWhatsAppOverlay" onclick="if(event.target===this)closeAliflamWhatsApp()">
+  <div class="dialog aliflam-wa-dialog" role="dialog" aria-modal="true" aria-labelledby="aliflamWaTitle">
+    <div class="dialoghead">
+      <div><div class="eyebrow">ALIFLAM PRINTING</div><h2 id="aliflamWaTitle">Apa yang mau kamu tanyakan?</h2></div>
+      <button class="close" type="button" onclick="closeAliflamWhatsApp()" aria-label="Tutup">×</button>
+    </div>
+    <div id="aliflamWaChoices" class="aliflam-wa-choices">
+      <button type="button" onclick="selectAliflamWaTopic('Produk')"><span class="aliflam-wa-choice-icon">▣</span><span><b>Produk</b><small>Tanya bahan, ukuran, dan produk cetak</small></span><span class="aliflam-wa-arrow">›</span></button>
+      <button type="button" onclick="selectAliflamWaTopic('Cara Order')"><span class="aliflam-wa-choice-icon">🛒</span><span><b>Cara Order</b><small>Panduan membuat pesanan di website</small></span><span class="aliflam-wa-arrow">›</span></button>
+      <button type="button" onclick="selectAliflamWaTopic('Cara Bayar')"><span class="aliflam-wa-choice-icon">▤</span><span><b>Cara Bayar</b><small>Informasi pembayaran pesanan</small></span><span class="aliflam-wa-arrow">›</span></button>
+      <button type="button" onclick="selectAliflamWaTopic('File Desain')"><span class="aliflam-wa-choice-icon">▧</span><span><b>File Desain</b><small>Tanya cara mengirim file desain</small></span><span class="aliflam-wa-arrow">›</span></button>
+      <button type="button" onclick="selectAliflamWaTopic('Pengiriman Instan')"><span class="aliflam-wa-choice-icon">🚚</span><span><b>Pengiriman Instan</b><small>Cek kemungkinan pengiriman instan</small></span><span class="aliflam-wa-arrow">›</span></button>
+    </div>
+    <div id="aliflamWaForm" class="aliflam-wa-form" hidden>
+      <button class="aliflam-wa-back" type="button" onclick="backToAliflamWaChoices()">← Kembali ke pilihan</button>
+      <label id="aliflamWaFieldLabel" for="aliflamWaField"></label>
+      <textarea id="aliflamWaField" rows="3" placeholder="" maxlength="500"></textarea>
+      <p id="aliflamWaHelp" class="aliflam-wa-help"></p>
+      <button class="primary aliflam-wa-send" type="button" onclick="sendAliflamWhatsApp()">Lanjut ke WhatsApp <span>↗</span></button>
+    </div>
+    <p class="aliflam-wa-footnote">Kamu akan diarahkan ke WhatsApp Aliflam Printing.</p>
+  </div>
+</div>
+
+
+<button id="floatingCatalogBack" class="floating-catalog-back" type="button"
+  onclick="backFromDetail()" aria-label="Kembali ke katalog">
+  <span aria-hidden="true">←</span> KEMBALI KE KATALOG
+</button>
+
+</body></html>
