@@ -1939,11 +1939,17 @@ function openMyOrderDetail(orderId){
   location.hash='pesanan/'+encodeURIComponent(id);
   showMyOrderDetail(id,true);
 }
-function showMyOrderDetail(orderId,scroll=true){
+async function showMyOrderDetail(orderId,scroll=true){
   document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id==='orderDetailPage'));
   document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.nav==='orders'));
+
+  // Tampilkan data tersimpan lebih dulu agar halaman tidak kosong.
   renderMyOrderDetail(orderId);
   if(scroll)window.scrollTo({top:0,left:0,behavior:'auto'});
+
+  // Perbarui status dari database sebelum menampilkan hasil akhirnya.
+  await syncCustomerOrderStatuses(false);
+  renderMyOrderDetail(orderId);
 }
 function backToMyOrders(){
   location.hash='pesanan';
