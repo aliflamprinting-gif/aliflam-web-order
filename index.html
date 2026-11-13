@@ -1939,7 +1939,7 @@ function openMyOrderDetail(orderId){
   location.hash='pesanan/'+encodeURIComponent(id);
   showMyOrderDetail(id,true);
 }
-async function showMyOrderDetail(orderId,scroll=true){
+async async function showMyOrderDetail(orderId,scroll=true){
   document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id==='orderDetailPage'));
   document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.nav==='orders'));
 
