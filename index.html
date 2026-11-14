@@ -2646,6 +2646,16 @@ html[data-theme="dark"] .account-profile-card>div{background:#1b344d;border-colo
 html[data-theme="dark"] .account-profile-card small{color:#bdcddd}
 html[data-theme="dark"] .account-profile-card strong{color:#f3f7fc}
 
+
+.account-bridge{margin-top:14px;padding:14px;border:1px solid #b9e4d0;border-radius:14px;background:#f0fbf5}
+.account-bridge-title{font-size:13px;font-weight:900;color:#126b45}
+.account-bridge p{font-size:11px;line-height:1.55;color:#476456;margin:6px 0 12px}
+.account-wa-btn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;min-height:46px;margin:0 0 9px;padding:11px 12px;border-radius:11px;background:#16a34a;color:#fff!important;font-size:11px;font-weight:900;text-align:center;text-decoration:none}
+.account-wa-btn span{font-size:17px}
+.account-bridge .account-main-btn{margin-top:2px}
+html[data-theme="dark"] .account-bridge{background:#123b30;border-color:#267453}
+html[data-theme="dark"] .account-bridge-title{color:#a8f0ca}
+html[data-theme="dark"] .account-bridge p{color:#c4e4d4}
 .account-brand-mark{width:42px;height:4px;border-radius:9px;background:linear-gradient(90deg,#00a6d6,#ec168b,#f5c400);margin-bottom:12px}
 </style>
 <div class="account-modal-back" id="accountModalBack" onclick="if(event.target===this)closeAccountModal()">
@@ -2669,8 +2679,8 @@ html[data-theme="dark"] .account-profile-card strong{color:#f3f7fc}
    <label for="accountLoginPassword">Password</label><input id="accountLoginPassword" type="password" autocomplete="current-password" placeholder="Masukkan password"/>
    <button class="account-main-btn" type="button" onclick="submitCustomerLogin()">MASUK</button>
    <div class="account-divider">ATAU</div>
-   <button class="account-link-btn" type="button" onclick="showAccountForm('register')">Belum punya akun? <b>Buat Akun</b></button>
-   <button class="account-link-btn" type="button" onclick="showAccountForm('reset')">Lupa password?</button>
+   <button class="account-link-btn account-register-link" type="button" onclick="showAccountForm('register')"><span>Belum punya akun?</span> <b>Buat akun</b></button>
+   <button class="account-link-btn account-reset-link" type="button" onclick="showAccountForm('reset')"><span>Lupa password?</span> <b>Reset password</b></button>
   </section>
   <section class="account-panel" id="accountRegisterForm" hidden>
    <button class="account-back-link" type="button" onclick="showAccountForm('login')">← Kembali ke Login</button>
@@ -2678,16 +2688,34 @@ html[data-theme="dark"] .account-profile-card strong{color:#f3f7fc}
    <label for="accountRegPhone">Nomor WhatsApp</label><input id="accountRegPhone" inputmode="tel" autocomplete="tel" placeholder="08xxxxxxxxxx"/>
    <label for="accountRegPassword">Buat password (minimal 8 karakter)</label><input id="accountRegPassword" type="password" autocomplete="new-password" placeholder="Buat password"/>
    <label for="accountRegConfirm">Konfirmasi password</label><input id="accountRegConfirm" type="password" autocomplete="new-password" placeholder="Ulangi password"/>
-   <button class="account-main-btn" type="button" onclick="submitCustomerRegistration()">BUAT AKUN</button>
-   <div class="account-note">Setelah mendaftar, akun berstatus <b>MENUNGGU VERIFIKASI</b>. Admin akan memeriksa dan menyetujui akun kamu sebelum bisa digunakan untuk login.</div>
+   <button class="account-main-btn" id="accountRegisterStartBtn" type="button" onclick="prepareAccountWhatsApp('register')">BUAT AKUN</button>
+   <div class="account-note">Pendaftaran akun memerlukan konfirmasi WhatsApp ke admin sebelum dikirim untuk persetujuan.</div>
+   <div class="account-bridge" id="accountRegisterBridge" hidden>
+    <div class="account-bridge-title">Langkah konfirmasi pembuatan akun</div>
+    <p>Hubungi admin akun melalui WhatsApp. Setelah chat terkirim, kembali ke sini dan lanjutkan pendaftaran.</p>
+    <a class="account-wa-btn" id="accountRegisterWhatsApp" href="#" target="_blank" rel="noopener"><span>◉</span> KONFIRMASI PEMBUATAN AKUN</a>
+    <button class="account-main-btn" type="button" onclick="submitCustomerRegistration()">SAYA SUDAH CHAT, LANJUTKAN</button>
+   </div>
   </section>
   <section class="account-panel" id="accountResetForm" hidden>
    <button class="account-back-link" type="button" onclick="showAccountForm('login')">← Kembali ke Login</button>
    <p class="account-subtitle">Masukkan nomor WhatsApp yang terdaftar. Kami akan membuat permintaan reset untuk diverifikasi admin.</p>
    <label for="accountResetPhone">Nomor WhatsApp terdaftar</label><input id="accountResetPhone" inputmode="tel" autocomplete="tel" placeholder="08xxxxxxxxxx"/>
-   <button class="account-main-btn" type="button" onclick="submitPasswordResetRequest()">KIRIM PERMINTAAN RESET</button>
+   <div class="account-note account-reset-unregistered" id="accountResetUnregistered" hidden>Nomor ini belum terverifikasi menjadi akun di sini. Silakan daftar terlebih dahulu.</div>
+   <button class="account-main-btn account-register-now" id="accountResetRegisterNow" type="button" hidden onclick="showAccountForm('register')">DAFTAR SEKARANG</button>
+   <button class="account-main-btn" id="accountResetStartBtn" type="button" onclick="prepareAccountWhatsApp('reset')">LANJUTKAN RESET PASSWORD</button>
+   <div class="account-bridge" id="accountResetBridge" hidden>
+    <div class="account-bridge-title">Langkah konfirmasi reset password</div>
+    <p>Hubungi admin akun melalui WhatsApp untuk mengonfirmasi permintaan reset. Setelah chat terkirim, kembali ke sini untuk mengirim permintaan reset.</p>
+    <a class="account-wa-btn" id="accountResetWhatsApp" href="#" target="_blank" rel="noopener"><span>◉</span> KONFIRMASI RESET PASSWORD</a>
+    <button class="account-main-btn" type="button" onclick="submitPasswordResetRequest()">SAYA SUDAH CHAT, KIRIM PERMINTAAN</button>
+   </div>
+   <div class="account-reset-wait" id="accountResetWaiting" hidden>
+    <div class="account-note">Permintaan reset sudah diterima. Password baru baru bisa dibuat setelah admin menyetujui permintaan kamu.</div>
+    <button class="account-main-btn" type="button" onclick="checkCustomerResetApproval()">CEK PERSETUJUAN ADMIN</button>
+   </div>
    <div id="accountResetComplete" hidden>
-    <div class="account-note">Setelah admin menyetujui permintaan, masukkan password baru di bawah ini. Tautan reset berlaku selama 30 menit setelah persetujuan.</div>
+    <div class="account-note">Permintaan kamu sudah disetujui. Silakan buat password baru dan konfirmasi password.</div>
     <label for="accountResetRequestId">ID Permintaan</label><input id="accountResetRequestId" placeholder="ID permintaan" readonly/>
     <label for="accountNewPassword">Password baru</label><input id="accountNewPassword" type="password" autocomplete="new-password" placeholder="Minimal 8 karakter"/>
     <label for="accountNewPasswordConfirm">Konfirmasi password baru</label><input id="accountNewPasswordConfirm" type="password" autocomplete="new-password" placeholder="Ulangi password baru"/>
@@ -2722,7 +2750,16 @@ function showAccountForm(which){
  document.getElementById('accountModalTitle').textContent=labels[which][0];
  document.getElementById('accountModalSubtitle').textContent=labels[which][1];
  document.getElementById('accountMessage').textContent='';
- if(which==='reset'){try{const id=localStorage.getItem('ALIFLAM_RESET_REQUEST_ID');if(id){document.getElementById('accountResetComplete').hidden=false;document.getElementById('accountResetRequestId').value=id;}}catch(e){}}
+ if(which==='reset'){
+  const phoneInput=document.getElementById('accountResetPhone');
+  const savedPhone=String(savedBuyer?.customer?.whatsapp||localOrders.find(o=>o.customer?.whatsapp)?.customer?.whatsapp||'').trim();
+  if(!phoneInput.value.trim()&&savedPhone)phoneInput.value=savedPhone;
+  document.getElementById('accountResetUnregistered').hidden=true;
+  document.getElementById('accountResetRegisterNow').hidden=true;
+  document.getElementById('accountResetComplete').hidden=true;
+  document.getElementById('accountResetWaiting').hidden=true;
+  try{const id=localStorage.getItem('ALIFLAM_RESET_REQUEST_ID'),phone=localStorage.getItem('ALIFLAM_RESET_PHONE');if(id&&phone){phoneInput.value=phone;document.getElementById('accountResetRequestId').value=id;document.getElementById('accountResetWaiting').hidden=false;}}catch(e){}
+ }
 }
 async function logoutCustomerAccount(){
  const customer=getStoredCustomer();
@@ -2734,23 +2771,53 @@ async function logoutCustomerAccount(){
  accountMessage('Kamu sudah keluar dari akun.');
 }
 function accountMessage(t){document.getElementById('accountMessage').textContent=t;}
+let accountWhatsAppConfirmed={register:false,reset:false};
+const ACCOUNT_ADMIN_WA='6285814703497';
+const ACCOUNT_WA_MESSAGES={
+ register:'Hai Admin Aliflam Printing 👋\n\nSaya ingin membuat akun di website Aliflam Printing untuk memudahkan pemesanan dan menggunakan layanan lainnya. Mohon bantu periksa pendaftaran saya dan setujui jika data sudah sesuai ya, Kak.\n\nTerima kasih 🙏',
+ reset:'Hai Admin Aliflam Printing 👋\n\nSaya lupa password akun website Aliflam Printing dan ingin mengajukan reset password. Mohon bantu periksa dan setujui permintaan saya. Setelah disetujui, mohon kabari saya agar bisa melanjutkan penggantian password di website.\n\nTerima kasih 🙏'
+};
+async function prepareAccountWhatsApp(kind){
+ if(kind==='register'){
+  const name=document.getElementById('accountRegName').value.trim(),phone=document.getElementById('accountRegPhone').value.trim(),password=document.getElementById('accountRegPassword').value,confirm=document.getElementById('accountRegConfirm').value;
+  if(!name||!phone||!password||!confirm)return accountMessage('Lengkapi semua data pendaftaran terlebih dahulu.');
+  if(password.length<8)return accountMessage('Password minimal 8 karakter.');
+  if(password!==confirm)return accountMessage('Konfirmasi password tidak sama.');
+  const msg=ACCOUNT_WA_MESSAGES.register+'\n\nNama: '+name+'\nNomor WhatsApp: '+phone;
+  document.getElementById('accountRegisterWhatsApp').href='https://wa.me/'+ACCOUNT_ADMIN_WA+'?text='+encodeURIComponent(msg);
+  document.getElementById('accountRegisterBridge').hidden=false;
+  accountWhatsAppConfirmed.register=false;
+ }else{
+  const phone=document.getElementById('accountResetPhone').value.trim();
+  if(!phone)return accountMessage('Masukkan nomor WhatsApp yang terdaftar terlebih dahulu.');
+  showLoading('Memeriksa nomor WhatsApp...');
+  try{const check=await api('checkCustomerResetStatus',{whatsapp:phone});if(!check.ok)throw Error(check.error||'Nomor gagal diperiksa.');if(!check.data.registered){document.getElementById('accountResetUnregistered').hidden=false;document.getElementById('accountResetRegisterNow').hidden=false;document.getElementById('accountResetBridge').hidden=true;return accountMessage('Nomor ini belum terverifikasi menjadi akun di sini. Silakan daftar terlebih dahulu.');}document.getElementById('accountResetUnregistered').hidden=true;document.getElementById('accountResetRegisterNow').hidden=true;}catch(e){return accountMessage(e.message||'Nomor gagal diperiksa.');}finally{hideLoading();}
+  const msg=ACCOUNT_WA_MESSAGES.reset+'\n\nNomor WhatsApp akun: '+phone;
+  document.getElementById('accountResetWhatsApp').href='https://wa.me/'+ACCOUNT_ADMIN_WA+'?text='+encodeURIComponent(msg);
+  document.getElementById('accountResetBridge').hidden=false;
+  accountWhatsAppConfirmed.reset=false;
+ }
+ accountMessage('Silakan konfirmasi melalui WhatsApp. Setelah mengirim chat, kembali ke website untuk melanjutkan.');
+}
 async function submitCustomerRegistration(){
  const name=document.getElementById('accountRegName').value.trim(),whatsapp=document.getElementById('accountRegPhone').value.trim(),password=document.getElementById('accountRegPassword').value,confirmPassword=document.getElementById('accountRegConfirm').value;
  if(!name||!whatsapp||!password||!confirmPassword)return accountMessage('Lengkapi semua data pendaftaran.');
  if(password.length<8)return accountMessage('Password minimal 8 karakter.');
  if(password!==confirmPassword)return accountMessage('Konfirmasi password tidak sama.');
- accountMessage('Mengirim pendaftaran...');
+ if(document.getElementById('accountRegisterBridge').hidden)return prepareAccountWhatsApp('register');
+ accountMessage('Mengirim pendaftaran...');showLoading('Mengirim pendaftaran akun...');
  try{
   const r=await api('registerCustomer',{name,whatsapp,password,confirmPassword});
   if(!r.ok)throw Error(r.error||'Pendaftaran gagal');
-  accountMessage('Pendaftaran berhasil! Akun kamu berstatus MENUNGGU VERIFIKASI. Admin Aliflam akan memeriksa nomor WhatsApp yang kamu daftarkan. Kamu bisa login setelah akun disetujui.');
-  document.getElementById('accountRegPassword').value='';document.getElementById('accountRegConfirm').value='';
- }catch(e){accountMessage(e.message||'Pendaftaran gagal.');}
+  document.getElementById('accountRegPassword').value='';document.getElementById('accountRegConfirm').value='';document.getElementById('accountRegisterBridge').hidden=true;
+  accountMessage('Pendaftaran berhasil dikirim. Status akun: MENUNGGU VERIFIKASI ADMIN. Kamu bisa login setelah disetujui.');
+  showNotice('Pendaftaran akun berhasil dikirim dan sedang menunggu persetujuan admin. Kamu akan dapat login setelah akun disetujui.','Pendaftaran Terkirim');
+ }catch(e){accountMessage(e.message||'Pendaftaran gagal.');showNotice(e.message||'Pendaftaran gagal.','Pendaftaran Belum Berhasil');}finally{hideLoading();}
 }
 async function submitCustomerLogin(){
  const whatsapp=document.getElementById('accountLoginPhone').value.trim(),password=document.getElementById('accountLoginPassword').value;
  if(!whatsapp||!password)return accountMessage('Masukkan nomor WhatsApp dan password.');
- accountMessage('Memeriksa akun...');
+ accountMessage('Memeriksa akun...');showLoading('Memeriksa akun...');
  try{
   const r=await api('customerLogin',{whatsapp,password});if(!r.ok)throw Error(r.error||'Login gagal');
   localStorage.setItem('ALIFLAM_CUSTOMER',JSON.stringify(r.data.customer));
@@ -2759,33 +2826,59 @@ async function submitCustomerLogin(){
   await syncCustomerOrderStatuses(false);
   openAccountModal();
   accountMessage('Berhasil masuk. Selamat datang, '+r.data.customer.name+'! Keranjang akun sudah dimuat.');
- }catch(e){accountMessage(e.message||'Login gagal.');}
+ }catch(e){accountMessage(e.message||'Login gagal.');showNotice(e.message||'Login gagal.','Tidak Bisa Masuk');}finally{hideLoading();}
 }
 async function submitPasswordResetRequest(){
  const whatsapp=document.getElementById('accountResetPhone').value.trim();if(!whatsapp)return accountMessage('Masukkan nomor WhatsApp yang terdaftar.');
- accountMessage('Membuat permintaan reset...');
+ if(document.getElementById('accountResetBridge').hidden)return prepareAccountWhatsApp('reset');
+ accountMessage('Membuat permintaan reset...');showLoading('Mengirim permintaan reset password...');
  try{
   const r=await api('requestPasswordReset',{whatsapp});if(!r.ok)throw Error(r.error||'Permintaan gagal');
   const d=r.data;localStorage.setItem('ALIFLAM_RESET_REQUEST_ID',d.requestId);localStorage.setItem('ALIFLAM_RESET_PHONE',whatsapp);
-  document.getElementById('accountResetComplete').hidden=false;document.getElementById('accountResetRequestId').value=d.requestId;
-  accountMessage('Jika nomor tersebut terdaftar dan aktif, permintaan reset sudah dicatat. Admin akan memverifikasi melalui WhatsApp. Setelah disetujui, kamu dapat membuat password baru dalam 30 menit.');
- }catch(e){accountMessage(e.message||'Permintaan reset gagal.');}
+  document.getElementById('accountResetComplete').hidden=true;document.getElementById('accountResetWaiting').hidden=false;document.getElementById('accountResetRequestId').value=d.requestId;
+  document.getElementById('accountResetBridge').hidden=true;
+  accountMessage('Permintaan reset berhasil dikirim. Password baru tersedia setelah admin menyetujui permintaan.');
+  showNotice('Permintaan reset password sudah dikirim. Tunggu persetujuan admin, lalu tekan CEK PERSETUJUAN ADMIN.','Permintaan Reset Terkirim');
+ }catch(e){accountMessage(e.message||'Permintaan reset gagal.');showNotice(e.message||'Permintaan reset gagal.','Reset Belum Berhasil');}finally{hideLoading();}
+}
+async function checkCustomerResetApproval(){
+ const requestId=document.getElementById('accountResetRequestId').value.trim();
+ const whatsapp=document.getElementById('accountResetPhone').value.trim()||localStorage.getItem('ALIFLAM_RESET_PHONE')||'';
+ if(!requestId||!whatsapp)return accountMessage('Data permintaan reset tidak ditemukan. Ajukan permintaan kembali.');
+ showLoading('Memeriksa persetujuan admin...');
+ try{const r=await api('checkCustomerResetStatus',{whatsapp,requestId});if(!r.ok)throw Error(r.error||'Status belum dapat diperiksa.');
+  if(r.data.approved){document.getElementById('accountResetWaiting').hidden=true;document.getElementById('accountResetComplete').hidden=false;accountMessage('Permintaan disetujui. Silakan buat password baru.');showNotice('Admin sudah menyetujui permintaan reset kamu. Sekarang buat password baru.','Reset Disetujui');}
+  else if(r.data.rejected){document.getElementById('accountResetWaiting').hidden=true;accountMessage('Permintaan reset ditolak admin. Silakan hubungi admin untuk informasi lebih lanjut.');showNotice('Permintaan reset password ditolak admin.','Permintaan Ditolak');}
+  else{accountMessage('Permintaan masih menunggu persetujuan admin. Coba periksa kembali nanti.');showNotice('Permintaan masih menunggu persetujuan admin.','Masih Menunggu');}
+ }catch(e){accountMessage(e.message||'Status persetujuan gagal diperiksa.');}finally{hideLoading();}
 }
 async function submitNewCustomerPassword(){
  const requestId=document.getElementById('accountResetRequestId').value.trim(),password=document.getElementById('accountNewPassword').value,confirmPassword=document.getElementById('accountNewPasswordConfirm').value,whatsapp=document.getElementById('accountResetPhone').value.trim()||localStorage.getItem('ALIFLAM_RESET_PHONE')||'';
  if(!password||password.length<8)return accountMessage('Password baru minimal 8 karakter.');
  if(password!==confirmPassword)return accountMessage('Konfirmasi password baru tidak sama.');
  if(!whatsapp)return accountMessage('Masukkan kembali nomor WhatsApp terdaftar.');
- accountMessage('Menyimpan password baru...');
+ accountMessage('Menyimpan password baru...');showLoading('Menyimpan password baru...');
  try{
   const r=await api('resetCustomerPassword',{requestId,whatsapp,password,confirmPassword});if(!r.ok)throw Error(r.error||'Reset gagal');
   localStorage.removeItem('ALIFLAM_RESET_REQUEST_ID');localStorage.removeItem('ALIFLAM_RESET_PHONE');
   document.getElementById('accountResetComplete').hidden=true;
-  showAccountForm('login');accountMessage('Password berhasil diperbarui. Silakan login menggunakan password baru.');
- }catch(e){accountMessage(e.message||'Reset password gagal.');}
+  showAccountForm('login');accountMessage('Password berhasil diperbarui. Silakan login menggunakan password baru.');showNotice('Password berhasil diperbarui. Silakan login menggunakan password baru.','Password Berhasil Diubah');
+ }catch(e){accountMessage(e.message||'Reset password gagal.');showNotice(e.message||'Reset password gagal.','Reset Belum Berhasil');}finally{hideLoading();}
 }
 </script>
 <style>
+/* ACCOUNT MODAL POLISH */
+#noticeOverlay,#confirmOverlay{z-index:1200!important}
+.account-modal .account-register-link{color:#202124!important}
+.account-modal .account-register-link b{color:#16a34a!important;text-decoration:underline;text-underline-offset:3px}
+.account-modal .account-reset-link,.account-modal .account-reset-link b{color:#dc2626!important}
+.account-modal .account-reset-link b{text-decoration:underline;text-underline-offset:3px}
+.account-modal .account-reset-unregistered{background:#fff1f1!important;border-color:#fecaca!important;color:#991b1b!important}
+.account-modal .account-register-now{background:#dc2626!important}
+html[data-theme="dark"] .account-modal .account-register-link{color:#f3f4f6!important}
+html[data-theme="dark"] .account-modal .account-register-link b{color:#4ade80!important}
+html[data-theme="dark"] .account-modal .account-reset-link,html[data-theme="dark"] .account-modal .account-reset-link b{color:#f87171!important}
+
 
 
 /* DARK MODE FIX — modal akun: kontras teks dan bidang input */
