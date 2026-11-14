@@ -2759,14 +2759,7 @@ html[data-theme="dark"] .account-unregistered-icon{background:#49351c;color:#ffd
    <label for="accountRegPhone">Nomor WhatsApp</label><input id="accountRegPhone" inputmode="tel" autocomplete="tel" placeholder="08xxxxxxxxxx"/>
    <label for="accountRegPassword">Buat password (minimal 8 karakter)</label><input id="accountRegPassword" type="password" autocomplete="new-password" placeholder="Buat password"/>
    <label for="accountRegConfirm">Konfirmasi password</label><input id="accountRegConfirm" type="password" autocomplete="new-password" placeholder="Ulangi password"/>
-   <button class="account-main-btn" id="accountRegisterStartBtn" type="button" onclick="prepareAccountWhatsApp('register')">BUAT AKUN</button>
-   <div class="account-note">Pendaftaran akun memerlukan konfirmasi WhatsApp ke admin sebelum dikirim untuk persetujuan.</div>
-   <div class="account-bridge" id="accountRegisterBridge" hidden>
-    <div class="account-bridge-title">Langkah konfirmasi pembuatan akun</div>
-    <p>Hubungi admin akun melalui WhatsApp. Setelah chat terkirim, kembali ke sini dan lanjutkan pendaftaran.</p>
-    <a class="account-wa-btn" id="accountRegisterWhatsApp" href="#" target="_blank" rel="noopener"><span>◉</span> KONFIRMASI PEMBUATAN AKUN</a>
-    <button class="account-main-btn" type="button" onclick="submitCustomerRegistration()">SAYA SUDAH CHAT, LANJUTKAN</button>
-   </div>
+   <button class="account-main-btn" id="accountRegisterStartBtn" type="button" onclick="submitCustomerRegistration()">BUAT AKUN</button>
   </section>
   <section class="account-panel" id="accountResetForm" hidden>
    <button class="account-back-link" type="button" onclick="showAccountForm('login')">← Kembali ke Login</button>
@@ -2805,6 +2798,37 @@ html[data-theme="dark"] .account-unregistered-icon{background:#49351c;color:#ffd
   <button class="account-unregistered-cancel" type="button" onclick="closeUnregisteredLoginPopup()">KEMBALI KE LOGIN</button>
  </div>
 </div>
+<div class="overlay account-pending-overlay" id="accountPendingOverlay" role="dialog" aria-modal="true" aria-labelledby="accountPendingTitle" onclick="if(event.target===this)closeAccountPendingPopup()">
+ <div class="account-pending-card">
+  <div class="account-pending-icon" aria-hidden="true">
+   <svg viewBox="0 0 48 48"><circle cx="21" cy="21" r="14" fill="none" stroke="currentColor" stroke-width="2.8"/><path d="M21 13v9l6 4" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 32l4 4 8-9" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </div>
+  <div class="account-pending-kicker">AKUN MENUNGGU PERSETUJUAN</div>
+  <h2 id="accountPendingTitle">Pendaftaran akun berhasil dibuat!</h2>
+  <p>Silakan tunggu admin menyetujuinya.</p>
+  <p class="account-pending-next">Langkah selanjutnya, klik tombol di bawah untuk konfirmasi ke admin agar akun kamu bisa disetujui.</p>
+  <a class="account-pending-wa" id="accountPendingWhatsApp" href="#" target="_blank" rel="noopener" onclick="markAccountWhatsAppOpened()">
+   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.8a8.6 8.6 0 0 1-12.7 7.5L3 20.5l1.3-4.6A8.6 8.6 0 1 1 20.5 11.8Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8.5 7.7c-.3-.7-.7-.7-1-.7h-.7c-.3 0-.7.2-.9.6-.3.4-1.1 1.1-1.1 2.6s1.1 3 1.2 3.2c.2.2 2.1 3.3 5.2 4.5 2.6 1 3.1.8 3.7.7.6-.1 1.9-.8 2.2-1.5.3-.7.3-1.3.2-1.5-.1-.1-.3-.2-.7-.4l-2.1-1c-.3-.1-.5-.2-.7.2-.2.3-.8 1-1 1.2-.2.2-.4.2-.7.1-.3-.2-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.7l.5-.6c.2-.2.2-.4.3-.6.1-.2 0-.4 0-.6l-.9-2.1Z" fill="currentColor"/></svg>
+   KONFIRMASI KE WHATSAPP
+  </a>
+  <button class="account-pending-continue" id="accountPendingContinue" type="button" hidden onclick="finishAccountRegistrationPopup()">SAYA SUDAH CHAT WHATSAPP</button>
+ </div>
+</div>
+<style>
+#accountPendingOverlay{z-index:1200!important;background:rgba(5,16,30,.76);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+.account-pending-card{width:min(420px,100%);max-height:90vh;overflow:auto;padding:27px 22px 22px;border:1px solid var(--line);border-radius:22px;background:var(--card);color:var(--ink);text-align:center;box-shadow:0 24px 80px #0006}
+.account-pending-icon{display:grid;place-items:center;width:68px;height:68px;margin:0 auto 14px;border-radius:22px;background:#fff4d6;color:#c88700}
+.account-pending-icon svg{width:42px;height:42px}
+.account-pending-kicker{font-size:9px;font-weight:900;letter-spacing:1.25px;color:#c88700;margin-bottom:8px}
+.account-pending-card h2{font:800 20px/1.3 Manrope,sans-serif;margin:0 0 8px;color:var(--ink)}
+.account-pending-card p{font-size:12px;line-height:1.6;color:var(--muted);margin:0}
+.account-pending-card .account-pending-next{margin:13px 0 17px;color:var(--ink)}
+.account-pending-wa{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;min-height:49px;padding:12px 14px;border-radius:12px;background:#16a34a;color:#fff!important;font-size:12px;font-weight:900;text-decoration:none}
+.account-pending-wa svg{width:21px;height:21px;flex:0 0 21px}
+.account-pending-wa:hover{background:#15803d}
+.account-pending-continue{display:block;width:100%;min-height:47px;margin-top:10px;padding:12px;border:1px solid var(--blue);border-radius:12px;background:var(--blue-soft);color:var(--blue);font-size:11px;font-weight:900}
+.account-pending-continue[hidden]{display:none!important}
+</style>
 <script>
 function getStoredCustomer(){
  try{return JSON.parse(localStorage.getItem('ALIFLAM_CUSTOMER')||'null')}catch(e){return null}
@@ -2903,21 +2927,51 @@ async function prepareAccountWhatsApp(kind){
  }
  accountMessage('Silakan konfirmasi melalui WhatsApp. Setelah mengirim chat, kembali ke website untuk melanjutkan.');
 }
+let pendingAccountRegistration=null;
 async function submitCustomerRegistration(){
  const name=document.getElementById('accountRegName').value.trim(),whatsapp=document.getElementById('accountRegPhone').value.trim(),password=document.getElementById('accountRegPassword').value,confirmPassword=document.getElementById('accountRegConfirm').value;
  if(!name||!whatsapp||!password||!confirmPassword)return markAccountRequired(['accountRegName','accountRegPhone','accountRegPassword','accountRegConfirm'],'Lengkapi kolom wajib yang ditandai merah.');
  if(password.length<8)return accountMessage('Password minimal 8 karakter.');
  if(password!==confirmPassword)return accountMessage('Konfirmasi password tidak sama.');
- if(document.getElementById('accountRegisterBridge').hidden)return prepareAccountWhatsApp('register');
- accountMessage('Mengirim pendaftaran...');showLoading('Mengirim pendaftaran akun...');
+ const submitButton=document.getElementById('accountRegisterStartBtn');
+ if(submitButton?.disabled)return;
+ if(submitButton){submitButton.disabled=true;submitButton.textContent='MENGIRIM PENDAFTARAN...';}
+ accountMessage('Mengirim permintaan pendaftaran...');showLoading('Mengirim pendaftaran akun...');
  try{
   const r=await api('registerCustomer',{name,whatsapp,password,confirmPassword});
   if(!r.ok)throw Error(r.error||'Pendaftaran gagal');
-  document.getElementById('accountRegPassword').value='';document.getElementById('accountRegConfirm').value='';document.getElementById('accountRegisterBridge').hidden=true;
-  accountMessage('Pendaftaran berhasil dikirim. Status akun: MENUNGGU VERIFIKASI ADMIN. Kamu bisa login setelah disetujui.');
-  showNotice('Pendaftaran akun berhasil dikirim dan sedang menunggu persetujuan admin. Kamu akan dapat login setelah akun disetujui.','Pendaftaran Terkirim');
- }catch(e){accountMessage(e.message||'Pendaftaran gagal.');showNotice(e.message||'Pendaftaran gagal.','Pendaftaran Belum Berhasil');}finally{hideLoading();}
+  const result=r.data||{};
+  if(String(result.status||'').toUpperCase()!=='PENDING')throw Error('Status pendaftaran belum dapat dipastikan. Silakan hubungi admin.');
+  pendingAccountRegistration={name,whatsapp,requestId:result.requestId||'',customerId:result.customerId||''};
+  document.getElementById('accountRegPassword').value='';
+  document.getElementById('accountRegConfirm').value='';
+  document.getElementById('accountPendingContinue').hidden=true;
+  const message=ACCOUNT_WA_MESSAGES.register+'\n\nNama: '+name+'\nNomor WhatsApp: '+whatsapp+(result.requestId?'\nID Permintaan: '+result.requestId:'');
+  document.getElementById('accountPendingWhatsApp').href='https://wa.me/'+ACCOUNT_ADMIN_WA+'?text='+encodeURIComponent(message);
+  accountMessage('');
+  openOverlay('accountPendingOverlay');
+ }catch(e){
+  accountMessage(e.message||'Pendaftaran gagal.');
+  showNotice(e.message||'Pendaftaran gagal.','Pendaftaran Belum Berhasil');
+ }finally{
+  hideLoading();
+  if(submitButton){submitButton.disabled=false;submitButton.textContent='BUAT AKUN';}
+ }
 }
+function markAccountWhatsAppOpened(){
+ const button=document.getElementById('accountPendingContinue');
+ if(button)button.hidden=false;
+}
+function finishAccountRegistrationPopup(){
+ closeOverlay('accountPendingOverlay');
+ const phone=pendingAccountRegistration?.whatsapp||'';
+ showAccountForm('login');
+ document.getElementById('accountLoginPhone').value=phone;
+ document.getElementById('accountLoginPassword').value='';
+ pendingAccountRegistration=null;
+}
+function closeAccountPendingPopup(){closeOverlay('accountPendingOverlay');}
+
 function markAccountRequired(ids,message){
  const fields=ids.map(id=>document.getElementById(id)).filter(Boolean);
  fields.forEach(el=>{
