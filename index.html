@@ -147,7 +147,7 @@ body.modal-open{overflow:hidden!important;touch-action:none}
 .checkout-loader-art{width:76px;height:76px;position:relative;display:grid;place-items:center;border-radius:24px;background:var(--blue-soft);color:var(--blue);font-size:34px;animation:checkoutFloat 2s ease-in-out infinite}
 .checkout-loader-art:before,.checkout-loader-art:after{content:"";position:absolute;inset:5px;border:2px solid color-mix(in srgb,var(--blue) 22%,transparent);border-radius:19px;animation:checkoutPulse 1.8s ease-out infinite}
 .checkout-loader-art:after{animation-delay:.9s}
-.checkout-loader-art span{position:relative;z-index:1}
+.checkout-loader-art span{position:relative;z-index:1}.checkout-loader-art svg{display:block;width:42px;height:42px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 #loadingText{font:800 15px/1.4 Manrope;color:var(--ink);min-height:22px}
 #loadingScreen .loading-card small{font-size:11px;line-height:1.5;text-align:center}
 .checkout-loading-dots{display:flex;gap:5px;margin-top:1px}
@@ -1565,7 +1565,7 @@ html[data-theme="dark"] .floating-catalog-back{
 
 <div class="overlay notice-overlay" id="noticeOverlay"><div class="dialog notice-dialog"><div class="notice-symbol"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5m0-8h.01"></path></svg></div><div class="notice-copy"><div class="notice-kicker">ALIFLAM PRINTING</div><h2 id="noticeTitle">Informasi</h2><p id="noticeMessage"></p></div><div class="notice-actions"><button class="primary" onclick="closeOverlay('noticeOverlay')">Oke</button></div></div></div>
 <div class="overlay" id="confirmOverlay"><div class="dialog notice-dialog"><div class="dialoghead"><h2 id="confirmTitle">Konfirmasi</h2><button class="close" onclick="resolveConfirm(false)">×</button></div><p id="confirmMessage"></p><div class="twoactions"><button class="secondary" onclick="resolveConfirm(false)">Batal</button><button class="danger-confirm" onclick="resolveConfirm(true)">Ya, hapus</button></div></div></div>
-<div class="loading-screen" id="loadingScreen" aria-live="polite" aria-busy="false"><div class="loading-card"><div class="checkout-loader-art" aria-hidden="true"><span>🛍️</span></div><b id="loadingText">Menyiapkan pesananmu...</b><small id="loadingSubtext">Mohon tunggu sebentar, kami sedang memprosesnya.</small><div class="checkout-loading-dots" aria-hidden="true"><i></i><i></i><i></i></div></div></div>
+<div class="loading-screen" id="loadingScreen" aria-live="polite" aria-busy="false"><div class="loading-card"><div class="checkout-loader-art" aria-hidden="true"><span id="loadingIcon"><svg viewBox="0 0 24 24" role="img" aria-label="Memeriksa akun"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="8" r="4"/><path d="m16.5 17 2 2 4-4"/></svg></span></div><b id="loadingText">Menyiapkan pesananmu...</b><small id="loadingSubtext">Mohon tunggu sebentar, kami sedang memprosesnya.</small><div class="checkout-loading-dots" aria-hidden="true"><i></i><i></i><i></i></div></div></div>
 
 <script>
 // Checkout tidak ditutup oleh klik area luar atau tombol Escape.
@@ -2021,7 +2021,7 @@ function closeFinishingInfo(){const overlay=document.getElementById('finishingIn
 
 function showNotice(message,title='Informasi'){document.getElementById('noticeTitle').textContent=title;document.getElementById('noticeMessage').textContent=message;openOverlay('noticeOverlay')}
 let confirmResolver=null;function askConfirm(message,title='Konfirmasi'){document.getElementById('confirmTitle').textContent=title;document.getElementById('confirmMessage').textContent=message;openOverlay('confirmOverlay');return new Promise(resolve=>{confirmResolver=resolve})}function resolveConfirm(answer){closeOverlay('confirmOverlay');if(confirmResolver){confirmResolver(answer);confirmResolver=null}}
-function showLoading(message='Memuat data...'){document.getElementById('loadingText').textContent=message;document.getElementById('loadingScreen').classList.add('show');document.body.classList.add('modal-open')}function hideLoading(){document.getElementById('loadingScreen').classList.remove('show');syncModalLock()}
+function showLoading(message='Memuat data...'){const icon=document.getElementById('loadingIcon');const accountCheck=/akun|whatsapp|login|password|admin|pelanggan/i.test(message);if(icon){icon.innerHTML=accountCheck?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-label="Memeriksa akun"><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/><path d="m16.5 16.5 1.8 1.8 3.2-3.6"/></svg>':'🛍️';}document.getElementById('loadingText').textContent=message;document.getElementById('loadingScreen').classList.add('show');document.body.classList.add('modal-open')}function hideLoading(){document.getElementById('loadingScreen').classList.remove('show');syncModalLock()}
 let checkoutLoadingTimer=null;
 const checkoutLoadingMessages=['Menyiapkan detail pesananmu...','Memeriksa produk dan variasi...','Menghitung total dan ongkir...','Menyimpan pesanan ke sistem...','Sedikit lagi, pesananmu sedang diproses...'];
 function showCheckoutLoading(){
@@ -2971,44 +2971,6 @@ html[data-theme="dark"] .account-modal .account-info *{
 html[data-theme="dark"] .account-modal .account-error{
   color:#ffb4b4 !important;
 }
-
-
-/* ACCOUNT POPUPS — tema Light/Dark mengikuti tema utama Aliflam */
-.account-modal-back,.account-unregistered-back{background:rgba(5,16,30,.62);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
-.account-modal,.account-unregistered-card{
-  background:var(--card)!important;color:var(--ink)!important;border:1px solid var(--line)!important;
-  box-shadow:0 24px 70px rgba(0,0,0,.24)!important
-}
-.account-modal h2,.account-unregistered-card h3{color:var(--ink)!important}
-.account-modal label{color:var(--ink)!important}
-.account-modal .account-subtitle,.account-unregistered-card p{color:var(--muted)!important}
-.account-modal input,.account-modal textarea,.account-modal select{
-  background:var(--soft)!important;color:var(--ink)!important;border:1px solid var(--line)!important;
-  caret-color:var(--blue)!important
-}
-.account-modal input::placeholder,.account-modal textarea::placeholder{color:var(--muted)!important;opacity:1}
-.account-modal .account-divider:before,.account-modal .account-divider:after{background:var(--line)!important}
-.account-modal .account-close{background:var(--soft)!important;color:var(--ink)!important;border:1px solid var(--line)!important}
-.account-modal .account-note{background:var(--blue-soft)!important;border-color:var(--line)!important;color:var(--ink)!important}
-.account-modal .account-profile-card>div{background:var(--soft)!important;border-color:var(--line)!important}
-.account-modal .account-profile-card small{color:var(--muted)!important}
-.account-modal .account-profile-card strong{color:var(--ink)!important}
-.account-modal .account-bridge{background:var(--soft)!important;border-color:var(--line)!important}
-.account-modal .account-bridge-title{color:var(--ink)!important}
-.account-modal .account-bridge p{color:var(--muted)!important}
-.account-modal .account-reset-unregistered{background:rgba(220,38,38,.09)!important;border-color:rgba(220,38,38,.28)!important;color:var(--ink)!important}
-.account-modal .account-register-link{color:var(--ink)!important}
-.account-modal .account-register-link b{color:#16a34a!important}
-.account-modal .account-reset-link,.account-modal .account-reset-link b{color:#dc2626!important}
-.account-modal .account-register-now{background:#dc2626!important;color:#fff!important}
-.account-unregistered-card .account-unregistered-icon{background:rgba(245,158,11,.15)!important;color:#b45309!important}
-.account-unregistered-card .account-unregistered-cancel{color:var(--muted)!important}
-html[data-theme="dark"] .account-modal .account-register-link{color:var(--ink)!important}
-html[data-theme="dark"] .account-modal .account-register-link b{color:#4ade80!important}
-html[data-theme="dark"] .account-modal .account-reset-link,html[data-theme="dark"] .account-modal .account-reset-link b{color:#f87171!important}
-html[data-theme="dark"] .account-modal .account-reset-unregistered{background:rgba(248,113,113,.12)!important;border-color:rgba(248,113,113,.3)!important;color:var(--ink)!important}
-html[data-theme="dark"] .account-unregistered-card .account-unregistered-icon{background:rgba(245,158,11,.18)!important;color:#ffd08a!important}
-html[data-theme="dark"] .account-modal .account-main-btn{background:var(--blue)!important;color:#fff!important}
 
 </style>
 </body></html>
