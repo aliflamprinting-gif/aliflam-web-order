@@ -8,7 +8,7 @@
 body:has(#productDetailPage.active) main{padding-top:12px}#productDetailPage>.secondary{margin:0;display:inline-block}#productDetailPage .detailpage{margin-top:16px}.variation-options{display:flex;flex-wrap:wrap;gap:8px}.variation-chip{position:relative;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:10px 13px;font-size:12px;font-weight:650;text-align:left;cursor:pointer}.variation-chip.selected{border:2px solid var(--blue);background:var(--soft);padding:9px 12px}.variation-chip .check{display:inline-flex;margin-left:8px;width:17px;height:17px;align-items:center;justify-content:center;border-radius:50%;background:var(--blue);color:white;font-size:11px}.qtyrow{gap:8px}.qtyrow input{width:76px;text-align:center}.qtybtn{width:40px;height:42px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font-size:22px;font-weight:700;cursor:pointer}.qtyrow input::-webkit-inner-spin-button,.qtyrow input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}.qtyrow input{appearance:textfield}*{-webkit-tap-highlight-color:transparent}button,a,input,select,textarea{-webkit-tap-highlight-color:transparent}button:focus:not(:focus-visible),a:focus:not(:focus-visible){outline:none}.cart-restore-wrap{margin:12px 14px;padding:13px;border:1px solid var(--line);border-radius:12px;background:var(--soft)}.cart-restore-note{font-size:11px;line-height:1.55;margin:0 0 10px;color:var(--muted)}.cart-restore-btn{min-height:42px;font-weight:850;letter-spacing:.2px}.cart-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.cart-action{border:0;border-radius:9px;padding:8px 12px;color:#fff;font-weight:750;display:inline-flex;align-items:center;gap:6px}.cart-action.edit{background:#16a34a}.cart-action.delete{background:#dc2626}.cart-action svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .notice-dialog p{line-height:1.55;color:var(--muted);margin:8px 0 18px}
 .danger-confirm{border:0;border-radius:10px;padding:11px 16px;background:#dc2626;color:#fff;font-weight:800}
-body.modal-open{overflow:hidden!important;touch-action:none}
+body.modal-open{overflow:hidden!important;overscroll-behavior:none}
 .overlay{overscroll-behavior:contain}
 .loading-screen{position:fixed;inset:0;z-index:9999;background:#0b1b2b55;display:none;align-items:center;justify-content:center;padding:20px}
 .loading-screen.show{display:flex}
@@ -2038,7 +2038,21 @@ function navigate(page){
 function setFilter(name){filter=name;navigate('products')}
 function renderProducts(){document.getElementById('filters').innerHTML=names.map(n=>`<button class="filter ${filter===n?'selected':''}" onclick="setFilter(decodeURIComponent('${encodeURIComponent(n)}'))">${esc(n)}</button>`).join('');const q=document.getElementById('productSearch').value.trim().toLowerCase();const arr=groups.filter(g=>(filter==='Semua'||classify(g)===filter)&&(g.name.toLowerCase().includes(q)||g.variants.some(v=>[v.sku,v.material,v.size,v.finishing,(v.sizeOptions||[]).map(x=>x.value).join(" ")].join(' ').toLowerCase().includes(q))));document.getElementById('products').innerHTML=arr.map(productCard).join('')||'<div class="empty">Produk tidak ditemukan.</div>';document.getElementById('productCount').textContent=arr.length+' produk ditemukan'}
 function renderHome(){const categoryDescriptions=['Cetak banner & spanduk promosi','X-banner, roll banner & display','Stiker label, produk & kemasan','Brosur, flyer & media promosi','Kartu nama dan kebutuhan kartu'];document.getElementById('homeCats').innerHTML=names.slice(1,6).map((n,i)=>`<button class="category category-cmyk category-tone-${i+1}" onclick="setFilter(decodeURIComponent('${encodeURIComponent(n)}'))"><span class="cat-icon">${icons[i+1]}</span><span class="category-copy"><b>${esc(n)}</b><small>${categoryDescriptions[i]||'Pilihan produk percetakan'}</small></span><span class="category-arrow" aria-hidden="true">↗</span></button>`).join('');const featured=groups.slice(0,8);document.getElementById('homeProducts').innerHTML=featured.map(productCard).join('')||'<div class="empty">Produk belum tersedia.</div>'}
-function syncModalLock(){const any=[...document.querySelectorAll('.overlay')].some(x=>x.classList.contains('open'));document.body.classList.toggle('modal-open',any)}
+function syncModalLock(){
+ const anyOverlay=[...document.querySelectorAll('.overlay')].some(x=>x.classList.contains('open'));
+ const accountOpen=!!document.querySelector('#accountModalBack.show,#accountUnregisteredLoginPopup.show');
+ const loadingOpen=!!document.querySelector('.loading-screen.show');
+ document.body.classList.toggle('modal-open',anyOverlay||accountOpen||loadingOpen);
+}
+/* Keep background page locked whenever any popup/overlay is visible. */
+(function(){
+ const watch=()=>{
+  if(typeof syncModalLock==='function')syncModalLock();
+ };
+ const observer=new MutationObserver(watch);
+ observer.observe(document.body,{subtree:true,attributes:true,attributeFilter:['class']});
+ watch();
+})();
 function openOverlay(id){document.getElementById(id).classList.add('open');syncModalLock()}function closeOverlay(id){document.getElementById(id).classList.remove('open');syncModalLock()}
 function openFinishingInfo(){const overlay=document.getElementById('finishingInfoOverlay');if(!overlay)return;overlay.classList.add('open');overlay.setAttribute('aria-hidden','false');syncModalLock()}
 function closeFinishingInfo(){const overlay=document.getElementById('finishingInfoOverlay');if(!overlay)return;overlay.classList.remove('open');overlay.setAttribute('aria-hidden','true');syncModalLock()}
@@ -2780,7 +2794,7 @@ html[data-theme="dark"] .account-unregistered-icon{background:#49351c;color:#ffd
 function getStoredCustomer(){
  try{return JSON.parse(localStorage.getItem('ALIFLAM_CUSTOMER')||'null')}catch(e){return null}
 }
-function openAccountModal(){
+function openAccountModal(){  bindAccountInvalidClear();
  const back=document.getElementById('accountModalBack');back.classList.add('show');
  const customer=getStoredCustomer();
  if(customer&&customer.id){
@@ -2876,7 +2890,7 @@ async function prepareAccountWhatsApp(kind){
 }
 async function submitCustomerRegistration(){
  const name=document.getElementById('accountRegName').value.trim(),whatsapp=document.getElementById('accountRegPhone').value.trim(),password=document.getElementById('accountRegPassword').value,confirmPassword=document.getElementById('accountRegConfirm').value;
- if(!name||!whatsapp||!password||!confirmPassword)return accountMessage('Lengkapi semua data pendaftaran.');
+ if(!name||!whatsapp||!password||!confirmPassword)return markAccountRequired(['accountRegName','accountRegPhone','accountRegPassword','accountRegConfirm'],'Lengkapi kolom wajib yang ditandai merah.');
  if(password.length<8)return accountMessage('Password minimal 8 karakter.');
  if(password!==confirmPassword)return accountMessage('Konfirmasi password tidak sama.');
  if(document.getElementById('accountRegisterBridge').hidden)return prepareAccountWhatsApp('register');
@@ -2889,9 +2903,28 @@ async function submitCustomerRegistration(){
   showNotice('Pendaftaran akun berhasil dikirim dan sedang menunggu persetujuan admin. Kamu akan dapat login setelah akun disetujui.','Pendaftaran Terkirim');
  }catch(e){accountMessage(e.message||'Pendaftaran gagal.');showNotice(e.message||'Pendaftaran gagal.','Pendaftaran Belum Berhasil');}finally{hideLoading();}
 }
+function markAccountRequired(ids,message){
+ const fields=ids.map(id=>document.getElementById(id)).filter(Boolean);
+ fields.forEach(el=>{
+  if(!String(el.value||'').trim())el.classList.add('invalid-field');
+ });
+ const first=fields.find(el=>el.classList.contains('invalid-field'));
+ if(first){first.focus({preventScroll:true});first.scrollIntoView({behavior:'smooth',block:'center'});}
+ if(message)accountMessage(message);
+ return !!first;
+}
+function bindAccountInvalidClear(){
+ document.querySelectorAll('#accountModalBack input,#accountModalBack textarea,#accountModalBack select').forEach(el=>{
+  if(el.dataset.accountInvalidClearBound)return;
+  el.dataset.accountInvalidClearBound='1';
+  const clear=()=>{if(String(el.value||'').trim())el.classList.remove('invalid-field');};
+  el.addEventListener('input',clear);
+  el.addEventListener('change',clear);
+ });
+}
 async function submitCustomerLogin(){
  const whatsapp=document.getElementById('accountLoginPhone').value.trim(),password=document.getElementById('accountLoginPassword').value;
- if(!whatsapp||!password)return accountMessage('Masukkan nomor WhatsApp dan password.');
+ if(!whatsapp||!password)return markAccountRequired(['accountLoginPhone','accountLoginPassword'],'Kolom wajib yang belum diisi ditandai merah.');
  accountMessage('Memeriksa akun...');showLoading('Memeriksa akun...');
  try{
   const r=await api('customerLogin',{whatsapp,password});if(!r.ok)throw Error(r.error||'Login gagal');
@@ -2909,7 +2942,7 @@ async function submitCustomerLogin(){
  }finally{hideLoading();}
 }
 async function submitPasswordResetRequest(){
- const whatsapp=document.getElementById('accountResetPhone').value.trim();if(!whatsapp)return accountMessage('Masukkan nomor WhatsApp yang terdaftar.');
+ const whatsapp=document.getElementById('accountResetPhone').value.trim();if(!whatsapp)return markAccountRequired(['accountResetPhone'],'Nomor WhatsApp wajib diisi. Kolom ditandai merah.');
  if(document.getElementById('accountResetBridge').hidden)return prepareAccountWhatsApp('reset');
  accountMessage('Membuat permintaan reset...');showLoading('Mengirim permintaan reset password...');
  try{
@@ -3172,6 +3205,27 @@ html[data-theme="dark"] .account-unregistered-icon{background:#49351c!important;
 .account-modal .account-logout-spinner{width:17px;height:17px;flex:0 0 17px;border:2px solid rgba(255,255,255,.38);border-top-color:#fff;border-radius:50%;animation:accountLogoutSpin .7s linear infinite}
 @keyframes accountLogoutSpin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.account-modal .account-logout-spinner{animation-duration:1.8s}}
+
+/* BACKGROUND SCROLL LOCK — keep scrolling inside the active popup only */
+body.modal-open{position:relative;width:100%;overscroll-behavior:none}
+.overlay,.account-modal-back,.account-unregistered-back{overscroll-behavior:contain}
+.account-modal,.account-unregistered-card,.dialog{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+
+/* REQUIRED FIELDS LEFT EMPTY */
+.account-modal input.invalid-field,.account-modal select.invalid-field,.account-modal textarea.invalid-field{
+ border:1.5px solid #dc2626!important;
+ background:#fff1f2!important;
+ box-shadow:0 0 0 3px rgba(220,38,38,.12)!important;
+}
+html[data-theme="dark"] .account-modal input.invalid-field,
+html[data-theme="dark"] .account-modal select.invalid-field,
+html[data-theme="dark"] .account-modal textarea.invalid-field{
+ border:1.5px solid #f87171!important;
+ background:#3b2029!important;
+ color:#fff1f2!important;
+ box-shadow:0 0 0 3px rgba(248,113,113,.16)!important;
+}
+.account-modal .invalid-field:focus{outline:2px solid rgba(220,38,38,.25)!important;outline-offset:1px}
 </style>
 
 </body></html>
