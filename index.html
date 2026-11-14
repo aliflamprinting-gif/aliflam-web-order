@@ -1565,7 +1565,7 @@ html[data-theme="dark"] .floating-catalog-back{
 </div>
 
 <div class="overlay notice-overlay" id="noticeOverlay"><div class="dialog notice-dialog"><div class="notice-symbol"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5m0-8h.01"></path></svg></div><div class="notice-copy"><div class="notice-kicker">ALIFLAM PRINTING</div><h2 id="noticeTitle">Informasi</h2><p id="noticeMessage"></p></div><div class="notice-actions"><button class="primary" onclick="closeOverlay('noticeOverlay')">Oke</button></div></div></div>
-<div class="overlay" id="confirmOverlay"><div class="dialog notice-dialog"><div class="dialoghead"><h2 id="confirmTitle">Konfirmasi</h2><button class="close" onclick="resolveConfirm(false)">×</button></div><p id="confirmMessage"></p><div class="twoactions"><button class="secondary" onclick="resolveConfirm(false)">Batal</button><button class="danger-confirm" onclick="resolveConfirm(true)">Ya, hapus</button></div></div></div>
+<div class="overlay" id="confirmOverlay"><div class="dialog notice-dialog"><div class="dialoghead"><h2 id="confirmTitle">Konfirmasi</h2><button class="close" onclick="resolveConfirm(false)">×</button></div><p id="confirmMessage"></p><div class="twoactions"><button class="secondary" onclick="resolveConfirm(false)">Batal</button><button class="danger-confirm" id="confirmAcceptBtn" onclick="resolveConfirm(true)">Ya, hapus</button></div></div></div>
 <div class="loading-screen" id="loadingScreen" aria-live="polite" aria-busy="false"><div class="loading-card"><div class="checkout-loader-art" aria-hidden="true"><span id="loadingIcon"><svg viewBox="0 0 24 24" role="img" aria-label="Memeriksa akun"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="8" r="4"/><path d="m16.5 17 2 2 4-4"/></svg></span></div><b id="loadingText">Menyiapkan pesananmu...</b><small id="loadingSubtext">Mohon tunggu sebentar, kami sedang memprosesnya.</small><div class="checkout-loading-dots" aria-hidden="true"><i></i><i></i><i></i></div></div></div>
 
 <script>
@@ -1712,7 +1712,7 @@ async function restoreDeviceCart(){
   showNotice('Silakan login menggunakan akun aktif terlebih dahulu. Keranjang perangkat kamu tetap tersimpan dan tidak akan dihapus.','Login Diperlukan');
   openAccountModal();return;
  }
- if(!await askConfirm('Keranjang akan dipulihkan sesuai produk yang pernah kamu masukkan ke dalam keranjang di perangkat ini. Produk yang sama akan digabung dengan keranjang akun, sedangkan produk berbeda akan ditambahkan. Pulihkan keranjang sekarang?','Pulihkan Keranjang'))return;
+ if(!await askConfirm('Keranjang perangkat ini akan disinkronkan ke akun kamu. Produk yang sama akan digabung jumlahnya, sedangkan produk yang berbeda akan ditambahkan. Keranjang yang sudah ada di akun tetap dipertahankan. Lanjutkan sinkronisasi?','Sinkronkan Keranjang','IYA, SINKRONKAN KERANJANG','sync'))return;
  const button=document.getElementById('restoreDeviceCartBtn');if(button){button.disabled=true;button.textContent='Memulihkan...'}
  try{
   const remoteKeys=new Set(cart.map(cartIdentity));
@@ -2058,7 +2058,22 @@ function openFinishingInfo(){const overlay=document.getElementById('finishingInf
 function closeFinishingInfo(){const overlay=document.getElementById('finishingInfoOverlay');if(!overlay)return;overlay.classList.remove('open');overlay.setAttribute('aria-hidden','true');syncModalLock()}
 
 function showNotice(message,title='Informasi'){document.getElementById('noticeTitle').textContent=title;document.getElementById('noticeMessage').textContent=message;openOverlay('noticeOverlay')}
-let confirmResolver=null;function askConfirm(message,title='Konfirmasi'){document.getElementById('confirmTitle').textContent=title;document.getElementById('confirmMessage').textContent=message;openOverlay('confirmOverlay');return new Promise(resolve=>{confirmResolver=resolve})}function resolveConfirm(answer){closeOverlay('confirmOverlay');if(confirmResolver){confirmResolver(answer);confirmResolver=null}}
+let confirmResolver=null;function askConfirm(message,title='Konfirmasi',confirmText='Ya, hapus',confirmKind='danger'){
+ const heading=document.getElementById('confirmTitle');
+ const body=document.getElementById('confirmMessage');
+ const accept=document.getElementById('confirmAcceptBtn');
+ if(heading)heading.textContent=title;
+ if(body)body.textContent=message;
+ const overlay=document.getElementById('confirmOverlay');
+ if(overlay)overlay.classList.toggle('confirm-sync-mode',confirmKind==='sync');
+ if(accept){
+  accept.textContent=confirmText;
+  accept.classList.toggle('confirm-sync-btn',confirmKind==='sync');
+  accept.classList.toggle('danger-confirm',confirmKind!=='sync');
+ }
+ openOverlay('confirmOverlay');
+ return new Promise(resolve=>{confirmResolver=resolve});
+}function resolveConfirm(answer){closeOverlay('confirmOverlay');if(confirmResolver){confirmResolver(answer);confirmResolver=null}}
 function showLoading(message='Memuat data...'){const icon=document.getElementById('loadingIcon');const accountCheck=/akun|whatsapp|login|password|admin|pelanggan/i.test(message);if(icon){icon.innerHTML=accountCheck?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-label="Memeriksa akun"><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/><path d="m16.5 16.5 1.8 1.8 3.2-3.6"/></svg>':'🛍️';}document.getElementById('loadingText').textContent=message;document.getElementById('loadingScreen').classList.add('show');document.body.classList.add('modal-open')}function hideLoading(){document.getElementById('loadingScreen').classList.remove('show');syncModalLock()}
 let checkoutLoadingTimer=null;
 const checkoutLoadingMessages=['Menyiapkan detail pesananmu...','Memeriksa produk dan variasi...','Menghitung total dan ongkir...','Menyimpan pesanan ke sistem...','Sedikit lagi, pesananmu sedang diproses...'];
@@ -3226,6 +3241,27 @@ html[data-theme="dark"] .account-modal textarea.invalid-field{
  box-shadow:0 0 0 3px rgba(248,113,113,.16)!important;
 }
 .account-modal .invalid-field:focus{outline:2px solid rgba(220,38,38,.25)!important;outline-offset:1px}
+
+/* CONFIRMATION ACTION FOR CART SYNC */
+.confirm-sync-btn{
+ border:0!important;border-radius:10px!important;padding:11px 16px!important;
+ background:#138be5!important;color:#fff!important;font-weight:800!important;
+ box-shadow:0 5px 14px rgba(19,139,229,.2)!important;
+}
+.confirm-sync-btn:hover{filter:brightness(1.06)}
+.confirm-sync-btn:focus-visible{outline:3px solid rgba(19,139,229,.28)!important;outline-offset:2px}
+
+/* CART SYNC CONFIRM: close with top-right red X; no cancel button */
+#confirmOverlay.confirm-sync-mode .twoactions button.secondary{display:none!important}
+#confirmOverlay.confirm-sync-mode .twoactions{display:flex!important;justify-content:stretch!important}
+#confirmOverlay.confirm-sync-mode .twoactions #confirmAcceptBtn{width:100%!important;flex:1 1 100%}
+#confirmOverlay.confirm-sync-mode .dialoghead{position:relative;padding-right:42px}
+#confirmOverlay.confirm-sync-mode .dialoghead .close{
+ position:absolute;top:0;right:0;width:34px;height:34px;padding:0;
+ display:grid;place-items:center;border:0;border-radius:10px;
+ background:#dc2626!important;color:#fff!important;font-size:23px;font-weight:800;
+}
+#confirmOverlay.confirm-sync-mode .dialoghead .close:hover{background:#b91c1c!important}
 </style>
 
 </body></html>
