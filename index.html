@@ -1598,8 +1598,16 @@ const BUYER_STORAGE_KEY='aliflam-buyer-data-v1';
 function formatPhoneInput(value){
   let raw=String(value??'').replace(/[^0-9+]/g,'');
   const hasPlus=raw.startsWith('+');
-  raw=raw.replace(/\+/g,'');
-  const chunks=raw.match(/.{1,4}/g)||[];
+  let digits=raw.replace(/\D/g,'');
+  if(!digits)return hasPlus?'+':'';
+  // Format internasional +62: prefix tetap utuh, nomor pelanggan dipisah 3-4-4.
+  if(hasPlus&&digits.startsWith('62')){
+    const local=digits.slice(2),parts=[];
+    if(local.length){parts.push(local.slice(0,3));}
+    for(let i=3;i<local.length;i+=4)parts.push(local.slice(i,i+4));
+    return '+62'+(parts.length?' '+parts.join('-'):'');
+  }
+  const chunks=digits.match(/.{1,4}/g)||[];
   return (hasPlus?'+':'')+chunks.join('-');
 }
 function bindPhoneInput(id){
@@ -1620,8 +1628,7 @@ function bindPhoneInput(id){
   });
 }
 function bindCheckoutPhoneInputs(){
-  bindPhoneInput('checkoutPhone');
-  bindPhoneInput('checkoutAddressPhone');
+  ['checkoutPhone','checkoutAddressPhone','accountLoginPhone','accountRegPhone','accountResetPhone'].forEach(bindPhoneInput);
 }
 const money=n=>'Rp'+Number(n||0).toLocaleString('id-ID');
 const imageKey=x=>String(x||'').trim().toLowerCase();
@@ -2808,26 +2815,14 @@ html[data-theme="dark"] .account-unregistered-icon{background:#49351c;color:#ffd
   <p>Silakan tunggu admin menyetujuinya.</p>
   <p class="account-pending-next">Langkah selanjutnya, klik tombol di bawah untuk konfirmasi ke admin agar akun kamu bisa disetujui.</p>
   <a class="account-pending-wa" id="accountPendingWhatsApp" href="#" target="_blank" rel="noopener" onclick="markAccountWhatsAppOpened()">
-   <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3.1a8.8 8.8 0 0 0-7.55 13.32L3.3 20.7l4.4-1.13A8.8 8.8 0 1 0 12 3.1Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.05 8.15c-.25-.55-.52-.56-.78-.57h-.66c-.23 0-.6.09-.91.43-.31.34-1.19 1.16-1.19 2.82s1.22 3.27 1.39 3.5c.17.23 2.36 3.78 5.83 5.15 2.88 1.14 3.47.91 4.09.85.62-.06 2-.82 2.28-1.61.28-.79.28-1.47.2-1.61-.08-.14-.31-.23-.65-.4l-2.28-1.13c-.31-.15-.54-.23-.77.12-.23.34-.88 1.13-1.08 1.36-.2.23-.4.26-.74.09-.34-.17-1.44-.53-2.75-1.69-1.02-.91-1.71-2.04-1.91-2.38-.2-.34-.02-.52.15-.69.15-.15.34-.4.51-.6.17-.2.23-.34.34-.57.11-.23.06-.43-.03-.6-.08-.17-.74-1.83-1.04-2.47Z" fill="currentColor" transform="translate(2.2 0) scale(.82)"/></svg>
+   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.8a8.6 8.6 0 0 1-12.7 7.5L3 20.5l1.3-4.6A8.6 8.6 0 1 1 20.5 11.8Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8.5 7.7c-.3-.7-.7-.7-1-.7h-.7c-.3 0-.7.2-.9.6-.3.4-1.1 1.1-1.1 2.6s1.1 3 1.2 3.2c.2.2 2.1 3.3 5.2 4.5 2.6 1 3.1.8 3.7.7.6-.1 1.9-.8 2.2-1.5.3-.7.3-1.3.2-1.5-.1-.1-.3-.2-.7-.4l-2.1-1c-.3-.1-.5-.2-.7.2-.2.3-.8 1-1 1.2-.2.2-.4.2-.7.1-.3-.2-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.7l.5-.6c.2-.2.2-.4.3-.6.1-.2 0-.4 0-.6l-.9-2.1Z" fill="currentColor"/></svg>
    KONFIRMASI KE WHATSAPP
   </a>
   <button class="account-pending-continue" id="accountPendingContinue" type="button" hidden onclick="finishAccountRegistrationPopup()">SAYA SUDAH CHAT WHATSAPP</button>
  </div>
 </div>
-<div class="overlay account-pending-overlay" id="accountLoginWaitingOverlay" role="dialog" aria-modal="true" aria-labelledby="accountLoginWaitingTitle" onclick="if(event.target===this)closeAccountLoginWaitingPopup()">
- <div class="account-pending-card">
-  <div class="account-pending-icon" aria-hidden="true">
-   <svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="17" fill="none" stroke="currentColor" stroke-width="2.8"/><path d="M24 13v12l8 5" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-  </div>
-  <div class="account-pending-kicker">AKUN DALAM PROSES VERIFIKASI</div>
-  <h2 id="accountLoginWaitingTitle">Akun kamu masih menunggu persetujuan</h2>
-  <p>Pendaftaran berhasil kami terima. Admin sedang memeriksa permintaan aktivasi akun kamu.</p>
-  <p class="account-pending-next">Kamu belum bisa masuk untuk saat ini. Silakan coba login kembali setelah admin menyetujui akunmu.</p>
-  <button class="account-pending-continue" type="button" onclick="closeAccountLoginWaitingPopup()">MENGERTI</button>
- </div>
-</div>
 <style>
-#accountPendingOverlay,#accountLoginWaitingOverlay{z-index:1200!important;background:rgba(5,16,30,.76);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+#accountPendingOverlay{z-index:1200!important;background:rgba(5,16,30,.76);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
 .account-pending-card{width:min(420px,100%);max-height:90vh;overflow:auto;padding:27px 22px 22px;border:1px solid var(--line);border-radius:22px;background:var(--card);color:var(--ink);text-align:center;box-shadow:0 24px 80px #0006}
 .account-pending-icon{display:grid;place-items:center;width:68px;height:68px;margin:0 auto 14px;border-radius:22px;background:#fff4d6;color:#c88700}
 .account-pending-icon svg{width:42px;height:42px}
@@ -3003,29 +2998,6 @@ function bindAccountInvalidClear(){
   el.addEventListener('change',clear);
  });
 }
-function showAccountLoginWaitingPopup(){
- const overlay=document.getElementById('accountLoginWaitingOverlay');
- if(overlay)overlay.classList.add('show');
-}
-function closeAccountLoginWaitingPopup(){
- const overlay=document.getElementById('accountLoginWaitingOverlay');
- if(overlay)overlay.classList.remove('show');
-}
-function getFriendlyLoginError(message){
- const code=String(message||'').toUpperCase();
- if(code.includes('PENDAFTARAN_DITOLAK')||code.includes('AKUN_DITOLAK')||code.includes('ACCOUNT_REJECTED'))
-  return {type:'rejected',message:'Pendaftaran akun kamu belum disetujui admin. Silakan hubungi admin Aliflam Printing untuk informasi lebih lanjut.'};
- if(code.includes('MENUNGGU_PERSETUJUAN')||code.includes('PENDING_APPROVAL')||code.includes('AKUN_PENDING')||code.includes('BELUM_DIVERIFIKASI')||code.includes('ACCOUNT_PENDING'))
-  return {type:'pending'};
- if(code.includes('TERLALU_BANYAK_PERCOBAAN_LOGIN')||code.includes('TOO_MANY_LOGIN_ATTEMPTS')){
-  const waitMatch=String(message||'').match(/(?:sekitar|dalam|after)?\\s*(\\d+\\s*(?:menit|menit|minute|minutes|jam|hour|hours))/i);
-  const waitText=waitMatch?waitMatch[1].replace(/minute(s)?/i,'menit').replace(/hour(s)?/i,'jam'):'15 menit';
-  return {type:'rate_limit',title:'Terlalu Banyak Percobaan Login',message:'Kamu sudah mencoba login beberapa kali. Demi keamanan, silakan coba kembali dalam '+waitText+'.'};
- }
- if(code.includes('NOMOR_ATAU_PASSWORD_SALAH')||code.includes('INVALID_CREDENTIALS'))
-  return {type:'invalid',message:'Nomor WhatsApp atau password yang kamu masukkan tidak sesuai. Periksa kembali lalu coba lagi.'};
- return {type:'other',message:message||'Login belum berhasil. Silakan coba lagi.'};
-}
 async function submitCustomerLogin(){
  const whatsapp=document.getElementById('accountLoginPhone').value.trim(),password=document.getElementById('accountLoginPassword').value;
  if(!whatsapp||!password)return markAccountRequired(['accountLoginPhone','accountLoginPassword'],'Kolom wajib yang belum diisi ditandai merah.');
@@ -3042,13 +3014,7 @@ async function submitCustomerLogin(){
  }catch(e){
   const message=e.message||'Login gagal.';
   if(message.includes('NOMOR_WHATSAPP_BELUM_TERDAFTAR')){accountMessage('Nomor WhatsApp belum terdaftar.');showUnregisteredLoginPopup();}
-  else{
-   const friendly=getFriendlyLoginError(message);
-   if(friendly.type==='pending'){accountMessage('Akun masih menunggu persetujuan admin.');showAccountLoginWaitingPopup();}
-   else if(friendly.type==='rejected'){accountMessage(friendly.message);showNotice(friendly.message,'Pendaftaran Belum Disetujui');}
-   else if(friendly.type==='rate_limit'){accountMessage(friendly.message);showNotice(friendly.message,friendly.title);}
-   else{accountMessage(friendly.message);showNotice(friendly.message,'Tidak Bisa Masuk');}
-  }
+  else{accountMessage(message);showNotice(message,'Tidak Bisa Masuk');}
  }finally{hideLoading();}
 }
 async function submitPasswordResetRequest(){
