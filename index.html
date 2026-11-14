@@ -2711,7 +2711,10 @@ html[data-theme="dark"] .account-unregistered-icon{background:#49351c;color:#ffd
     <div><small>ID PELANGGAN</small><strong id="accountProfileId">-</strong></div>
     <div><small>STATUS AKUN</small><strong id="accountProfileStatus">AKTIF</strong></div>
    </div>
-   <button class="account-main-btn account-logout-btn" type="button" onclick="logoutCustomerAccount()">KELUAR DARI AKUN</button>
+   <button class="account-main-btn account-logout-btn" id="accountLogoutBtn" type="button" onclick="logoutCustomerAccount()">
+      <svg class="account-logout-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 17l5-5-5-5M15 12H3m9-8h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>KELUAR DARI AKUN</span>
+    </button>
   </section>
   <section class="account-panel" id="accountLoginForm">
    <label for="accountLoginPhone">Nomor WhatsApp</label><input id="accountLoginPhone" inputmode="tel" autocomplete="tel" placeholder="08xxxxxxxxxx"/>
@@ -2817,13 +2820,30 @@ function showAccountForm(which){
  }
 }
 async function logoutCustomerAccount(){
+ const button=document.getElementById('accountLogoutBtn');
+ if(button?.disabled)return;
  const customer=getStoredCustomer();
- if(customer?.sessionToken){try{await api('customerLogout',{customerSessionToken:customer.sessionToken})}catch(e){}}
- localStorage.removeItem('ALIFLAM_CUSTOMER');
- cart=[];customerCartId='';customerCartSyncReady=true;saveCart();renderCart();
- showAccountForm('login');
- document.getElementById('accountLoginPassword').value='';
- accountMessage('Kamu sudah keluar dari akun.');
+ if(button){
+  button.disabled=true;
+  button.classList.add('is-logging-out');
+  button.innerHTML='<span class="account-logout-spinner" aria-hidden="true"></span><span>SEDANG KELUAR...</span>';
+  button.setAttribute('aria-busy','true');
+ }
+ try{
+  if(customer?.sessionToken){try{await api('customerLogout',{customerSessionToken:customer.sessionToken})}catch(e){}}
+  localStorage.removeItem('ALIFLAM_CUSTOMER');
+  cart=[];customerCartId='';customerCartSyncReady=true;saveCart();renderCart();
+  showAccountForm('login');
+  document.getElementById('accountLoginPassword').value='';
+  accountMessage('Kamu sudah keluar dari akun.');
+ }finally{
+  if(button){
+   button.disabled=false;
+   button.classList.remove('is-logging-out');
+   button.setAttribute('aria-busy','false');
+   button.innerHTML='<svg class="account-logout-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 17l5-5-5-5M15 12H3m9-8h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>KELUAR DARI AKUN</span>';
+  }
+ }
 }
 function accountMessage(t){document.getElementById('accountMessage').textContent=t;}
 let accountWhatsAppConfirmed={register:false,reset:false};
@@ -3004,132 +3024,7 @@ html[data-theme="dark"] .account-modal .account-error{
 
 </style>
 
-<style id="aliflam-account-theme-contrast-final">
-/* FINAL ACCOUNT POPUP CONTRAST FIX — scoped to account UI only */
-/* Light mode */
-html:not([data-theme="dark"]) .account-modal,
-html:not([data-theme="dark"]) .account-unregistered-card{
-  background:#ffffff!important;
-  color:#172334!important;
-  border-color:#dbe5ef!important;
-}
-html:not([data-theme="dark"]) .account-modal h2,
-html:not([data-theme="dark"]) .account-modal h3,
-html:not([data-theme="dark"]) .account-modal label,
-html:not([data-theme="dark"]) .account-modal .account-msg,
-html:not([data-theme="dark"]) .account-unregistered-card h3{
-  color:#172334!important;
-}
-html:not([data-theme="dark"]) .account-modal .account-subtitle,
-html:not([data-theme="dark"]) .account-modal p,
-html:not([data-theme="dark"]) .account-unregistered-card p,
-html:not([data-theme="dark"]) .account-unregistered-cancel{
-  color:#5b6b7e!important;
-}
-html:not([data-theme="dark"]) .account-modal input{
-  background:#ffffff!important;color:#172334!important;border-color:#cbd5e1!important;
-}
-html:not([data-theme="dark"]) .account-modal input::placeholder{color:#8794a5!important;opacity:1}
-html:not([data-theme="dark"]) .account-modal .account-note{
-  background:#eff8f3!important;border-color:#cce8d8!important;color:#176b4e!important;
-}
-html:not([data-theme="dark"]) .account-modal .account-profile-card>div{
-  background:#f7fafc!important;border-color:#dbe5ed!important;
-}
-html:not([data-theme="dark"]) .account-modal .account-profile-card small{color:#64748b!important}
-html:not([data-theme="dark"]) .account-modal .account-profile-card strong{color:#172334!important}
-html:not([data-theme="dark"]) .account-modal .account-bridge{
-  background:#f0fbf5!important;border-color:#b9e4d0!important;
-}
-html:not([data-theme="dark"]) .account-modal .account-bridge-title{color:#126b45!important}
-html:not([data-theme="dark"]) .account-modal .account-bridge p{color:#476456!important}
-html:not([data-theme="dark"]) .account-modal .account-reset-unregistered{
-  background:#fff1f1!important;border-color:#fecaca!important;color:#991b1b!important;
-}
 
-/* Dark mode: dark surfaces use light text consistently. */
-html[data-theme="dark"] .account-modal,
-html[data-theme="dark"] .account-unregistered-card{
-  background:#14283f!important;color:#f3f7fc!important;border-color:#36516b!important;
-}
-html[data-theme="dark"] .account-modal *,
-html[data-theme="dark"] .account-unregistered-card *{
-  text-shadow:none;
-}
-html[data-theme="dark"] .account-modal h2,
-html[data-theme="dark"] .account-modal h3,
-html[data-theme="dark"] .account-modal label,
-html[data-theme="dark"] .account-modal .account-msg,
-html[data-theme="dark"] .account-modal .account-profile-card strong,
-html[data-theme="dark"] .account-unregistered-card h3{
-  color:#f3f7fc!important;
-}
-html[data-theme="dark"] .account-modal .account-subtitle,
-html[data-theme="dark"] .account-modal p,
-html[data-theme="dark"] .account-modal .account-help,
-html[data-theme="dark"] .account-unregistered-card p,
-html[data-theme="dark"] .account-unregistered-cancel{
-  color:#bdcddd!important;
-}
-html[data-theme="dark"] .account-modal input,
-html[data-theme="dark"] .account-modal textarea,
-html[data-theme="dark"] .account-modal select{
-  background:#0d1b2b!important;color:#f3f7fc!important;
-  border:1px solid #49627c!important;caret-color:#8bd5ff;
-}
-html[data-theme="dark"] .account-modal input::placeholder,
-html[data-theme="dark"] .account-modal textarea::placeholder{
-  color:#91a5bb!important;opacity:1;
-}
-html[data-theme="dark"] .account-modal input:focus,
-html[data-theme="dark"] .account-modal textarea:focus,
-html[data-theme="dark"] .account-modal select:focus{
-  outline:2px solid #55bfff!important;outline-offset:1px;
-  border-color:#55bfff!important;
-}
-html[data-theme="dark"] .account-modal .account-divider{color:#aebed0!important}
-html[data-theme="dark"] .account-modal .account-divider:before,
-html[data-theme="dark"] .account-modal .account-divider:after{background:#36516b!important}
-html[data-theme="dark"] .account-modal .account-note,
-html[data-theme="dark"] .account-modal .account-success,
-html[data-theme="dark"] .account-modal .account-info,
-html[data-theme="dark"] .account-modal .account-reset-unregistered{
-  background:#1b344d!important;border:1px solid #36516b!important;color:#e4edf7!important;
-}
-html[data-theme="dark"] .account-modal .account-note *,
-html[data-theme="dark"] .account-modal .account-success *,
-html[data-theme="dark"] .account-modal .account-info *,
-html[data-theme="dark"] .account-modal .account-reset-unregistered *{
-  color:inherit!important;
-}
-html[data-theme="dark"] .account-modal .account-profile-card>div{
-  background:#1b344d!important;border-color:#36516b!important;
-}
-html[data-theme="dark"] .account-modal .account-profile-card small{color:#bdcddd!important}
-html[data-theme="dark"] .account-modal .account-bridge{
-  background:#123b30!important;border-color:#267453!important;
-}
-html[data-theme="dark"] .account-modal .account-bridge-title{color:#a8f0ca!important}
-html[data-theme="dark"] .account-modal .account-bridge p{color:#c4e4d4!important}
-html[data-theme="dark"] .account-modal .account-register-link,
-html[data-theme="dark"] .account-modal .account-register-link span{color:#e5edf7!important}
-html[data-theme="dark"] .account-modal .account-register-link b{color:#6ee7a8!important}
-html[data-theme="dark"] .account-modal .account-reset-link,
-html[data-theme="dark"] .account-modal .account-reset-link span,
-html[data-theme="dark"] .account-modal .account-reset-link b{color:#ff9b9b!important}
-html[data-theme="dark"] .account-modal .account-back-link{color:#78caff!important}
-html[data-theme="dark"] .account-modal .account-close{
-  background:#49303a!important;color:#ffd1d8!important;border:1px solid #704553!important;
-}
-html[data-theme="dark"] .account-unregistered-icon{
-  background:#49351c!important;color:#ffd08a!important;
-}
-html[data-theme="dark"] .account-modal .account-main-btn,
-html[data-theme="dark"] .account-unregistered-card .account-main-btn{
-  background:#087a59!important;color:#ffffff!important;
-}
-html[data-theme="dark"] .account-modal .account-error{color:#ffb4b4!important}
-</style>
 
 
 
@@ -3142,4 +3037,141 @@ html[data-theme="dark"] .account-modal .account-error{color:#ffb4b4!important}
   box-shadow:0 0 0 3px rgba(22,163,74,.16);
 }
 </style>
-\n</body></html>
+\n
+<style id="aliflam-account-popup-theme-final-v3">
+/* ALIFLAM ACCOUNT POPUPS — semantic colors shared across Light and Dark */
+
+/* LIGHT MODE */
+html:not([data-theme="dark"]) .account-modal,
+html:not([data-theme="dark"]) .account-unregistered-card{
+  background:#ffffff!important;color:#17263a!important;
+  border:1px solid #dce5ef!important;box-shadow:0 24px 70px rgba(16,38,62,.18)!important;
+}
+html:not([data-theme="dark"]) .account-modal h2,
+html:not([data-theme="dark"]) .account-modal h3,
+html:not([data-theme="dark"]) .account-modal label,
+html:not([data-theme="dark"]) .account-unregistered-card h3{color:#17263a!important}
+html:not([data-theme="dark"]) .account-modal .account-subtitle,
+html:not([data-theme="dark"]) .account-modal p,
+html:not([data-theme="dark"]) .account-unregistered-card p{color:#64748b!important}
+html:not([data-theme="dark"]) .account-modal input,
+html:not([data-theme="dark"]) .account-modal textarea,
+html:not([data-theme="dark"]) .account-modal select{
+  background:#f8fafc!important;color:#17263a!important;border:1px solid #cbd5e1!important;
+}
+html:not([data-theme="dark"]) .account-modal input::placeholder,
+html:not([data-theme="dark"]) .account-modal textarea::placeholder{color:#8795a7!important;opacity:1}
+html:not([data-theme="dark"]) .account-modal input:focus,
+html:not([data-theme="dark"]) .account-modal textarea:focus,
+html:not([data-theme="dark"]) .account-modal select:focus{
+  border-color:#138be5!important;outline:3px solid rgba(19,139,229,.14)!important;outline-offset:1px;
+}
+html:not([data-theme="dark"]) .account-modal .account-close{
+  background:#eef2f6!important;color:#475569!important;border:1px solid #d8e1ea!important;
+}
+html:not([data-theme="dark"]) .account-modal .account-main-btn{background:#138be5!important;color:#fff!important}
+html:not([data-theme="dark"]) .account-modal #accountRegisterStartBtn,
+html:not([data-theme="dark"]) .account-modal .account-register-now{background:#16834f!important;color:#fff!important}
+html:not([data-theme="dark"]) .account-modal .account-logout-btn{background:#dc2626!important;color:#fff!important}
+html:not([data-theme="dark"]) .account-modal .account-link-btn{color:#53657a!important}
+html:not([data-theme="dark"]) .account-modal .account-register-link b{color:#16834f!important}
+html:not([data-theme="dark"]) .account-modal .account-reset-link b,
+html:not([data-theme="dark"]) .account-modal .account-back-link{color:#087fc7!important}
+html:not([data-theme="dark"]) .account-modal .account-note,
+html:not([data-theme="dark"]) .account-modal .account-bridge{
+  background:#effaf3!important;border:1px solid #c8ead4!important;color:#176b43!important;
+}
+html:not([data-theme="dark"]) .account-modal .account-bridge-title{color:#176b43!important}
+html:not([data-theme="dark"]) .account-modal .account-bridge p{color:#456b55!important}
+html:not([data-theme="dark"]) .account-modal .account-reset-unregistered{
+  background:#fff7e6!important;border:1px solid #f2d28b!important;color:#815b12!important;
+}
+html:not([data-theme="dark"]) .account-modal .account-profile-card>div{
+  background:#f8fafc!important;border-color:#dce5ef!important;
+}
+html:not([data-theme="dark"]) .account-modal .account-profile-card small{color:#64748b!important}
+html:not([data-theme="dark"]) .account-modal .account-profile-card strong{color:#17263a!important}
+html:not([data-theme="dark"]) .account-modal .account-error,
+html:not([data-theme="dark"]) .account-modal .account-msg.account-error{color:#dc2626!important}
+html:not([data-theme="dark"]) .account-unregistered-icon{background:#fff3dc!important;color:#a86508!important}
+
+/* DARK MODE */
+html[data-theme="dark"] .account-modal,
+html[data-theme="dark"] .account-unregistered-card{
+  background:#142338!important;color:#f1f5f9!important;
+  border:1px solid #344b64!important;box-shadow:0 26px 76px rgba(0,0,0,.48)!important;
+}
+html[data-theme="dark"] .account-modal h2,
+html[data-theme="dark"] .account-modal h3,
+html[data-theme="dark"] .account-modal label,
+html[data-theme="dark"] .account-unregistered-card h3{color:#f1f5f9!important}
+html[data-theme="dark"] .account-modal .account-subtitle,
+html[data-theme="dark"] .account-modal p,
+html[data-theme="dark"] .account-unregistered-card p{color:#a9bacd!important}
+html[data-theme="dark"] .account-modal input,
+html[data-theme="dark"] .account-modal textarea,
+html[data-theme="dark"] .account-modal select{
+  background:#0d1929!important;color:#f1f5f9!important;border:1px solid #40556d!important;
+  caret-color:#138be5!important;
+}
+html[data-theme="dark"] .account-modal input::placeholder,
+html[data-theme="dark"] .account-modal textarea::placeholder{color:#879bb0!important;opacity:1}
+html[data-theme="dark"] .account-modal input:focus,
+html[data-theme="dark"] .account-modal textarea:focus,
+html[data-theme="dark"] .account-modal select:focus{
+  border-color:#138be5!important;outline:3px solid rgba(19,139,229,.2)!important;outline-offset:1px;
+}
+html[data-theme="dark"] .account-modal .account-close{
+  background:#26384d!important;color:#dce6f0!important;border:1px solid #40556d!important;
+}
+html[data-theme="dark"] .account-modal .account-main-btn{background:#138be5!important;color:#fff!important}
+html[data-theme="dark"] .account-modal #accountRegisterStartBtn,
+html[data-theme="dark"] .account-modal .account-register-now{background:#16834f!important;color:#fff!important}
+html[data-theme="dark"] .account-modal .account-logout-btn{background:#dc2626!important;color:#fff!important}
+html[data-theme="dark"] .account-modal .account-link-btn{color:#c4d2e0!important}
+html[data-theme="dark"] .account-modal .account-register-link b{color:#42c987!important}
+html[data-theme="dark"] .account-modal .account-reset-link b,
+html[data-theme="dark"] .account-modal .account-back-link{color:#55baff!important}
+html[data-theme="dark"] .account-modal .account-divider{color:#91a3b7!important}
+html[data-theme="dark"] .account-modal .account-divider:before,
+html[data-theme="dark"] .account-modal .account-divider:after{background:#344b64!important}
+html[data-theme="dark"] .account-modal .account-note,
+html[data-theme="dark"] .account-modal .account-bridge{
+  background:#12372f!important;border:1px solid #24634f!important;color:#d5f3e2!important;
+}
+html[data-theme="dark"] .account-modal .account-bridge-title{color:#9be4bb!important}
+html[data-theme="dark"] .account-modal .account-bridge p{color:#c1d9ce!important}
+html[data-theme="dark"] .account-modal .account-reset-unregistered{
+  background:#40351f!important;border:1px solid #725b2c!important;color:#ffe0a0!important;
+}
+html[data-theme="dark"] .account-modal .account-profile-card>div{
+  background:#1b2d43!important;border-color:#354c65!important;
+}
+html[data-theme="dark"] .account-modal .account-profile-card small{color:#a9bacd!important}
+html[data-theme="dark"] .account-modal .account-profile-card strong{color:#f1f5f9!important}
+html[data-theme="dark"] .account-modal .account-error,
+html[data-theme="dark"] .account-modal .account-msg.account-error{color:#ff8585!important}
+html[data-theme="dark"] .account-unregistered-icon{background:#49351c!important;color:#ffd08a!important}
+
+/* INTERACTION STATES */
+.account-modal .account-main-btn,.account-modal .account-close,.account-modal .account-link-btn{
+  transition:background-color .18s ease,border-color .18s ease,transform .18s ease;
+}
+.account-modal .account-main-btn:hover{filter:brightness(1.06)}
+.account-modal .account-main-btn:active{transform:translateY(1px)}
+.account-modal .account-main-btn:disabled{opacity:.58!important;cursor:not-allowed!important;filter:none!important}
+@media(prefers-reduced-motion:reduce){
+  .account-modal .account-main-btn,.account-modal .account-close,.account-modal .account-link-btn{transition:none}
+}
+
+/* LOGOUT BUTTON ICON + LOADING */
+.account-modal .account-logout-btn{display:flex!important;align-items:center!important;justify-content:center!important;gap:10px!important;min-height:46px;position:relative}
+.account-modal .account-logout-icon{width:18px;height:18px;flex:0 0 18px}
+.account-modal .account-logout-btn.is-logging-out{opacity:.82!important;cursor:wait!important}
+.account-modal .account-logout-btn:disabled{opacity:.82!important;cursor:wait!important}
+.account-modal .account-logout-spinner{width:17px;height:17px;flex:0 0 17px;border:2px solid rgba(255,255,255,.38);border-top-color:#fff;border-radius:50%;animation:accountLogoutSpin .7s linear infinite}
+@keyframes accountLogoutSpin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.account-modal .account-logout-spinner{animation-duration:1.8s}}
+</style>
+
+</body></html>
