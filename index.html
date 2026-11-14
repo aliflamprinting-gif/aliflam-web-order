@@ -2657,6 +2657,16 @@ html[data-theme="dark"] .account-bridge{background:#123b30;border-color:#267453}
 html[data-theme="dark"] .account-bridge-title{color:#a8f0ca}
 html[data-theme="dark"] .account-bridge p{color:#c4e4d4}
 .account-brand-mark{width:42px;height:4px;border-radius:9px;background:linear-gradient(90deg,#00a6d6,#ec168b,#f5c400);margin-bottom:12px}
+.account-unregistered-back{position:fixed;inset:0;z-index:1100;background:#101828a8;display:none;align-items:center;justify-content:center;padding:18px}
+.account-unregistered-back.show{display:flex}
+.account-unregistered-card{width:min(390px,100%);padding:24px 20px;border-radius:20px;background:var(--card,#fff);color:var(--text,#202938);box-shadow:0 24px 70px #0005;text-align:center;border:1px solid #e5eaf0}
+.account-unregistered-icon{width:54px;height:54px;border-radius:18px;background:#fff4e5;color:#b45309;display:grid;place-items:center;font-size:27px;margin:0 auto 14px}
+.account-unregistered-card h3{font-size:17px;font-weight:900;margin:0 0 9px}
+.account-unregistered-card p{font-size:13px;line-height:1.6;color:var(--muted,#64748b);margin:0 0 18px}
+.account-unregistered-card .account-main-btn{margin:0}
+.account-unregistered-cancel{width:100%;border:0;background:transparent;color:var(--muted,#64748b);font-size:12px;font-weight:800;padding:13px 8px 0;cursor:pointer}
+html[data-theme="dark"] .account-unregistered-card{border-color:#36516b}
+html[data-theme="dark"] .account-unregistered-icon{background:#49351c;color:#ffd08a}
 </style>
 <div class="account-modal-back" id="accountModalBack" onclick="if(event.target===this)closeAccountModal()">
  <div class="account-modal" role="dialog" aria-modal="true" aria-labelledby="accountModalTitle">
@@ -2725,6 +2735,15 @@ html[data-theme="dark"] .account-bridge p{color:#c4e4d4}
   <div class="account-msg" id="accountMessage" role="status" aria-live="polite"></div>
  </div>
 </div>
+<div class="account-unregistered-back" id="accountUnregisteredLoginPopup" role="dialog" aria-modal="true" aria-labelledby="accountUnregisteredLoginTitle" onclick="if(event.target===this)closeUnregisteredLoginPopup()">
+ <div class="account-unregistered-card">
+  <div class="account-unregistered-icon" aria-hidden="true">!</div>
+  <h3 id="accountUnregisteredLoginTitle">Nomor WhatsApp Belum Terdaftar</h3>
+  <p>Nomor WhatsApp kamu belum terdaftar sebagai akun aktif di sini. Silakan buat akun terlebih dahulu untuk menggunakan fitur akun pelanggan Aliflam.</p>
+  <button class="account-main-btn" type="button" onclick="goToRegisterFromUnregisteredPopup()">BUAT AKUN</button>
+  <button class="account-unregistered-cancel" type="button" onclick="closeUnregisteredLoginPopup()">KEMBALI KE LOGIN</button>
+ </div>
+</div>
 <script>
 function getStoredCustomer(){
  try{return JSON.parse(localStorage.getItem('ALIFLAM_CUSTOMER')||'null')}catch(e){return null}
@@ -2744,6 +2763,13 @@ function openAccountModal(){
  }
 }
 function closeAccountModal(){document.getElementById('accountModalBack').classList.remove('show');}
+function showUnregisteredLoginPopup(){document.getElementById('accountUnregisteredLoginPopup').classList.add('show');}
+function closeUnregisteredLoginPopup(){document.getElementById('accountUnregisteredLoginPopup').classList.remove('show');}
+function goToRegisterFromUnregisteredPopup(){
+ const phone=document.getElementById('accountLoginPhone').value.trim();
+ closeUnregisteredLoginPopup();showAccountForm('register');
+ const registerPhone=document.getElementById('accountRegPhone');if(phone)registerPhone.value=phone;
+}
 function showAccountForm(which){
  const labels={login:['Masuk ke Akun','Masuk untuk mengakses akun pelanggan Aliflam.'],register:['Buat Akun','Daftarkan akun pelanggan Aliflam.'],reset:['Reset Password','Pulihkan akses akun menggunakan nomor WhatsApp terdaftar.'],profile:['Akun Saya','Informasi akun pelanggan Aliflam.']};
  ['login','register','reset','profile'].forEach(k=>document.getElementById('account'+k[0].toUpperCase()+k.slice(1)+'Form').hidden=k!==which);
@@ -2826,7 +2852,11 @@ async function submitCustomerLogin(){
   await syncCustomerOrderStatuses(false);
   openAccountModal();
   accountMessage('Berhasil masuk. Selamat datang, '+r.data.customer.name+'! Keranjang akun sudah dimuat.');
- }catch(e){accountMessage(e.message||'Login gagal.');showNotice(e.message||'Login gagal.','Tidak Bisa Masuk');}finally{hideLoading();}
+ }catch(e){
+  const message=e.message||'Login gagal.';
+  if(message.includes('NOMOR_WHATSAPP_BELUM_TERDAFTAR')){accountMessage('Nomor WhatsApp belum terdaftar.');showUnregisteredLoginPopup();}
+  else{accountMessage(message);showNotice(message,'Tidak Bisa Masuk');}
+ }finally{hideLoading();}
 }
 async function submitPasswordResetRequest(){
  const whatsapp=document.getElementById('accountResetPhone').value.trim();if(!whatsapp)return accountMessage('Masukkan nomor WhatsApp yang terdaftar.');
