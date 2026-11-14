@@ -1588,6 +1588,7 @@ document.addEventListener('keydown', function(event){
 const API='https://script.google.com/macros/s/AKfycbzzis01Cv-kWurEimDySmksL_6bvASB_sQop0X64kILzKULHWM1E2Ci7lX2PFctUA5G1w/exec';
 const IMAGE_BASE='https://aliflamprinting-gif.github.io/aliflam-web-order/assets/products/';
 let VARIANTS=[],groups=[],filter='Semua',selected=null,cart=[],localOrders=[],savedBuyer={},editingCartVid=null,selectedO1=null,selectedO2=null,selectedO3=null,selectedSizeChoices={},selectedCustom=false,detailReturnPage='products';
+let customerCartId='',customerCartSyncReady=false,customerCartSaveTimer=null,customerCartSavePromise=Promise.resolve();
 let activeMyOrderTab='BELUM BAYAR',myOrderSyncBusy=false;
 const CART_STORAGE_KEY='aliflam-live-cart';
 const ORDERS_STORAGE_KEY='aliflam-local-orders-v1';
@@ -1694,7 +1695,12 @@ function refreshCategories(){names=['Semua',...Array.from(new Set(groups.map(g=>
 function readLocalJSON(key,fallback){try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):fallback}catch(e){return fallback}}
 function normalizeOrderStatus(status){const value=String(status||'').trim().toUpperCase();return !value||value==='BARU'?'BELUM BAYAR':value}
 function loadLocalData(){const savedCart=readLocalJSON(CART_STORAGE_KEY,[]);cart=Array.isArray(savedCart)?savedCart:[];const saved=readLocalJSON(ORDERS_STORAGE_KEY,[]);localOrders=Array.isArray(saved)?saved.map(o=>({...o,status:normalizeOrderStatus(o.status),paymentStatus:String(o.paymentStatus||'').toUpperCase()==='BELUM BAYAR'?'BELUM LUNAS':(o.paymentStatus||'')})):[];const buyer=readLocalJSON(BUYER_STORAGE_KEY,{});savedBuyer=buyer&&typeof buyer==='object'?buyer:{ };document.getElementById('cartCount').textContent=cart.reduce((a,b)=>a+(Number(b.qty)||0),0)}
-function saveCart(){try{localStorage.setItem(CART_STORAGE_KEY,JSON.stringify(cart))}catch(e){}document.getElementById('cartCount').textContent=cart.reduce((a,b)=>a+b.qty,0)}
+function customerSession(){const c=getStoredCustomer();return c&&c.sessionToken?c:null}
+function cartPayloadItem(x){return {id:x.id,vid:x.vid,variationId:x.variationId||x.vid, name:x.name,sku:x.sku,o1:x.o1,o2:x.o2,o3:x.o3,sizeChoices:x.sizeChoices||{},image:x.image,qty:x.qty,customBanner:!!x.customBanner,width:x.width||0,height:x.height||0,internalPcs:x.internalPcs||1,cartKey:x.cartKey||x.vid}}
+async function persistCustomerCart(){const customer=customerSession();if(!customer||!customerCartSyncReady)return;const items=cart.map(cartPayloadItem);const response=await api('saveCustomerCart',{customerSessionToken:customer.sessionToken,cartId:customerCartId,items});if(!response.ok)throw new Error(response.error||'Keranjang gagal disimpan ke akun.');customerCartId=response.data.cartId||customerCartId}
+function queueCustomerCartSave(){if(!customerSession()||!customerCartSyncReady)return;clearTimeout(customerCartSaveTimer);customerCartSaveTimer=setTimeout(()=>{customerCartSavePromise=persistCustomerCart().catch(error=>{console.warn('Sinkronisasi keranjang akun:',error);const msg=document.getElementById('cartSyncMessage');if(msg)msg.textContent='Keranjang belum tersinkron. Periksa koneksi lalu coba lagi.'})},450)}
+async function hydrateCustomerCart(mergeLocal=true){const customer=customerSession();if(!customer){customerCartSyncReady=true;return}customerCartSyncReady=false;const localItems=mergeLocal?[...cart]:[];const response=await api('getCustomerCart',{customerSessionToken:customer.sessionToken});if(!response.ok)throw new Error(response.error||'Keranjang akun gagal dimuat.');customerCartId=response.data.cartId||'';const remote=Array.isArray(response.data.items)?response.data.items:[];const merged=[...remote];localItems.forEach(item=>{const key=item.cartKey||item.vid,found=merged.find(x=>(x.cartKey||x.vid)===key);if(found)found.qty=(Number(found.qty)||0)+(Number(item.qty)||0);else merged.push(item)});cart=merged;customerCartSyncReady=true;saveCart();renderCart()}
+function saveCart(){try{if(customerSession())localStorage.removeItem(CART_STORAGE_KEY);else localStorage.setItem(CART_STORAGE_KEY,JSON.stringify(cart))}catch(e){}const count=cart.reduce((a,b)=>a+(Number(b.qty)||0),0);const badge=document.getElementById('cartCount');if(badge)badge.textContent=count;queueCustomerCartSave()}
 function saveLocalOrders(){try{localStorage.setItem(ORDERS_STORAGE_KEY,JSON.stringify(localOrders))}catch(e){showNotice('Pesanan berhasil dibuat, tetapi riwayat lokal tidak dapat disimpan. Periksa ruang penyimpanan browser.','Penyimpanan Perangkat')}}
 function saveBuyerData(customer,address){savedBuyer={customer:customer,address:address,savedAt:new Date().toISOString()};try{localStorage.setItem(BUYER_STORAGE_KEY,JSON.stringify(savedBuyer))}catch(e){}}
 function applySavedBuyerData(){const c=savedBuyer.customer||{},a=savedBuyer.address||{};const values={checkoutName:c.name,checkoutPhone:c.whatsapp,checkoutEmail:c.email,checkoutRecipient:a.recipientName,checkoutAddressPhone:a.phone,checkoutFullAddress:a.fullAddress,checkoutReference:a.reference};Object.entries(values).forEach(([id,value])=>{const el=document.getElementById(id);if(el&&value!==undefined&&value!==null)el.value=value});const notice=document.getElementById('savedCheckoutNotice');if(notice)notice.style.display=(Object.keys(c).length||Object.keys(a).length)?'block':'none';clearCheckoutInvalidFields()}
@@ -1805,9 +1811,9 @@ async function syncCustomerOrderStatuses(showFeedback=false){
     while(myOrderSyncBusy) await new Promise(resolve=>setTimeout(resolve,80));
     return;
   }
-  if(!localOrders.length){renderMyOrders();return}
+  if(!localOrders.length&&!customerSession()){renderMyOrders();return}
   const phone=String(savedBuyer?.customer?.whatsapp||localOrders.find(o=>o.customer?.whatsapp)?.customer?.whatsapp||'').trim();
-  if(!phone){
+  if(!phone&&!customerSession()){
     const message=document.getElementById('myOrderSyncMessage');
     if(message)message.textContent='Nomor WhatsApp pembeli tidak ditemukan. Status lokal tetap ditampilkan.';
     renderMyOrders();return;
@@ -1818,20 +1824,26 @@ async function syncCustomerOrderStatuses(showFeedback=false){
   if(button){button.disabled=true;button.classList.add('is-loading')}
   if(message)message.textContent='Memperbarui status pesanan...';
   try{
-    const response=await api('lookupCustomerOrders',{whatsapp:phone});
+    const activeAccount=customerSession();const response=activeAccount?await api('customerOrders',{customerSessionToken:activeAccount.sessionToken}):await api('lookupCustomerOrders',{whatsapp:phone});
     if(!response.ok)throw new Error(response.error||'Status pesanan gagal diperbarui.');
     const remoteOrders=Array.isArray(response.data?.orders)?response.data.orders:[];
     const remoteById=new Map(remoteOrders.map(order=>[String(order.orderId||'').toUpperCase(),order]));
     let changed=false;
-    localOrders=localOrders.map(local=>{
-      const remote=remoteById.get(String(local.orderId||'').toUpperCase());
-      if(!remote)return local;
-      const nextStatus=normalizeOrderStatus(remote.status||local.status);
-      const nextProgress=String(remote.progress??local.progress??'');
-      const nextPayment=String(remote.paymentStatus??local.paymentStatus??'');
-      if(nextStatus!==normalizeOrderStatus(local.status)||nextProgress!==String(local.progress??'')||nextPayment!==String(local.paymentStatus??''))changed=true;
-      return {...local,status:nextStatus,progress:nextProgress,paymentStatus:nextPayment};
-    });
+    if(activeAccount){
+      const localById=new Map(localOrders.map(order=>[String(order.orderId||'').toUpperCase(),order]));
+      localOrders=remoteOrders.map(remote=>{const local=localById.get(String(remote.orderId||'').toUpperCase())||{};return {...local,...remote,status:normalizeOrderStatus(remote.status||local.status),items:Array.isArray(local.items)&&local.items.length?local.items:(remote.items||[]),customer:remote.customer||local.customer||{}}});
+      changed=true;
+    }else{
+      localOrders=localOrders.map(local=>{
+        const remote=remoteById.get(String(local.orderId||'').toUpperCase());
+        if(!remote)return local;
+        const nextStatus=normalizeOrderStatus(remote.status||local.status);
+        const nextProgress=String(remote.progress??local.progress??'');
+        const nextPayment=String(remote.paymentStatus??local.paymentStatus??'');
+        if(nextStatus!==normalizeOrderStatus(local.status)||nextProgress!==String(local.progress??'')||nextPayment!==String(local.paymentStatus??''))changed=true;
+        return {...local,status:nextStatus,progress:nextProgress,paymentStatus:nextPayment};
+      });
+    }
     if(changed)saveLocalOrders();
     if(message)message.textContent='Status tersinkron dari database · '+new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
     renderMyOrders();
@@ -2347,7 +2359,7 @@ function buildWhatsAppOrderMessage(order){
     'Mohon bantuannya untuk konsultasi pesanan saya. Terima kasih.'
   ].join('\n');
 }
-async function checkoutInfo(){if(!cart.length)return showNotice('Keranjang masih kosong.');const total=money(cart.reduce((a,b)=>a+b.qty*b.price,0));document.getElementById('checkoutTotal').textContent=total; document.getElementById('checkoutResult').textContent='';document.getElementById('checkoutWizard').style.display='block';document.getElementById('checkoutSuccess').style.display='none';checkoutAddressMethod='';const manual=document.getElementById('checkoutManualMethod'),paste=document.getElementById('checkoutPasteMethod');[manual,paste].forEach(el=>{if(el){el.classList.remove('selected');el.setAttribute('aria-pressed','false')}});closeManualAddressPopup();closePasteAddressPopup();setCheckoutStep(1);applySavedBuyerData();closeOverlay('cartOverlay');openOverlay('checkoutOverlay');try{await loadCheckoutDropdowns()}catch(e){document.getElementById('submitOrderBtn').disabled=true}}
+async function checkoutInfo(){if(!cart.length)return showNotice('Keranjang masih kosong.');if(customerSession()){try{clearTimeout(customerCartSaveTimer);await persistCustomerCart()}catch(e){return showNotice(e.message||'Keranjang akun belum tersimpan.','Sinkronisasi Keranjang')}}const total=money(cart.reduce((a,b)=>a+b.qty*b.price,0));document.getElementById('checkoutTotal').textContent=total; document.getElementById('checkoutResult').textContent='';document.getElementById('checkoutWizard').style.display='block';document.getElementById('checkoutSuccess').style.display='none';checkoutAddressMethod='';const manual=document.getElementById('checkoutManualMethod'),paste=document.getElementById('checkoutPasteMethod');[manual,paste].forEach(el=>{if(el){el.classList.remove('selected');el.setAttribute('aria-pressed','false')}});closeManualAddressPopup();closePasteAddressPopup();setCheckoutStep(1);applySavedBuyerData();closeOverlay('cartOverlay');openOverlay('checkoutOverlay');try{await loadCheckoutDropdowns()}catch(e){document.getElementById('submitOrderBtn').disabled=true}}
 let checkoutSubmitting=false;
 function getCheckoutAttemptKey(payload){
   const fingerprint=JSON.stringify(payload);
@@ -2382,7 +2394,7 @@ async function submitOrder(){
     const notes=document.getElementById('checkoutNotes').value.trim();
     const orderItems=cart.map(x=>({productName:x.name,sku:x.sku,image:x.image||'',qty:x.qty,lineTotal:x.qty*x.price,unitPrice:x.price,variationId:x.variationId,customBanner:!!x.customBanner,width:x.width||0,height:x.height||0,detail:[x.sku,x.o1,x.o2,x.o3].filter(Boolean).join(' · ')}));
     const orderPayload={customer,address,paymentMethod,notes,items:cart.map(x=>({productId:x.variationId,qty:x.qty,...(x.customBanner?{customSize:{width:x.width,height:x.height}}:{})}))};
-    const data={...orderPayload,idempotencyKey:getCheckoutAttemptKey(orderPayload)};
+    const activeCustomer=customerSession();if(activeCustomer){clearTimeout(customerCartSaveTimer);await persistCustomerCart()}const data={...orderPayload,idempotencyKey:getCheckoutAttemptKey(orderPayload),...(activeCustomer?{customerSessionToken:activeCustomer.sessionToken,cartId:customerCartId}:{})};
     btn.textContent='MEMPROSES PESANAN...';out.textContent='';
     showCheckoutLoading();
     const r=await api('createWebOrder',data);if(!r.ok)throw Error(r.error||'Pesanan belum dapat dikirim.');
@@ -2566,6 +2578,7 @@ function sendAliflamWhatsApp(){
 }
 
 loadLocalData();
+if(customerSession()){hydrateCustomerCart(true).catch(error=>{customerCartSyncReady=false;showNotice(error.message||'Keranjang akun gagal dimuat. Silakan login ulang.','Keranjang Akun')})}else customerCartSyncReady=true;
 renderMyOrders();
 if(!handleOrderRoute() && location.hash==='#pesanan')navigate('orders');
 window.addEventListener('hashchange',()=>{if(!handleOrderRoute() && location.hash==='#pesanan')navigate('orders')});
@@ -2710,8 +2723,11 @@ function showAccountForm(which){
  document.getElementById('accountMessage').textContent='';
  if(which==='reset'){try{const id=localStorage.getItem('ALIFLAM_RESET_REQUEST_ID');if(id){document.getElementById('accountResetComplete').hidden=false;document.getElementById('accountResetRequestId').value=id;}}catch(e){}}
 }
-function logoutCustomerAccount(){
+async function logoutCustomerAccount(){
+ const customer=getStoredCustomer();
+ if(customer?.sessionToken){try{await api('customerLogout',{customerSessionToken:customer.sessionToken})}catch(e){}}
  localStorage.removeItem('ALIFLAM_CUSTOMER');
+ cart=[];customerCartId='';customerCartSyncReady=true;saveCart();renderCart();
  showAccountForm('login');
  document.getElementById('accountLoginPassword').value='';
  accountMessage('Kamu sudah keluar dari akun.');
@@ -2738,8 +2754,10 @@ async function submitCustomerLogin(){
   const r=await api('customerLogin',{whatsapp,password});if(!r.ok)throw Error(r.error||'Login gagal');
   localStorage.setItem('ALIFLAM_CUSTOMER',JSON.stringify(r.data.customer));
   document.getElementById('accountLoginPassword').value='';
+  await hydrateCustomerCart(true);
+  await syncCustomerOrderStatuses(false);
   openAccountModal();
-  accountMessage('Berhasil masuk. Selamat datang, '+r.data.customer.name+'!');
+  accountMessage('Berhasil masuk. Selamat datang, '+r.data.customer.name+'! Keranjang akun sudah dimuat.');
  }catch(e){accountMessage(e.message||'Login gagal.');}
 }
 async function submitPasswordResetRequest(){
