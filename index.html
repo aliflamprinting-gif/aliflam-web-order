@@ -2814,8 +2814,20 @@ html[data-theme="dark"] .account-unregistered-icon{background:#49351c;color:#ffd
   <button class="account-pending-continue" id="accountPendingContinue" type="button" hidden onclick="finishAccountRegistrationPopup()">SAYA SUDAH CHAT WHATSAPP</button>
  </div>
 </div>
+<div class="overlay account-pending-overlay" id="accountLoginWaitingOverlay" role="dialog" aria-modal="true" aria-labelledby="accountLoginWaitingTitle" onclick="if(event.target===this)closeAccountLoginWaitingPopup()">
+ <div class="account-pending-card">
+  <div class="account-pending-icon" aria-hidden="true">
+   <svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="17" fill="none" stroke="currentColor" stroke-width="2.8"/><path d="M24 13v12l8 5" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </div>
+  <div class="account-pending-kicker">AKUN DALAM PROSES VERIFIKASI</div>
+  <h2 id="accountLoginWaitingTitle">Akun kamu masih menunggu persetujuan</h2>
+  <p>Pendaftaran berhasil kami terima. Admin sedang memeriksa permintaan aktivasi akun kamu.</p>
+  <p class="account-pending-next">Kamu belum bisa masuk untuk saat ini. Silakan coba login kembali setelah admin menyetujui akunmu.</p>
+  <button class="account-pending-continue" type="button" onclick="closeAccountLoginWaitingPopup()">MENGERTI</button>
+ </div>
+</div>
 <style>
-#accountPendingOverlay{z-index:1200!important;background:rgba(5,16,30,.76);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+#accountPendingOverlay,#accountLoginWaitingOverlay{z-index:1200!important;background:rgba(5,16,30,.76);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
 .account-pending-card{width:min(420px,100%);max-height:90vh;overflow:auto;padding:27px 22px 22px;border:1px solid var(--line);border-radius:22px;background:var(--card);color:var(--ink);text-align:center;box-shadow:0 24px 80px #0006}
 .account-pending-icon{display:grid;place-items:center;width:68px;height:68px;margin:0 auto 14px;border-radius:22px;background:#fff4d6;color:#c88700}
 .account-pending-icon svg{width:42px;height:42px}
@@ -2991,6 +3003,29 @@ function bindAccountInvalidClear(){
   el.addEventListener('change',clear);
  });
 }
+function showAccountLoginWaitingPopup(){
+ const overlay=document.getElementById('accountLoginWaitingOverlay');
+ if(overlay)overlay.classList.add('show');
+}
+function closeAccountLoginWaitingPopup(){
+ const overlay=document.getElementById('accountLoginWaitingOverlay');
+ if(overlay)overlay.classList.remove('show');
+}
+function getFriendlyLoginError(message){
+ const code=String(message||'').toUpperCase();
+ if(code.includes('PENDAFTARAN_DITOLAK')||code.includes('AKUN_DITOLAK')||code.includes('ACCOUNT_REJECTED'))
+  return {type:'rejected',message:'Pendaftaran akun kamu belum disetujui admin. Silakan hubungi admin Aliflam Printing untuk informasi lebih lanjut.'};
+ if(code.includes('MENUNGGU_PERSETUJUAN')||code.includes('PENDING_APPROVAL')||code.includes('AKUN_PENDING')||code.includes('BELUM_DIVERIFIKASI')||code.includes('ACCOUNT_PENDING'))
+  return {type:'pending'};
+ if(code.includes('TERLALU_BANYAK_PERCOBAAN_LOGIN')||code.includes('TOO_MANY_LOGIN_ATTEMPTS')){
+  const waitMatch=String(message||'').match(/(?:sekitar|dalam|after)?\\s*(\\d+\\s*(?:menit|menit|minute|minutes|jam|hour|hours))/i);
+  const waitText=waitMatch?waitMatch[1].replace(/minute(s)?/i,'menit').replace(/hour(s)?/i,'jam'):'15 menit';
+  return {type:'rate_limit',title:'Terlalu Banyak Percobaan Login',message:'Kamu sudah mencoba login beberapa kali. Demi keamanan, silakan coba kembali dalam '+waitText+'.'};
+ }
+ if(code.includes('NOMOR_ATAU_PASSWORD_SALAH')||code.includes('INVALID_CREDENTIALS'))
+  return {type:'invalid',message:'Nomor WhatsApp atau password yang kamu masukkan tidak sesuai. Periksa kembali lalu coba lagi.'};
+ return {type:'other',message:message||'Login belum berhasil. Silakan coba lagi.'};
+}
 async function submitCustomerLogin(){
  const whatsapp=document.getElementById('accountLoginPhone').value.trim(),password=document.getElementById('accountLoginPassword').value;
  if(!whatsapp||!password)return markAccountRequired(['accountLoginPhone','accountLoginPassword'],'Kolom wajib yang belum diisi ditandai merah.');
@@ -3007,7 +3042,13 @@ async function submitCustomerLogin(){
  }catch(e){
   const message=e.message||'Login gagal.';
   if(message.includes('NOMOR_WHATSAPP_BELUM_TERDAFTAR')){accountMessage('Nomor WhatsApp belum terdaftar.');showUnregisteredLoginPopup();}
-  else{accountMessage(message);showNotice(message,'Tidak Bisa Masuk');}
+  else{
+   const friendly=getFriendlyLoginError(message);
+   if(friendly.type==='pending'){accountMessage('Akun masih menunggu persetujuan admin.');showAccountLoginWaitingPopup();}
+   else if(friendly.type==='rejected'){accountMessage(friendly.message);showNotice(friendly.message,'Pendaftaran Belum Disetujui');}
+   else if(friendly.type==='rate_limit'){accountMessage(friendly.message);showNotice(friendly.message,friendly.title);}
+   else{accountMessage(friendly.message);showNotice(friendly.message,'Tidak Bisa Masuk');}
+  }
  }finally{hideLoading();}
 }
 async function submitPasswordResetRequest(){
