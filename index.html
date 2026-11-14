@@ -1385,15 +1385,7 @@ html[data-theme="dark"] .floating-catalog-back{
 /* Custom inline validation — avoid native browser required tooltip */
 .outside-java-location-error{margin:6px 0 0;color:#dc2626;font-size:11px;font-weight:800;line-height:1.45}
 #outsideJavaLocation.invalid{border-color:#dc2626;box-shadow:0 0 0 2px rgba(220,38,38,.12)}
-\n
-.personal-link-card{margin:14px 0;padding:14px;border:1px solid var(--blue);border-radius:13px;background:var(--blue-soft);color:var(--ink)}
-.personal-link-card>b{font:800 12px Manrope;color:var(--blue)}
-.personal-link-card p{font-size:11px;margin:6px 0 10px}.personal-link-card .input{font-size:10px;margin-bottom:8px}
-.personal-link-card .twoactions{margin-top:8px}.personal-link-card .secondary{font-size:10px;padding:10px 6px}
-.customer-access-card{max-width:560px;margin:16px auto;padding:20px;background:var(--card);border:1px solid var(--line);border-radius:16px}
-.customer-access-card h3{font:800 17px Manrope;margin:0 0 8px}.customer-access-card p{font-size:12px}
-.customer-access-card .input{margin:8px 0}.customer-access-actions{display:flex;gap:8px;margin-top:12px}.customer-access-actions>*{flex:1}
-</style><script>
+\n</style><script>
 (function(){
   try {
     var savedTheme = localStorage.getItem('aliflam-theme');
@@ -1600,13 +1592,6 @@ let activeMyOrderTab='BELUM BAYAR',myOrderSyncBusy=false;
 const CART_STORAGE_KEY='aliflam-live-cart';
 const ORDERS_STORAGE_KEY='aliflam-local-orders-v1';
 const BUYER_STORAGE_KEY='aliflam-buyer-data-v1';
-const PERSONAL_LINK_KEY='aliflam-personal-link-v1';
-const CUSTOMER_SESSION_KEY='aliflam-customer-session-v1';
-let personalLink=localStorage.getItem(PERSONAL_LINK_KEY)||'';
-let personalToken=(location.hash.match(/^#akses\/(.+)$/)||[])[1]||((personalLink.split('#akses/')[1]||''));
-if(personalToken){personalToken=decodeURIComponent(personalToken);personalLink=location.origin+location.pathname+'#akses/'+encodeURIComponent(personalToken);try{localStorage.setItem(PERSONAL_LINK_KEY,personalLink)}catch(e){}}
-let customerSession=localStorage.getItem(CUSTOMER_SESSION_KEY)||'';
-let personalOrdersLoaded=false, personalAccessBusy=false;
 function formatPhoneInput(value){
   let raw=String(value??'').replace(/[^0-9+]/g,'');
   const hasPlus=raw.startsWith('+');
@@ -1860,82 +1845,24 @@ async function syncCustomerOrderStatuses(showFeedback=false){
   }
 }
 function renderMyOrders(){
-  const out=document.getElementById('myOrdersResult');if(!out)return;
-  if(!personalLink){
-    out.innerHTML='<div class="customer-access-card"><h3>BUKA RIWAYAT PESANAN</h3><p>Apakah kamu pernah membuat pesanan di web Aliflam Printing? Masukkan nomor WhatsApp yang digunakan saat memesan untuk memulai proses pemulihan link pribadi.</p><label class="field">NOMOR WHATSAPP</label><input class="input" id="recoveryWhatsapp" inputmode="tel" placeholder="08xxxxxxxxxx"><button class="primary full" style="margin-top:10px" onclick="startCustomerRecovery()">LANJUTKAN</button><p id="recoveryMessage" role="alert"></p></div>';
-    return;
-  }
-  if(!personalOrdersLoaded){out.innerHTML='<div class="empty">Memuat riwayat pesanan dari database...</div>';return;}
+  const out=document.getElementById('myOrdersResult');
+  if(!out)return;
   renderMyOrderTabCounts();
   const query=(document.getElementById('myOrderSearch')?.value||'').trim().toLowerCase();
   const tabOrders=localOrders.filter(o=>myOrderTabForStatus(o.status)===activeMyOrderTab);
-  const filtered=tabOrders.filter(o=>[o.orderId,...(o.items||[]).flatMap(it=>[it.productName,it.sku])].join(' ').toLowerCase().includes(query));
-  const pinNotice='<div class="customer-access-card"><b>LINK PRIBADI AKTIF</b><p>Riwayat pesanan terhubung ke database Aliflam. Simpan link pribadi kamu untuk digunakan di perangkat lain.</p><button class="secondary full" onclick="copyPersonalLink()">SALIN LINK PRIBADI</button></div>';
-  const pinSetup='<div class="customer-access-card"><b>PERLINDUNGAN TAMBAHAN</b><p>Buat PIN 6 digit agar riwayat pesanan memiliki perlindungan tambahan.</p><button class="primary" onclick="createPersonalPinPrompt()">BUAT PIN SEKARANG</button></div>';
-  if(!localOrders.length){out.innerHTML=pinNotice+pinSetup+'<div class="empty"><strong>Belum ada pesanan.</strong></div>';return;}
-  if(!tabOrders.length){out.innerHTML=pinNotice+pinSetup+'<div class="empty"><strong>Belum ada pesanan di kategori ini.</strong></div>';return;}
-  out.innerHTML=pinNotice+pinSetup+'<div class="sectionhead"><div><h2>'+filtered.length+' Pesanan</h2><p>Riwayat pesanan tersimpan di database.</p></div></div>'+filtered.map(o=>{
-    const items=(o.items||[]).map(it=>'<div class="order-history-product">'+renderOrderProductImage(it)+'<div class="order-history-product-info"><b>'+esc(it.productName||it.sku||'Produk')+'</b><small>'+esc(it.sku||'')+' · Jumlah '+Number(it.qty||0)+'</small></div><strong class="order-history-product-price">'+money(it.lineTotal||0)+'</strong></div>').join('');
+  const filtered=tabOrders.filter(o=>{
+    const haystack=[o.orderId,...(o.items||[]).flatMap(it=>[it.productName,it.sku])].join(' ').toLowerCase();
+    return !query||haystack.includes(query);
+  });
+  if(!localOrders.length){out.innerHTML='<div class="empty"><strong>Belum ada pesanan tersimpan.</strong><p class="tiny">Pesanan yang berhasil dibuat dari perangkat ini akan muncul di sini.</p><button class="primary" onclick="navigate(&quot;products&quot;)">Mulai Belanja</button></div>';return}
+  if(!tabOrders.length){out.innerHTML='<div class="empty"><strong>Belum ada pesanan di kategori ini.</strong><p class="tiny">Pesanan akan muncul di sini setelah statusnya diperbarui.</p></div>';return}
+  if(!filtered.length){out.innerHTML='<div class="empty">Pesanan tidak ditemukan. Coba kata kunci lain.</div>';return}
+  out.innerHTML='<div class="sectionhead"><div><h2>'+filtered.length+' Pesanan</h2><p>Menampilkan pesanan '+esc(activeMyOrderTab.toLowerCase())+'.</p></div></div>'+filtered.map(o=>{
+    const items=(o.items||[]).map(it=>{
+      return '<div class="order-history-product">'+renderOrderProductImage(it)+'<div class="order-history-product-info"><b>'+esc(it.productName||it.name||it.sku||'Produk')+'</b><small>'+esc(it.sku||'')+' · Jumlah '+Number(it.qty||0)+'</small></div><strong class="order-history-product-price">'+money(it.lineTotal||0)+'</strong></div>';
+    }).join('');
     return '<article class="panel order-history-card"><div class="order-history-head"><div><b>'+esc(o.orderId||'-')+'</b><p class="order-history-date">Tanggal pesanan: '+esc(formatOrderDate(o.orderDate))+'</p></div><span class="order-history-status">'+esc(normalizeOrderStatus(o.status))+'</span></div><div class="order-history-products">'+items+'</div><button class="order-history-more" type="button" onclick="openMyOrderDetail(&quot;'+encodeURIComponent(String(o.orderId||''))+'&quot;)">LIHAT SELENGKAPNYA <span aria-hidden="true">→</span></button></article>';
   }).join('');
-}
-
-function personalTokenFromLink(){return personalToken||((personalLink.split('#akses/')[1]||'').trim());}
-function copyPersonalLink(){const value=personalLink||document.getElementById('newPersonalLink')?.value||'';if(!value)return; navigator.clipboard?.writeText(value).then(()=>showNotice('Link pribadi berhasil disalin. Simpan link ini baik-baik.','Link Pribadi')).catch(()=>showNotice('Silakan salin link dari kolom yang tersedia.','Link Pribadi'));}
-async function loadPersonalAccess(){
-  const token=personalTokenFromLink();if(!token)return false;
-  if(personalAccessBusy)return false;personalAccessBusy=true;
-  try{
-    const r=await api('getCustomerAccess',{token:decodeURIComponent(token),session:customerSession});
-    if(!r.ok)throw Error(r.error||'Link pribadi tidak valid.');
-    if(r.data.requiresPin){
-      if(r.data.locked){renderCustomerPinGate('PIN terkunci. Coba lagi setelah 15 menit.');return false;}
-      renderCustomerPinGate();return false;
-    }
-    localOrders=(r.data.orders||[]).map(o=>({...o,status:normalizeOrderStatus(o.status),paymentStatus:String(o.paymentStatus||'').toUpperCase()==='BELUM BAYAR'?'BELUM LUNAS':o.paymentStatus}));
-    saveLocalOrders();personalOrdersLoaded=true;renderMyOrders();return true;
-  }catch(e){const out=document.getElementById('myOrdersResult');if(out)out.innerHTML='<div class="empty">'+esc(e.message||'Link pribadi tidak dapat dibuka.')+'</div>';return false;}
-  finally{personalAccessBusy=false;}
-}
-function renderCustomerPinGate(message=''){
-  const out=document.getElementById('myOrdersResult');if(!out)return;
-  out.innerHTML='<div class="customer-access-card"><h3>VERIFIKASI PIN PESANAN</h3><p>Masukkan PIN 6 digit untuk membuka seluruh riwayat pesanan kamu.</p><input class="input" id="customerPinInput" type="password" inputmode="numeric" maxlength="6" placeholder="6 digit PIN"><p id="customerPinMessage" role="alert">'+esc(message)+'</p><button class="primary full" onclick="submitCustomerPin()">BUKA RIWAYAT PESANAN</button><button class="secondary full" style="margin-top:8px" onclick="forgotCustomerPin()">SAYA LUPA PIN</button></div>';
-}
-async function submitCustomerPin(){
-  const pin=document.getElementById('customerPinInput')?.value||'',msg=document.getElementById('customerPinMessage');
-  if(!/^\d{6}$/.test(pin)){if(msg)msg.textContent='Masukkan PIN 6 digit.';return;}
-  const r=await api('verifyCustomerPin',{token:decodeURIComponent(personalTokenFromLink()),pin});
-  if(!r.ok){if(msg)msg.textContent=r.error==='PIN_TERKUNCI_15_MENIT'?'PIN terkunci selama 15 menit.':r.error||'PIN salah.';return;}
-  customerSession=r.data.session;try{localStorage.setItem(CUSTOMER_SESSION_KEY,customerSession)}catch(e){}
-  personalOrdersLoaded=true;localOrders=r.data.orders||[];saveLocalOrders();renderMyOrders();
-}
-async function createPersonalPinPrompt(){
-  const token=personalTokenFromLink();if(!token){showNotice('Link pribadi belum tersedia.','PIN Pesanan');return;}
-  const pin=prompt('Buat PIN 6 digit untuk perlindungan tambahan:');if(pin===null)return;
-  const confirmPin=prompt('Ulangi PIN 6 digit:');if(confirmPin===null)return;
-  const r=await api('setCustomerPin',{token:decodeURIComponent(token),pin,confirmPin});
-  if(!r.ok){showNotice(r.error==='PIN_SUDAH_DIBUAT'?'PIN sudah pernah dibuat.':r.error||'PIN gagal disimpan.','PIN Pesanan');return;}
-  customerSession=r.data.session;try{localStorage.setItem(CUSTOMER_SESSION_KEY,customerSession)}catch(e){}
-  showNotice('PIN berhasil dibuat. Perangkat ini sudah diingat.','PIN Pesanan');
-}
-function skipPersonalPin(){showNotice('Kamu memilih melanjutkan tanpa PIN. Simpan link pribadi untuk menjaga akses riwayat pesanan.','Link Pribadi');}
-async function startCustomerRecovery(){
-  const phone=document.getElementById('recoveryWhatsapp')?.value||'',msg=document.getElementById('recoveryMessage');
-  if(!phone.trim()){if(msg)msg.textContent='Nomor WhatsApp wajib diisi.';return;}
-  const r=await api('lookupCustomerRecovery',{whatsapp:phone});
-  if(!r.ok){if(msg)msg.textContent=r.error||'Pemeriksaan gagal.';return;}
-  if(!r.data.found){if(msg)msg.textContent='Nomor WhatsApp belum terdaftar pada pesanan Aliflam.';return;}
-  if(!r.data.hasPin){openRecoveryWhatsApp(phone,false);return;}
-  if(msg)msg.innerHTML='Nomor ditemukan. Apakah kamu masih ingat PIN Pesanan Saya?<div class="customer-access-actions"><button class="secondary" onclick="openRecoveryWhatsApp('+JSON.stringify(phone)+',false)">SAYA MASIH INGAT PIN</button><button class="primary" onclick="openRecoveryWhatsApp('+JSON.stringify(phone)+',true)">SAYA LUPA PIN</button></div>';
-}
-function openRecoveryWhatsApp(phone,forgot){
-  const text='Halo Kak, saya pernah membuat pesanan di website Aliflam Printing. Saya ingin meminta link pribadi untuk membuka riwayat pesanan saya.'+(forgot?' Sekaligus meminta bantuan reset PIN karena saya lupa PIN sebelumnya.':' PIN lama saya masih ingat dan tetap ingin menggunakannya.')+' Nomor WhatsApp: '+phone+'. Mohon bantuannya. Terima kasih.';
-  window.open('https://wa.me/6281617905237?text='+encodeURIComponent(text),'_blank','noopener');
-}
-function forgotCustomerPin(){
-  const phone=prompt('Masukkan nomor WhatsApp yang digunakan saat memesan:');if(!phone)return;
-  const text='Halo Kak, saya pernah membuat pesanan di website Aliflam Printing. Saya ingin meminta link pribadi untuk membuka riwayat pesanan sekaligus meminta bantuan reset PIN karena saya lupa PIN sebelumnya. Nomor WhatsApp: '+phone+'. Mohon bantuannya. Terima kasih.';
-  window.open('https://wa.me/6281617905237?text='+encodeURIComponent(text),'_blank','noopener');
 }
 function renderOrderPinGate(orderId,errorMessage=""){
   const out=document.getElementById('myOrderDetailContent');
@@ -2024,15 +1951,6 @@ function openMyOrderDetail(orderId){
   showMyOrderDetail(id,true);
 }
 async function showMyOrderDetail(orderId,scroll=true){
-  if(personalLink){
-    navigate('orders');
-    const ok=await loadPersonalAccess();
-    if(ok){
-      const found=localOrders.find(o=>String(o.orderId)===String(orderId));
-      if(found){document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id==='orderDetailPage'));document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.nav==='orders'));renderMyOrderDetail(orderId,found);if(scroll)window.scrollTo({top:0,left:0,behavior:'auto'});}
-    }
-    return;
-  }
   document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id==='orderDetailPage'));
   document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.nav==='orders'));
 
@@ -2058,8 +1976,6 @@ function backToMyOrders(){
   navigate('orders');
 }
 function handleOrderRoute(){
-  const access=location.hash.match(/^#akses\/(.+)$/);
-  if(access){personalToken=decodeURIComponent(access[1]);personalLink=location.origin+location.pathname+location.search+'#akses/'+encodeURIComponent(personalToken);try{localStorage.setItem(PERSONAL_LINK_KEY,personalLink)}catch(e){};navigate('orders');loadPersonalAccess();return true;}
   const match=location.hash.match(/^#pesanan\/(.+)$/);
   if(match){showMyOrderDetail(decodeURIComponent(match[1]),true);return true}
   return false;
@@ -2079,7 +1995,7 @@ function navigate(page){
   document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id===page+'Page'));
   document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.nav===page));
   if(page==='products')renderProducts();
-  if(page==='orders'){renderMyOrders();if(personalLink)loadPersonalAccess();}
+  if(page==='orders'){renderMyOrders();syncCustomerOrderStatuses(false);}
   window.scrollTo({top:0,behavior:'smooth'});updateFloatingCatalogBack();
 }
 function setFilter(name){filter=name;navigate('products')}
@@ -2474,11 +2390,10 @@ async function submitOrder(){
     const orderDate=new Date().toISOString();
     const order={orderId:r.data.orderId,orderDate,status:'BELUM BAYAR',progress:'MENUNGGU KONFIRMASI',paymentStatus:'BELUM LUNAS',paymentMethod,subtotal:Number(r.data.subtotal)||0,shippingCost:Number(r.data.shippingCost)||0,grandTotal:Number(r.data.grandTotal)||0,customer,address,items:orderItems,notes};
     localOrders.unshift(order);saveLocalOrders();saveBuyerData(customer,address);
-    if(r.data.personalLink){personalLink=r.data.personalLink;personalToken=(personalLink.split('#akses/')[1]||'');try{localStorage.setItem(PERSONAL_LINK_KEY,personalLink)}catch(e){}}
     const whatsappText=buildWhatsAppOrderMessage(order);
     const whatsappUrl='https://wa.me/6281617905237?text='+encodeURIComponent(whatsappText);
     const success=document.getElementById('checkoutSuccess');
-    success.innerHTML=`<div class="checkout-success"><div class="checkout-success-heading"><div class="checkout-success-mark" aria-hidden="true"><svg viewBox="0 0 52 52"><circle class="checkout-success-circle" cx="26" cy="26" r="23"></circle><path class="checkout-success-check" d="M14 27l8 8 17-18"></path></svg></div><h2>PESANAN BERHASIL DIBUAT</h2><p>Silahkan klik tombol WhatsApp dibawah untuk melanjutkan pembayaran dan konsultasi lebih lanjut.</p></div><div class="checkout-buyer-summary"><div class="checkout-summary-row"><span>NAMA PEMBELI</span><strong>${esc(order.customer.name||'-')}</strong></div><div class="checkout-summary-row"><span>NO HP</span><strong>${esc(order.customer.whatsapp||'-')}</strong></div></div><div class="checkout-price-summary"><div class="checkout-summary-row"><span>HARGA BARANG</span><strong>${money(order.subtotal)}</strong></div><div class="checkout-summary-row"><span>HARGA ONGKIR</span><strong>${money(order.shippingCost)}</strong></div><div class="checkout-summary-row checkout-grand-total"><span>TOTAL PEMBAYARAN</span><strong>${money(order.grandTotal)}</strong></div><div class="checkout-summary-row"><span>METODE PEMBAYARAN</span><strong>${esc(order.paymentMethod||'-')}</strong></div></div><div class="order-info order-detail-list"><b>RINCIAN PESANAN</b>${order.items.map((item,i)=>`<div class="order-detail-item"><span>${i+1}. ${esc(item.productName||'Produk')}<small>${esc(item.detail||item.sku||'-')} · Qty ${Number(item.qty)||0}</small></span><strong>${money(item.lineTotal||0)}</strong></div>`).join('')}</div>${r.data.personalLink?`<div class="personal-link-card"><b>LINK PRIBADI RIWAYAT PESANAN</b><p>Simpan link ini. Link ini berlaku permanen untuk membuka seluruh riwayat pesanan kamu.</p><input class="input" readonly value="${esc(r.data.personalLink)}" id="newPersonalLink"><button class="primary full" type="button" onclick="copyPersonalLink()">SALIN LINK PRIBADI</button><div class="twoactions"><button class="secondary" type="button" onclick="createPersonalPinPrompt()">BUAT PIN SEKARANG</button><button class="secondary" type="button" onclick="skipPersonalPin()">NANTI SAJA</button></div></div>`:''}<a class="wa-button" href="${whatsappUrl}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.7a8.5 8.5 0 0 1-12.6 7.4L3 20.5l1.4-4.7A8.5 8.5 0 1 1 20.5 11.7Z"></path><path d="M8.5 8.2c.2-.5.5-.5.8-.5h.5c.2 0 .4.1.5.4l.8 1.8c.1.2.1.4-.1.6l-.6.7c-.2.2-.2.4-.1.6.4.8 1.1 1.5 1.9 1.9.2.1.4.1.6-.1l.8-.9c.2-.2.4-.2.6-.1l1.7.8c.3.1.4.3.4.5 0 .3-.2 1.1-.7 1.5-.5.5-1.2.7-2 .6-1-.1-2.2-.7-3.4-1.8-1.4-1.2-2.3-2.8-2.5-3.7-.2-.8 0-1.5.8-2.3Z"></path></svg>LANJUT KONSULTASI VIA WHATSAPP</a><button class="checkout-orders-button full" type="button" onclick="closeOverlay('checkoutOverlay');navigate('orders')">LIHAT PESANAN SAYA</button></div>`;
+    success.innerHTML=`<div class="checkout-success"><div class="checkout-success-heading"><div class="checkout-success-mark" aria-hidden="true"><svg viewBox="0 0 52 52"><circle class="checkout-success-circle" cx="26" cy="26" r="23"></circle><path class="checkout-success-check" d="M14 27l8 8 17-18"></path></svg></div><h2>PESANAN BERHASIL DIBUAT</h2><p>Silahkan klik tombol WhatsApp dibawah untuk melanjutkan pembayaran dan konsultasi lebih lanjut.</p></div><div class="checkout-buyer-summary"><div class="checkout-summary-row"><span>NAMA PEMBELI</span><strong>${esc(order.customer.name||'-')}</strong></div><div class="checkout-summary-row"><span>NO HP</span><strong>${esc(order.customer.whatsapp||'-')}</strong></div></div><div class="checkout-price-summary"><div class="checkout-summary-row"><span>HARGA BARANG</span><strong>${money(order.subtotal)}</strong></div><div class="checkout-summary-row"><span>HARGA ONGKIR</span><strong>${money(order.shippingCost)}</strong></div><div class="checkout-summary-row checkout-grand-total"><span>TOTAL PEMBAYARAN</span><strong>${money(order.grandTotal)}</strong></div><div class="checkout-summary-row"><span>METODE PEMBAYARAN</span><strong>${esc(order.paymentMethod||'-')}</strong></div></div><div class="order-info order-detail-list"><b>RINCIAN PESANAN</b>${order.items.map((item,i)=>`<div class="order-detail-item"><span>${i+1}. ${esc(item.productName||'Produk')}<small>${esc(item.detail||item.sku||'-')} · Qty ${Number(item.qty)||0}</small></span><strong>${money(item.lineTotal||0)}</strong></div>`).join('')}</div><a class="wa-button" href="${whatsappUrl}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.7a8.5 8.5 0 0 1-12.6 7.4L3 20.5l1.4-4.7A8.5 8.5 0 1 1 20.5 11.7Z"></path><path d="M8.5 8.2c.2-.5.5-.5.8-.5h.5c.2 0 .4.1.5.4l.8 1.8c.1.2.1.4-.1.6l-.6.7c-.2.2-.2.4-.1.6.4.8 1.1 1.5 1.9 1.9.2.1.4.1.6-.1l.8-.9c.2-.2.4-.2.6-.1l1.7.8c.3.1.4.3.4.5 0 .3-.2 1.1-.7 1.5-.5.5-1.2.7-2 .6-1-.1-2.2-.7-3.4-1.8-1.4-1.2-2.3-2.8-2.5-3.7-.2-.8 0-1.5.8-2.3Z"></path></svg>LANJUT KONSULTASI VIA WHATSAPP</a><button class="checkout-orders-button full" type="button" onclick="closeOverlay('checkoutOverlay');navigate('orders')">LIHAT PESANAN SAYA</button></div>`;
     document.getElementById('checkoutWizard').style.display='none';success.style.display='block';out.textContent='';
     cart=[];saveCart();renderCart();renderMyOrders();
   }catch(e){out.textContent=e.message;out.style.color='#c33';}
