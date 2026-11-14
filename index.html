@@ -1546,7 +1546,7 @@ html[data-theme="dark"] .floating-catalog-back{
 </div>
 <div class="overlay" id="manualAddressOverlay" style="z-index:40" aria-hidden="true"><div class="dialog manual-address-dialog" role="dialog" aria-modal="true" aria-labelledby="manualAddressTitle">
   <div class="dialoghead"><h2 id="manualAddressTitle">ISI ALAMAT MANUAL</h2><button class="close" type="button" aria-label="Tutup" onclick="closeManualAddressPopup()">×</button></div>
-  <div id="checkoutWilayahMount"></div>
+  <div id="checkoutWilayahMountHome"><div id="checkoutWilayahMount"></div></div>
   <div class="checkout-actions"><button class="secondary" type="button" onclick="closeManualAddressPopup()">Kembali</button><button class="secondary" type="button" onclick="closeManualAddressPopup();openPasteAddressPopup()">TEMPEL ALAMAT</button><button class="primary" type="button" onclick="checkoutNext(2)">Lanjutkan</button></div>
 </div></div>
 <div class="overlay" id="pasteAddressOverlay" style="z-index:40" aria-hidden="true"><div class="dialog paste-address-dialog" role="dialog" aria-modal="true" aria-labelledby="pasteAddressTitle">
@@ -1557,6 +1557,36 @@ html[data-theme="dark"] .floating-catalog-back{
   <p class="paste-address-stage-note">Pemeriksaan dan pengenalan otomatis alamat akan dilanjutkan pada tahap berikutnya.</p>
   <div class="checkout-actions"><button class="secondary" type="button" onclick="closePasteAddressPopup()">Kembali</button><button class="primary" type="button" onclick="processPastedAddress()">Selesai</button></div>
 </div></div>
+
+
+<!-- EDITOR ALAMAT AKUN KHUSUS: terpisah dari popup checkout agar tidak saling menimpa -->
+<div class="account-address-editor-overlay" id="accountAddressEditorOverlay" aria-hidden="true">
+  <div class="account-address-editor" role="dialog" aria-modal="true" aria-labelledby="accountAddressEditorTitle">
+    <div class="account-address-editor-head">
+      <div><div class="account-brand-mark"></div><h2 id="accountAddressEditorTitle">TAMBAH ALAMAT</h2><p class="account-subtitle">Lengkapi alamat pengiriman pelanggan.</p></div>
+      <button class="account-address-editor-close" type="button" aria-label="Tutup" onclick="closeManualAddressPopup()">×</button>
+    </div>
+    <section id="accountAddressManualView">
+      <div id="accountAddressWilayahHome"></div>
+      <div class="checkout-actions account-address-editor-actions">
+        <button class="secondary" type="button" onclick="closeManualAddressPopup()">Kembali</button>
+        <button class="secondary" type="button" onclick="openPasteAddressPopup()">TEMPEL ALAMAT</button>
+        <button class="primary" type="button" onclick="checkoutNext(2)">SIMPAN ALAMAT</button>
+      </div>
+    </section>
+    <section id="accountAddressPasteView" hidden>
+      <h3 class="account-address-paste-title">TEMPELKAN ALAMAT</h3>
+      <button class="paste-clipboard-btn" type="button" onclick="pasteAddressFromClipboard()">📋 KLIK UNTUK TEMPEL ALAMAT</button>
+      <label class="field" for="accountAddressPastedText">TEKS ALAMAT</label>
+      <textarea class="input" id="accountAddressPastedText" rows="6" placeholder="Tempel alamat lengkap di sini..."></textarea>
+      <p class="paste-address-stage-note">Alamat akan dikenali otomatis dan hasilnya dimasukkan ke form alamat.</p>
+      <div class="checkout-actions account-address-editor-actions">
+        <button class="secondary" type="button" onclick="closePasteAddressPopup()">Kembali</button>
+        <button class="primary" type="button" onclick="processPastedAddress()">SELESAI</button>
+      </div>
+    </section>
+  </div>
+</div>
 
 <div class="overlay" id="finishingInfoOverlay" onclick="if(event.target===this)closeFinishingInfo()" aria-hidden="true">
   <div class="finishing-info-dialog" role="dialog" aria-modal="true" aria-label="Penjelasan finishing banner">
@@ -2172,21 +2202,43 @@ function openManualAddressPopup(){
   if(manual){manual.classList.add('selected');manual.setAttribute('aria-pressed','true');}
   const mount=document.getElementById('checkoutWilayahMount');
   if(mount)mount.removeAttribute('hidden');
+  if(addressEditorContext==='account'){
+    const home=document.getElementById('accountAddressWilayahHome');
+    if(mount&&home&&mount.parentElement!==home)home.appendChild(mount);
+    const overlay=document.getElementById('accountAddressEditorOverlay');
+    document.getElementById('accountAddressManualView').hidden=false;
+    document.getElementById('accountAddressPasteView').hidden=true;
+    if(overlay){overlay.classList.add('open');overlay.setAttribute('aria-hidden','false');}
+    syncModalLock();return;
+  }
   const overlay=document.getElementById('manualAddressOverlay');if(!overlay)return;
-  overlay.style.zIndex='50';
-  openOverlay('manualAddressOverlay');
-  overlay.setAttribute('aria-hidden','false');
+  overlay.style.zIndex='50';openOverlay('manualAddressOverlay');overlay.setAttribute('aria-hidden','false');
 }
 function closeManualAddressPopup(){
+  if(addressEditorContext==='account'){
+    const overlay=document.getElementById('accountAddressEditorOverlay');
+    if(overlay){overlay.classList.remove('open');overlay.setAttribute('aria-hidden','true');}
+    const mount=document.getElementById('checkoutWilayahMount');
+    const home=document.getElementById('checkoutWilayahMountHome');
+    if(mount&&home&&mount.parentElement!==home)home.appendChild(mount);
+    const manual=document.getElementById('accountAddressManualView');
+    const paste=document.getElementById('accountAddressPasteView');
+    if(manual)manual.hidden=false;if(paste)paste.hidden=true;
+    addressEditorContext='';editingCustomerAddressId='';syncModalLock();return;
+  }
   const overlay=document.getElementById('manualAddressOverlay');if(!overlay)return;
-  overlay.classList.remove('open');overlay.setAttribute('aria-hidden','true');
-  if(addressEditorContext==='account'){addressEditorContext='';editingCustomerAddressId='';}
-  syncModalLock();
+  overlay.classList.remove('open');overlay.setAttribute('aria-hidden','true');syncModalLock();
 }
 function openPasteAddressPopup(){
+  if(addressEditorContext==='account'){
+    const manual=document.getElementById('accountAddressManualView');
+    const paste=document.getElementById('accountAddressPasteView');
+    if(manual)manual.hidden=true;if(paste)paste.hidden=false;
+    const input=document.getElementById('accountAddressPastedText');if(input)setTimeout(()=>input.focus({preventScroll:true}),50);
+    syncModalLock();return;
+  }
   const overlay=document.getElementById('pasteAddressOverlay');if(!overlay)return;
-  overlay.classList.add('open');overlay.setAttribute('aria-hidden','false');
-  document.body.classList.add('modal-open');
+  overlay.classList.add('open');overlay.setAttribute('aria-hidden','false');document.body.classList.add('modal-open');
   const input=document.getElementById('checkoutPastedAddress');if(input)setTimeout(()=>input.focus({preventScroll:true}),50);
 }
 function focusPasteAddressTextarea(){
@@ -2197,8 +2249,8 @@ function focusPasteAddressTextarea(){
   textarea.setSelectionRange(length,length);
 }
 async function pasteAddressFromClipboard(){
-  const textarea=document.getElementById('checkoutPastedAddress');
-  const button=document.querySelector('.paste-clipboard-btn');
+  const textarea=document.getElementById(addressEditorContext==='account'?'accountAddressPastedText':'checkoutPastedAddress');
+  const button=addressEditorContext==='account'?document.querySelector('#accountAddressPasteView .paste-clipboard-btn'):document.querySelector('#pasteAddressOverlay .paste-clipboard-btn');
   if(!textarea)return;
   const originalLabel='📋 KLIK UNTUK TEMPEL ALAMAT';
   if(!navigator.clipboard||typeof navigator.clipboard.readText!=='function'){
@@ -2226,6 +2278,15 @@ async function pasteAddressFromClipboard(){
   }
 }
 function closePasteAddressPopup(){
+  if(addressEditorContext==='account'){
+    const manual=document.getElementById('accountAddressManualView');
+    const paste=document.getElementById('accountAddressPasteView');
+    if(paste)paste.hidden=true;if(manual)manual.hidden=false;
+    const mount=document.getElementById('checkoutWilayahMount');
+    const home=document.getElementById('accountAddressWilayahHome');
+    if(mount&&home&&mount.parentElement!==home)home.appendChild(mount);
+    syncModalLock();return;
+  }
   const overlay=document.getElementById('pasteAddressOverlay');if(!overlay)return;
   overlay.classList.remove('open');overlay.setAttribute('aria-hidden','true');
   if(!document.querySelector('.overlay.open'))document.body.classList.remove('modal-open');
@@ -2343,7 +2404,7 @@ function recognizePastedAddress(raw){
   return {province:province.n,city:city.n,district:district.n,village:village?.[0]||'',postal:village?.[1]||'',complete:!!village};
 }
 async function processPastedAddress(){
-  const textarea=document.getElementById('checkoutPastedAddress');
+  const textarea=document.getElementById(addressEditorContext==='account'?'accountAddressPastedText':'checkoutPastedAddress');
   const raw=String(textarea?.value||'').trim();
   if(!raw)return showNotice('Tempel atau tulis alamat lengkap terlebih dahulu.');
   try{
@@ -2434,7 +2495,32 @@ function buildWhatsAppOrderMessage(order){
     'Mohon bantuannya untuk konsultasi pesanan saya. Terima kasih.'
   ].join('\n');
 }
-async function checkoutInfo(){if(!cart.length)return showNotice('Keranjang masih kosong.');if(customerSession()){try{clearTimeout(customerCartSaveTimer);await persistCustomerCart();await loadCustomerAddresses()}catch(e){return showNotice(e.message||'Keranjang akun belum tersimpan.','Sinkronisasi Keranjang')}}const total=money(cart.reduce((a,b)=>a+b.qty*b.price,0));document.getElementById('checkoutTotal').textContent=total; document.getElementById('checkoutResult').textContent='';document.getElementById('checkoutWizard').style.display='block';document.getElementById('checkoutSuccess').style.display='none';checkoutAddressMethod='';selectedCheckoutAddressId='';addressEditorContext='';const manual=document.getElementById('checkoutManualMethod'),paste=document.getElementById('checkoutPasteMethod');[manual,paste].forEach(el=>{if(el){el.classList.remove('selected');el.setAttribute('aria-pressed','false')}});closeManualAddressPopup();closePasteAddressPopup();setCheckoutStep(1);applySavedBuyerData();closeOverlay('cartOverlay');openOverlay('checkoutOverlay');try{await loadCheckoutDropdowns()}catch(e){document.getElementById('submitOrderBtn').disabled=true}}
+async function checkoutInfo(){
+  if(!cart.length)return showNotice('Keranjang masih kosong.');
+  showLoading('Menyiapkan checkout...');
+  try{
+    if(customerSession()){
+      clearTimeout(customerCartSaveTimer);
+      await persistCustomerCart();
+      await loadCustomerAddresses();
+    }
+    const total=money(cart.reduce((a,b)=>a+b.qty*b.price,0));
+    document.getElementById('checkoutTotal').textContent=total;
+    document.getElementById('checkoutResult').textContent='';
+    document.getElementById('checkoutWizard').style.display='block';
+    document.getElementById('checkoutSuccess').style.display='none';
+    checkoutAddressMethod='';selectedCheckoutAddressId='';addressEditorContext='';
+    const manual=document.getElementById('checkoutManualMethod'),paste=document.getElementById('checkoutPasteMethod');
+    [manual,paste].forEach(el=>{if(el){el.classList.remove('selected');el.setAttribute('aria-pressed','false')}});
+    closeManualAddressPopup();closePasteAddressPopup();setCheckoutStep(1);applySavedBuyerData();
+    closeOverlay('cartOverlay');openOverlay('checkoutOverlay');
+    try{await loadCheckoutDropdowns()}catch(e){document.getElementById('submitOrderBtn').disabled=true}
+  }catch(e){
+    showNotice(e.message||'Checkout belum dapat disiapkan.','Persiapan Checkout');
+  }finally{
+    hideLoading();
+  }
+}
 let checkoutSubmitting=false;
 function getCheckoutAttemptKey(payload){
   const fingerprint=JSON.stringify(payload);
@@ -2469,9 +2555,10 @@ async function submitOrder(){
     const notes=document.getElementById('checkoutNotes').value.trim();
     const orderItems=cart.map(x=>({productName:x.name,sku:x.sku,image:x.image||'',qty:x.qty,lineTotal:x.qty*x.price,unitPrice:x.price,variationId:x.variationId,customBanner:!!x.customBanner,width:x.width||0,height:x.height||0,detail:[x.sku,x.o1,x.o2,x.o3].filter(Boolean).join(' · ')}));
     const orderPayload={customer,address,paymentMethod,notes,items:cart.map(x=>({productId:x.variationId,qty:x.qty,...(x.customBanner?{customSize:{width:x.width,height:x.height}}:{})}))};
-    const activeCustomer=customerSession();if(activeCustomer){clearTimeout(customerCartSaveTimer);await persistCustomerCart()}const data={...orderPayload,idempotencyKey:getCheckoutAttemptKey(orderPayload),...(activeCustomer?{customerSessionToken:activeCustomer.sessionToken,cartId:customerCartId}:{})};
     btn.textContent='MEMPROSES PESANAN...';out.textContent='';
     showCheckoutLoading();
+    const activeCustomer=customerSession();if(activeCustomer){clearTimeout(customerCartSaveTimer);await persistCustomerCart()}
+    const data={...orderPayload,idempotencyKey:getCheckoutAttemptKey(orderPayload),...(activeCustomer?{customerSessionToken:activeCustomer.sessionToken,cartId:customerCartId}:{})};
     const r=await api('createWebOrder',data);if(!r.ok)throw Error(r.error||'Pesanan belum dapat dikirim.');
     clearCheckoutAttemptKey(data.idempotencyKey);
     const orderDate=new Date().toISOString();
@@ -2747,7 +2834,13 @@ html[data-theme="dark"] .account-unregistered-icon{background:#49351c;color:#ffd
  <div class="account-modal" role="dialog" aria-modal="true" aria-labelledby="accountModalTitle">
   <div class="account-modal-head">
    <div><div class="account-brand-mark"></div><h2 id="accountModalTitle">Masuk ke Akun</h2><p class="account-subtitle" id="accountModalSubtitle">Masuk untuk mengakses akun pelanggan Aliflam.</p></div>
-   <button class="account-close" type="button" onclick="closeAccountModal()">TUTUP</button>
+   <div class="account-head-actions">
+    <button class="account-main-btn account-logout-btn" id="accountLogoutBtn" type="button" onclick="logoutCustomerAccount()" hidden>
+      <svg class="account-logout-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 17l5-5-5-5M15 12H3m9-8h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>KELUAR</span>
+    </button>
+    <button class="account-close" type="button" aria-label="Tutup" onclick="closeAccountModal()">×</button>
+   </div>
   </div>
   <section class="account-panel" id="accountProfileForm" hidden>
    <div class="account-note">Kamu sudah masuk ke akun Aliflam.</div>
@@ -2761,10 +2854,6 @@ html[data-theme="dark"] .account-unregistered-icon{background:#49351c;color:#ffd
    </div>
    </div>
    <div id="accountAddressesPanel" hidden><div id="accountAddressList" style="display:grid;gap:10px"></div><button class="account-main-btn" type="button" style="margin-top:12px" onclick="openCustomerAddressEditor()">＋ TAMBAH ALAMAT BARU</button></div>
-   <button class="account-main-btn account-logout-btn" id="accountLogoutBtn" type="button" onclick="logoutCustomerAccount()">
-      <svg class="account-logout-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 17l5-5-5-5M15 12H3m9-8h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <span>KELUAR DARI AKUN</span>
-    </button>
   </section>
   <section class="account-panel" id="accountLoginForm">
    <label for="accountLoginPhone">Nomor WhatsApp</label><input id="accountLoginPhone" inputmode="tel" autocomplete="tel" placeholder="08xxxxxxxxxx"/>
@@ -2864,7 +2953,21 @@ function renderCheckoutSavedAddresses(){const box=document.getElementById('check
 async function selectCheckoutSavedAddress(id){const a=customerAddressCache.find(x=>x.addressId===id);if(!a)return;selectedCheckoutAddressId=id;await fillCheckoutAddress(a);saveBuyerData({name:document.getElementById('checkoutName').value,whatsapp:document.getElementById('checkoutPhone').value,email:document.getElementById('checkoutEmail').value},a);renderCheckoutSavedAddresses();setCheckoutStep(3);}
 async function fillCheckoutAddress(a){await loadWilayahPartial();await loadWilayahData();if(typeof window.AliflamWilayahInit!=='function')throw Error('Mesin dropdown wilayah belum siap.');const vals={checkoutRecipient:a.recipientName,checkoutAddressPhone:a.phone,checkoutFullAddress:a.fullAddress,checkoutReference:a.reference||''};Object.entries(vals).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.value=v||'';});window.AliflamWilayahInit({province:a.province,city:a.city,district:a.district,village:a.village,postalCode:a.postalCode,fullAddress:a.fullAddress,reference:a.reference});}
 async function startCheckoutNewAddress(){addressEditorContext='checkout';editingCustomerAddressId='';checkoutAddressMethod='';['checkoutRecipient','checkoutAddressPhone','checkoutFullAddress','checkoutReference'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});await loadWilayahPartial();await loadWilayahData();window.AliflamWilayahInit({});setCheckoutAddressMethod('manual');openManualAddressPopup();}
-async function openCustomerAddressEditor(id=''){const a=customerAddressCache.find(x=>x.addressId===id)||null;addressEditorContext='account';editingCustomerAddressId=id||'';await loadWilayahPartial();await loadWilayahData();const c=customerSession();document.getElementById('checkoutRecipient').value=a?.recipientName||c?.name||'';document.getElementById('checkoutAddressPhone').value=a?.phone||c?.whatsapp||'';document.getElementById('checkoutFullAddress').value=a?.fullAddress||'';document.getElementById('checkoutReference').value=a?.reference||'';window.AliflamWilayahInit(a||{});document.getElementById('manualAddressTitle').textContent=a?'EDIT ALAMAT':'TAMBAH ALAMAT';document.querySelector('#manualAddressOverlay .checkout-actions .primary').textContent='SIMPAN ALAMAT';setCheckoutAddressMethod('manual');openManualAddressPopup();}
+async function openCustomerAddressEditor(id=''){
+  const a=customerAddressCache.find(x=>x.addressId===id)||null;
+  addressEditorContext='account';editingCustomerAddressId=id||'';
+  try{
+    await loadWilayahPartial();await loadWilayahData();
+    const c=customerSession();
+    document.getElementById('checkoutRecipient').value=a?.recipientName||c?.name||'';
+    document.getElementById('checkoutAddressPhone').value=a?.phone||c?.whatsapp||'';
+    document.getElementById('checkoutFullAddress').value=a?.fullAddress||'';
+    document.getElementById('checkoutReference').value=a?.reference||'';
+    window.AliflamWilayahInit(a||{});
+    document.getElementById('accountAddressEditorTitle').textContent=a?'EDIT ALAMAT':'TAMBAH ALAMAT';
+    setCheckoutAddressMethod('manual');openManualAddressPopup();
+  }catch(error){addressEditorContext='';editingCustomerAddressId='';showNotice(error.message||'Form alamat gagal dibuka.');}
+}
 async function removeCustomerAddress(id){if(!confirm('Hapus alamat ini dari akun kamu?'))return;const c=customerSession();try{const r=await api('deleteCustomerAddress',{customerSessionToken:c.sessionToken,addressId:id});if(!r.ok)throw Error(r.error||'Alamat gagal dihapus.');customerAddressCache=customerAddressCache.filter(a=>a.addressId!==id);renderCustomerAddressList();renderCheckoutSavedAddresses();}catch(e){showNotice(e.message||'Alamat gagal dihapus.');}}
 function openAccountModal(){  bindAccountInvalidClear();
  const back=document.getElementById('accountModalBack');back.classList.add('show');
@@ -2895,6 +2998,7 @@ function goToRegisterFromUnregisteredPopup(){
 function showAccountForm(which){
  const labels={login:['Masuk ke Akun','Masuk untuk mengakses akun pelanggan Aliflam.'],register:['Buat Akun','Daftarkan akun pelanggan Aliflam.'],reset:['Reset Password','Pulihkan akses akun menggunakan nomor WhatsApp terdaftar.'],profile:['Akun Saya','Informasi akun pelanggan Aliflam.']};
  ['login','register','reset','profile'].forEach(k=>document.getElementById('account'+k[0].toUpperCase()+k.slice(1)+'Form').hidden=k!==which);
+ const logoutButton=document.getElementById('accountLogoutBtn');if(logoutButton)logoutButton.hidden=which!=='profile';
  document.getElementById('accountModalTitle').textContent=labels[which][0];
  document.getElementById('accountModalSubtitle').textContent=labels[which][1];
  document.getElementById('accountMessage').textContent='';
@@ -2931,7 +3035,7 @@ async function logoutCustomerAccount(){
    button.disabled=false;
    button.classList.remove('is-logging-out');
    button.setAttribute('aria-busy','false');
-   button.innerHTML='<svg class="account-logout-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 17l5-5-5-5M15 12H3m9-8h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>KELUAR DARI AKUN</span>';
+   button.innerHTML='<svg class="account-logout-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 17l5-5-5-5M15 12H3m9-8h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>KELUAR</span>';
   }
  }
 }
@@ -3354,6 +3458,43 @@ html[data-theme="dark"] .account-modal textarea.invalid-field{
  background:#dc2626!important;color:#fff!important;font-size:23px;font-weight:800;
 }
 #confirmOverlay.confirm-sync-mode .dialoghead .close:hover{background:#b91c1c!important}
+</style>
+
+
+<style id="account-header-actions-final">
+.account-modal-head{align-items:flex-start!important;gap:12px!important}
+.account-head-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex:0 0 auto}
+.account-modal .account-head-actions [hidden]{display:none!important}
+.account-modal .account-close{width:36px!important;height:36px!important;min-width:36px!important;padding:0!important;display:grid!important;place-items:center!important;border:0!important;border-radius:50%!important;background:#dc2626!important;color:#fff!important;font-size:27px!important;font-weight:800!important;line-height:1!important;box-shadow:0 3px 9px rgba(220,38,38,.25)!important}
+.account-modal .account-close:hover{background:#b91c1c!important}
+.account-modal .account-head-actions .account-logout-btn{min-height:36px!important;height:36px!important;margin:0!important;padding:0 11px!important;border:0!important;border-radius:10px!important;background:#facc15!important;color:#111827!important;font-size:10px!important;font-weight:900!important;white-space:nowrap!important;box-shadow:0 3px 9px rgba(0,0,0,.12)!important}
+.account-modal .account-head-actions .account-logout-btn .account-logout-icon{width:15px!important;height:15px!important;flex:0 0 15px!important}
+.account-modal .account-head-actions .account-logout-btn:hover{background:#eab308!important;filter:none!important}
+.account-modal .account-head-actions .account-logout-btn:disabled{opacity:.78!important;color:#111827!important}
+.account-modal .account-head-actions .account-logout-spinner{border-color:rgba(17,24,39,.25)!important;border-top-color:#111827!important}
+@media(max-width:420px){.account-head-actions{gap:6px}.account-modal .account-head-actions .account-logout-btn{padding:0 8px!important;font-size:9px!important;gap:6px!important}.account-modal .account-close{width:34px!important;height:34px!important;min-width:34px!important}}
+</style>
+
+<style id="account-address-editor-isolated">
+.account-address-editor-overlay{position:fixed;inset:0;z-index:1600;display:none;align-items:center;justify-content:center;padding:12px;background:rgba(8,18,32,.72);overscroll-behavior:contain}
+.account-address-editor-overlay.open{display:flex}
+.account-address-editor{width:min(560px,100%);max-height:92vh;overflow:auto;overscroll-behavior:contain;padding:18px;background:var(--card,#fff);color:var(--text,#202938);border:1px solid var(--line,#dbe3ec);border-radius:20px;box-shadow:0 24px 70px rgba(0,0,0,.35)}
+.account-address-editor-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+.account-address-editor-head h2{margin:0 0 5px;font-size:19px;line-height:1.2;white-space:nowrap}
+.account-address-editor-head .account-subtitle{margin:0}
+.account-address-editor-close{width:36px;height:36px;min-width:36px;border:0;border-radius:50%;background:#dc2626;color:#fff;font-size:26px;font-weight:900;line-height:1;display:grid;place-items:center;cursor:pointer}
+.account-address-editor-close:hover{background:#b91c1c}
+.account-address-editor-actions{position:sticky;bottom:-18px;background:var(--card,#fff);padding:12px 0 2px;margin-top:14px;gap:8px}
+.account-address-editor #accountAddressPasteView[hidden]{display:none!important}
+.account-address-paste-title{font-size:15px;margin:8px 0 12px}
+.account-address-editor textarea{width:100%;box-sizing:border-box}
+.account-modal-head>div:first-child{min-width:0;flex:1 1 auto}
+.account-modal-head h2{white-space:nowrap;font-size:20px}
+.account-head-actions{flex:0 0 auto;gap:6px}
+.account-modal .account-head-actions .account-logout-btn{min-width:0;padding:0 8px!important;gap:5px!important;font-size:9px!important}
+.account-modal .account-head-actions .account-logout-btn span{white-space:nowrap}
+.account-modal .account-head-actions .account-close{width:34px!important;height:34px!important;min-width:34px!important}
+@media(max-width:420px){.account-address-editor{padding:15px;width:calc(100% - 2px);max-height:94vh}.account-address-editor-actions{bottom:-15px;flex-wrap:wrap}.account-modal{padding:16px!important}.account-modal-head{gap:7px!important}.account-modal-head h2{font-size:18px!important}.account-modal .account-head-actions .account-logout-btn{height:34px!important;min-height:34px!important;padding:0 7px!important;font-size:9px!important}}
 </style>
 
 </body></html>
