@@ -1567,6 +1567,11 @@ html[data-theme="dark"] .floating-catalog-back{
       <button class="account-address-editor-close" type="button" aria-label="Tutup" onclick="closeManualAddressPopup()">×</button>
     </div>
     <section id="accountAddressManualView">
+      <div id="accountAddressLabelWrap" hidden>
+        <label class="field" for="accountAddressLabel">NAMA LABEL ALAMAT <span style="font-weight:500;color:var(--muted)">(opsional)</span></label>
+        <input class="input" id="accountAddressLabel" type="text" maxlength="40" placeholder="Contoh: Rumah, Kantor, Toko">
+        <p class="paste-address-stage-note">Kosongkan jika tidak ingin mengubah label yang sekarang.</p>
+      </div>
       <div id="accountAddressWilayahHome"></div>
       <div class="checkout-actions account-address-editor-actions">
         <button class="secondary" type="button" onclick="closeManualAddressPopup()">Kembali</button>
@@ -2425,6 +2430,15 @@ async function processPastedAddress(){
     checkoutAddressMethod='manual';
     setCheckoutAddressMethod('manual');
     closePasteAddressPopup();
+    if(addressEditorContext==='account'){
+      closePasteAddressPopup();
+      const manual=document.getElementById('accountAddressManualView');
+      if(manual)manual.hidden=false;
+      showNotice(result.complete
+        ?'Alamat berhasil dikenali. Periksa kembali seluruh data, lalu tekan SIMPAN ALAMAT.'
+        :'Sebagian wilayah belum berhasil dikenali. Hasil yang ditemukan sudah diisikan. Lengkapi atau koreksi data, lalu tekan SIMPAN ALAMAT.');
+      return;
+    }
     if(!result.complete){
       openManualAddressPopup();
       showNotice('Sebagian wilayah belum berhasil dikenali. Hasil yang ditemukan sudah diisikan. Silakan lengkapi atau koreksi pilihan wilayah pada form alamat.');
@@ -2458,9 +2472,60 @@ async function checkoutNext(from){
     const customer={name:val('checkoutName'),whatsapp:val('checkoutPhone'),email:val('checkoutEmail')};
     const address={recipientName:val('checkoutRecipient'),phone:val('checkoutAddressPhone'),province:val('checkoutProvince'),city:val('checkoutCity'),district:val('checkoutDistrict'),village:val('checkoutVillage'),postalCode:val('checkoutPostal'),fullAddress:val('checkoutFullAddress'),reference:val('checkoutReference')};
     if(addressEditorContext==='account'){
-      const label=window.prompt('Nama label alamat (contoh: Rumah, Kantor):',customerAddressCache.find(x=>x.addressId===editingCustomerAddressId)?.label||'Alamat')||'Alamat';
-      const c=customerSession();const r=await api('saveCustomerAddress',{customerSessionToken:c.sessionToken,addressId:editingCustomerAddressId,label,address});if(!r.ok)throw Error(r.error||'Alamat gagal disimpan.');
-      addressEditorContext='';editingCustomerAddressId='';closeManualAddressPopup();document.getElementById('manualAddressTitle').textContent='ISI ALAMAT MANUAL';document.querySelector('#manualAddressOverlay .checkout-actions .primary').textContent='Lanjutkan';await loadCustomerAddresses();showCustomerProfileTab('addresses');accountMessage('Alamat berhasil disimpan.');return;
+      const saveButton=document.querySelector('#accountAddressManualView .checkout-actions .primary');
+      const originalButtonText=saveButton?.textContent||'SIMPAN ALAMAT';
+      const isEdit=!!editingCustomerAddressId;
+      const oldAddress=customerAddressCache.find(x=>x.addressId===editingCustomerAddressId)||null;
+      const typedLabel=(document.getElementById('accountAddressLabel')?.value||'').trim();
+      let label;
+      if(isEdit){
+        label=typedLabel||oldAddress?.label||'Alamat';
+      }else{
+        const usedNumbers=customerAddressCache.map(x=>Number(String(x.label||'').match(/^Alamat\\s+(\\d+)$/i)?.[1]||0));
+        label='Alamat '+(Math.max(0,...usedNumbers)+1);
+      }
+      const c=customerSession();
+      if(!c?.sessionToken)throw Error('Sesi akun tidak ditemukan. Silakan login kembali.');
+      if(saveButton){saveButton.disabled=true;saveButton.textContent='MENYIMPAN...';}
+      showLoading(isEdit?'Memperbarui alamat...':'Menyimpan alamat...');
+      try{
+        const r=await api('saveCustomerAddress',{customerSessionToken:c.sessionToken,addressId:editingCustomerAddressId,label,address});
+        if(!r?.ok)throw Error(r?.error||'Alamat gagal disimpan.');
+        let refreshWarning='';
+        try{
+          const refreshed=await api('customerAddresses',{customerSessionToken:c.sessionToken});
+          if(!refreshed?.ok)throw Error(refreshed?.error||'Daftar alamat gagal diperbarui.');
+          customerAddressCache=refreshed.data?.addresses||[];
+        }catch(refreshError){
+          refreshWarning='Alamat sudah tersimpan, tetapi daftar belum berhasil diperbarui. Buka ulang tab DATA ALAMAT untuk memuat ulang.';
+        }
+        renderCustomerAddressList();
+        renderCheckoutSavedAddresses();
+        addressEditorContext='';editingCustomerAddressId='';
+        const editor=document.getElementById('accountAddressEditorOverlay');
+        if(editor){editor.classList.remove('open');editor.setAttribute('aria-hidden','true');}
+        const mount=document.getElementById('checkoutWilayahMount');
+        const home=document.getElementById('checkoutWilayahMountHome');
+        if(mount&&home&&mount.parentElement!==home)home.appendChild(mount);
+        const manualView=document.getElementById('accountAddressManualView');
+        const pasteView=document.getElementById('accountAddressPasteView');
+        if(manualView)manualView.hidden=false;
+        if(pasteView)pasteView.hidden=true;
+        const labelInput=document.getElementById('accountAddressLabel');
+        if(labelInput)labelInput.value='';
+        document.getElementById('accountBuyerPanel').hidden=true;
+        document.getElementById('accountAddressesPanel').hidden=false;
+        document.getElementById('accountTabBuyer').classList.remove('primary');
+        document.getElementById('accountTabAddresses').classList.add('primary');
+        accountMessage(isEdit?'Alamat berhasil diperbarui.':'Alamat berhasil disimpan.');
+        showNotice(refreshWarning|| (isEdit?'Alamat berhasil diperbarui.':'Alamat berhasil disimpan.'),refreshWarning?'Berhasil, Perlu Muat Ulang':'Berhasil');
+      }catch(error){
+        showNotice(error.message||'Alamat gagal disimpan. Silakan coba lagi.','Gagal Menyimpan Alamat');
+      }finally{
+        hideLoading();
+        if(saveButton){saveButton.disabled=false;saveButton.textContent=originalButtonText;}
+      }
+      return;
     }
     if(customerSession()&&!selectedCheckoutAddressId){const c=customerSession();const r=await api('saveCustomerAddress',{customerSessionToken:c.sessionToken,label:'Alamat '+(customerAddressCache.length+1),address});if(!r.ok)throw Error(r.error||'Alamat gagal disimpan ke akun.');await loadCustomerAddresses();}
     saveBuyerData(customer,address);
@@ -2965,6 +3030,10 @@ async function openCustomerAddressEditor(id=''){
     document.getElementById('checkoutReference').value=a?.reference||'';
     window.AliflamWilayahInit(a||{});
     document.getElementById('accountAddressEditorTitle').textContent=a?'EDIT ALAMAT':'TAMBAH ALAMAT';
+    const labelWrap=document.getElementById('accountAddressLabelWrap');
+    const labelInput=document.getElementById('accountAddressLabel');
+    if(labelWrap)labelWrap.hidden=!a;
+    if(labelInput)labelInput.value=a?.label||'';
     setCheckoutAddressMethod('manual');openManualAddressPopup();
   }catch(error){addressEditorContext='';editingCustomerAddressId='';showNotice(error.message||'Form alamat gagal dibuka.');}
 }
