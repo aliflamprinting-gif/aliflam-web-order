@@ -1409,6 +1409,7 @@ html[data-theme="dark"] .floating-catalog-back{
     </div>
   </div>
   <div class="home-hero-points" aria-label="Keunggulan layanan">
+    <span><b>✓</b> GRATIS KONSULTASI</span>
     <span><b>✓</b> Pemesanan online</span>
     <span><b>✓</b> Pilihan produk &amp; variasi</span>
     <span><b>✓</b> Pantau pesanan</span>
@@ -3002,4 +3003,143 @@ html[data-theme="dark"] .account-modal .account-error{
 }
 
 </style>
-</body></html>
+
+<style id="aliflam-account-theme-contrast-final">
+/* FINAL ACCOUNT POPUP CONTRAST FIX — scoped to account UI only */
+/* Light mode */
+html:not([data-theme="dark"]) .account-modal,
+html:not([data-theme="dark"]) .account-unregistered-card{
+  background:#ffffff!important;
+  color:#172334!important;
+  border-color:#dbe5ef!important;
+}
+html:not([data-theme="dark"]) .account-modal h2,
+html:not([data-theme="dark"]) .account-modal h3,
+html:not([data-theme="dark"]) .account-modal label,
+html:not([data-theme="dark"]) .account-modal .account-msg,
+html:not([data-theme="dark"]) .account-unregistered-card h3{
+  color:#172334!important;
+}
+html:not([data-theme="dark"]) .account-modal .account-subtitle,
+html:not([data-theme="dark"]) .account-modal p,
+html:not([data-theme="dark"]) .account-unregistered-card p,
+html:not([data-theme="dark"]) .account-unregistered-cancel{
+  color:#5b6b7e!important;
+}
+html:not([data-theme="dark"]) .account-modal input{
+  background:#ffffff!important;color:#172334!important;border-color:#cbd5e1!important;
+}
+html:not([data-theme="dark"]) .account-modal input::placeholder{color:#8794a5!important;opacity:1}
+html:not([data-theme="dark"]) .account-modal .account-note{
+  background:#eff8f3!important;border-color:#cce8d8!important;color:#176b4e!important;
+}
+html:not([data-theme="dark"]) .account-modal .account-profile-card>div{
+  background:#f7fafc!important;border-color:#dbe5ed!important;
+}
+html:not([data-theme="dark"]) .account-modal .account-profile-card small{color:#64748b!important}
+html:not([data-theme="dark"]) .account-modal .account-profile-card strong{color:#172334!important}
+html:not([data-theme="dark"]) .account-modal .account-bridge{
+  background:#f0fbf5!important;border-color:#b9e4d0!important;
+}
+html:not([data-theme="dark"]) .account-modal .account-bridge-title{color:#126b45!important}
+html:not([data-theme="dark"]) .account-modal .account-bridge p{color:#476456!important}
+html:not([data-theme="dark"]) .account-modal .account-reset-unregistered{
+  background:#fff1f1!important;border-color:#fecaca!important;color:#991b1b!important;
+}
+
+/* Dark mode: dark surfaces use light text consistently. */
+html[data-theme="dark"] .account-modal,
+html[data-theme="dark"] .account-unregistered-card{
+  background:#14283f!important;color:#f3f7fc!important;border-color:#36516b!important;
+}
+html[data-theme="dark"] .account-modal *,
+html[data-theme="dark"] .account-unregistered-card *{
+  text-shadow:none;
+}
+html[data-theme="dark"] .account-modal h2,
+html[data-theme="dark"] .account-modal h3,
+html[data-theme="dark"] .account-modal label,
+html[data-theme="dark"] .account-modal .account-msg,
+html[data-theme="dark"] .account-modal .account-profile-card strong,
+html[data-theme="dark"] .account-unregistered-card h3{
+  color:#f3f7fc!important;
+}
+html[data-theme="dark"] .account-modal .account-subtitle,
+html[data-theme="dark"] .account-modal p,
+html[data-theme="dark"] .account-modal .account-help,
+html[data-theme="dark"] .account-unregistered-card p,
+html[data-theme="dark"] .account-unregistered-cancel{
+  color:#bdcddd!important;
+}
+html[data-theme="dark"] .account-modal input,
+html[data-theme="dark"] .account-modal textarea,
+html[data-theme="dark"] .account-modal select{
+  background:#0d1b2b!important;color:#f3f7fc!important;
+  border:1px solid #49627c!important;caret-color:#8bd5ff;
+}
+html[data-theme="dark"] .account-modal input::placeholder,
+html[data-theme="dark"] .account-modal textarea::placeholder{
+  color:#91a5bb!important;opacity:1;
+}
+html[data-theme="dark"] .account-modal input:focus,
+html[data-theme="dark"] .account-modal textarea:focus,
+html[data-theme="dark"] .account-modal select:focus{
+  outline:2px solid #55bfff!important;outline-offset:1px;
+  border-color:#55bfff!important;
+}
+html[data-theme="dark"] .account-modal .account-divider{color:#aebed0!important}
+html[data-theme="dark"] .account-modal .account-divider:before,
+html[data-theme="dark"] .account-modal .account-divider:after{background:#36516b!important}
+html[data-theme="dark"] .account-modal .account-note,
+html[data-theme="dark"] .account-modal .account-success,
+html[data-theme="dark"] .account-modal .account-info,
+html[data-theme="dark"] .account-modal .account-reset-unregistered{
+  background:#1b344d!important;border:1px solid #36516b!important;color:#e4edf7!important;
+}
+html[data-theme="dark"] .account-modal .account-note *,
+html[data-theme="dark"] .account-modal .account-success *,
+html[data-theme="dark"] .account-modal .account-info *,
+html[data-theme="dark"] .account-modal .account-reset-unregistered *{
+  color:inherit!important;
+}
+html[data-theme="dark"] .account-modal .account-profile-card>div{
+  background:#1b344d!important;border-color:#36516b!important;
+}
+html[data-theme="dark"] .account-modal .account-profile-card small{color:#bdcddd!important}
+html[data-theme="dark"] .account-modal .account-bridge{
+  background:#123b30!important;border-color:#267453!important;
+}
+html[data-theme="dark"] .account-modal .account-bridge-title{color:#a8f0ca!important}
+html[data-theme="dark"] .account-modal .account-bridge p{color:#c4e4d4!important}
+html[data-theme="dark"] .account-modal .account-register-link,
+html[data-theme="dark"] .account-modal .account-register-link span{color:#e5edf7!important}
+html[data-theme="dark"] .account-modal .account-register-link b{color:#6ee7a8!important}
+html[data-theme="dark"] .account-modal .account-reset-link,
+html[data-theme="dark"] .account-modal .account-reset-link span,
+html[data-theme="dark"] .account-modal .account-reset-link b{color:#ff9b9b!important}
+html[data-theme="dark"] .account-modal .account-back-link{color:#78caff!important}
+html[data-theme="dark"] .account-modal .account-close{
+  background:#49303a!important;color:#ffd1d8!important;border:1px solid #704553!important;
+}
+html[data-theme="dark"] .account-unregistered-icon{
+  background:#49351c!important;color:#ffd08a!important;
+}
+html[data-theme="dark"] .account-modal .account-main-btn,
+html[data-theme="dark"] .account-unregistered-card .account-main-btn{
+  background:#087a59!important;color:#ffffff!important;
+}
+html[data-theme="dark"] .account-modal .account-error{color:#ffb4b4!important}
+</style>
+
+
+
+
+<style id="aliflam-hero-free-consultation-check-final">
+/* Checklist baru di posisi pertama: centang hijau. Tiga checklist lama tetap dipertahankan. */
+.home-hero-points span:first-child b{
+  background:#16a34a!important;
+  color:#ffffff!important;
+  box-shadow:0 0 0 3px rgba(22,163,74,.16);
+}
+</style>
+\n</body></html>
