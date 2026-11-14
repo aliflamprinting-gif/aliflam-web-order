@@ -2972,5 +2972,43 @@ html[data-theme="dark"] .account-modal .account-error{
   color:#ffb4b4 !important;
 }
 
+
+/* ACCOUNT POPUPS — tema Light/Dark mengikuti tema utama Aliflam */
+.account-modal-back,.account-unregistered-back{background:rgba(5,16,30,.62);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+.account-modal,.account-unregistered-card{
+  background:var(--card)!important;color:var(--ink)!important;border:1px solid var(--line)!important;
+  box-shadow:0 24px 70px rgba(0,0,0,.24)!important
+}
+.account-modal h2,.account-unregistered-card h3{color:var(--ink)!important}
+.account-modal label{color:var(--ink)!important}
+.account-modal .account-subtitle,.account-unregistered-card p{color:var(--muted)!important}
+.account-modal input,.account-modal textarea,.account-modal select{
+  background:var(--soft)!important;color:var(--ink)!important;border:1px solid var(--line)!important;
+  caret-color:var(--blue)!important
+}
+.account-modal input::placeholder,.account-modal textarea::placeholder{color:var(--muted)!important;opacity:1}
+.account-modal .account-divider:before,.account-modal .account-divider:after{background:var(--line)!important}
+.account-modal .account-close{background:var(--soft)!important;color:var(--ink)!important;border:1px solid var(--line)!important}
+.account-modal .account-note{background:var(--blue-soft)!important;border-color:var(--line)!important;color:var(--ink)!important}
+.account-modal .account-profile-card>div{background:var(--soft)!important;border-color:var(--line)!important}
+.account-modal .account-profile-card small{color:var(--muted)!important}
+.account-modal .account-profile-card strong{color:var(--ink)!important}
+.account-modal .account-bridge{background:var(--soft)!important;border-color:var(--line)!important}
+.account-modal .account-bridge-title{color:var(--ink)!important}
+.account-modal .account-bridge p{color:var(--muted)!important}
+.account-modal .account-reset-unregistered{background:rgba(220,38,38,.09)!important;border-color:rgba(220,38,38,.28)!important;color:var(--ink)!important}
+.account-modal .account-register-link{color:var(--ink)!important}
+.account-modal .account-register-link b{color:#16a34a!important}
+.account-modal .account-reset-link,.account-modal .account-reset-link b{color:#dc2626!important}
+.account-modal .account-register-now{background:#dc2626!important;color:#fff!important}
+.account-unregistered-card .account-unregistered-icon{background:rgba(245,158,11,.15)!important;color:#b45309!important}
+.account-unregistered-card .account-unregistered-cancel{color:var(--muted)!important}
+html[data-theme="dark"] .account-modal .account-register-link{color:var(--ink)!important}
+html[data-theme="dark"] .account-modal .account-register-link b{color:#4ade80!important}
+html[data-theme="dark"] .account-modal .account-reset-link,html[data-theme="dark"] .account-modal .account-reset-link b{color:#f87171!important}
+html[data-theme="dark"] .account-modal .account-reset-unregistered{background:rgba(248,113,113,.12)!important;border-color:rgba(248,113,113,.3)!important;color:var(--ink)!important}
+html[data-theme="dark"] .account-unregistered-card .account-unregistered-icon{background:rgba(245,158,11,.18)!important;color:#ffd08a!important}
+html[data-theme="dark"] .account-modal .account-main-btn{background:var(--blue)!important;color:#fff!important}
+
 </style>
 </body></html>
