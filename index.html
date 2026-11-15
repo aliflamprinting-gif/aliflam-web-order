@@ -1575,7 +1575,7 @@ html[data-theme="dark"] .floating-catalog-back{
   <div class="account-address-editor" role="dialog" aria-modal="true" aria-labelledby="accountAddressEditorTitle">
     <div class="account-address-editor-head">
       <div><div class="account-brand-mark"></div><h2 id="accountAddressEditorTitle">TAMBAH ALAMAT</h2><p class="account-subtitle">Lengkapi alamat pengiriman pelanggan.</p></div>
-      <button class="account-address-editor-close" type="button" aria-label="Tutup" onclick="closeManualAddressPopup()">×</button>
+      <button class="account-address-editor-close" type="button" aria-label="Tutup" onclick="closeCheckoutAddressEditor()">×</button>
     </div>
     <section id="accountAddressManualView">
       <div id="accountAddressLabelWrap">
@@ -2246,10 +2246,12 @@ function closeManualAddressPopup(){
     const mount=document.getElementById('checkoutWilayahMount');
     const home=document.getElementById('checkoutWilayahMountHome');
     if(mount&&home&&mount.parentElement!==home)home.appendChild(mount);
+    /* Form alamat juga wajib dikembalikan agar tidak tertinggal di popup. */
+    restoreCheckoutAddressFormHome();
     const manual=document.getElementById('accountAddressManualView');
     const paste=document.getElementById('accountAddressPasteView');
     if(manual)manual.hidden=false;if(paste)paste.hidden=true;
-    addressEditorContext='';editingCustomerAddressId='';syncModalLock();return;
+    addressEditorContext='';editingCustomerAddressId='';window.checkoutAddressPopupFlow=false;syncModalLock();return;
   }
   const overlay=document.getElementById('manualAddressOverlay');if(!overlay)return;
   overlay.classList.remove('open');overlay.setAttribute('aria-hidden','true');
@@ -2993,7 +2995,13 @@ html[data-theme="dark"] .account-unregistered-icon{background:#49351c;color:#ffd
   </section>
   <section class="account-panel" id="accountLoginForm">
    <label for="accountLoginPhone">Nomor WhatsApp</label><input id="accountLoginPhone" inputmode="tel" autocomplete="tel" placeholder="08xxxxxxxxxx"/>
-   <label for="accountLoginPassword">Password</label><input id="accountLoginPassword" type="password" autocomplete="current-password" placeholder="Masukkan password"/>
+   <label for="accountLoginPassword">Password</label>
+   <div class="account-password-wrap">
+    <input id="accountLoginPassword" type="password" autocomplete="current-password" placeholder="Masukkan password"/>
+    <button id="accountLoginPasswordToggle" class="account-password-toggle" type="button" aria-label="Tampilkan password" aria-pressed="false" onclick="toggleLoginPasswordVisibility()">
+     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+    </button>
+   </div>
    <button class="account-main-btn" type="button" onclick="submitCustomerLogin()">MASUK</button>
    <div class="account-divider">ATAU</div>
    <button class="account-link-btn account-register-link" type="button" onclick="showAccountForm('register')"><span>Belum punya akun?</span> <b>Buat akun</b></button>
@@ -3097,6 +3105,12 @@ html[data-theme="dark"] .account-unregistered-icon{background:#49351c;color:#ffd
 .checkout-selected-address-summary .summary-detail{margin-top:6px;font-size:11px;line-height:1.55;overflow-wrap:anywhere}
 .checkout-address-picker[hidden],.checkout-address-picker-panel[hidden],#checkoutSelectedAddressPreview[hidden]{display:none!important}
 #checkoutAddressFormFields[hidden]{display:none!important}#checkoutAddressFormFields{display:block}
+.account-password-wrap{position:relative;width:100%;display:block}
+.account-password-wrap #accountLoginPassword{width:100%;box-sizing:border-box;padding-right:48px}
+.account-password-toggle{position:absolute;top:50%;right:8px;transform:translateY(-50%);width:36px;height:36px;display:grid;place-items:center;border:0;border-radius:9px;background:transparent;color:var(--muted);cursor:pointer}
+.account-password-toggle:hover{background:var(--soft);color:var(--ink)}
+.account-password-toggle svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.account-password-toggle:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 .account-pending-wa svg{width:21px;height:21px;flex:0 0 21px}
 .account-pending-wa:hover{background:#15803d}
 .account-pending-continue{display:block;width:100%;min-height:47px;margin-top:10px;padding:12px;border:1px solid var(--blue);border-radius:12px;background:var(--blue-soft);color:var(--blue);font-size:11px;font-weight:900}
@@ -3160,10 +3174,13 @@ function moveCheckoutAddressFormIntoAccountPopup(){
   const form=document.getElementById('checkoutAddressFormFields');
   const home=document.getElementById('checkoutAddressFormFieldsHome');
   const target=document.getElementById('accountAddressManualView');
+  const wilayahHome=document.getElementById('accountAddressWilayahHome');
   if(!form||!home||!target)return;
-  if(!home.contains(form))home.appendChild(form);
+  if(!home.contains(form)&&form.parentElement!==target)home.appendChild(form);
   form.hidden=false;
-  target.appendChild(form);
+  /* Urutan popup: LABEL, penerima/telepon, lalu seluruh field wilayah. */
+  if(wilayahHome)target.insertBefore(form,wilayahHome);
+  else target.appendChild(form);
 }
 function restoreCheckoutAddressFormHome(){
   const form=document.getElementById('checkoutAddressFormFields');
@@ -3204,6 +3221,10 @@ async function startCheckoutNewAddress(){
     if(phone&&!phone.value)phone.value=c?.whatsapp||'';
     await loadWilayahPartial();
     await loadWilayahData();
+    /* Pindahkan modul wilayah ke popup sebelum menginisialisasi dropdown. */
+    const wilayahMount=document.getElementById('checkoutWilayahMount');
+    const wilayahHome=document.getElementById('accountAddressWilayahHome');
+    if(wilayahMount&&wilayahHome&&wilayahMount.parentElement!==wilayahHome)wilayahHome.appendChild(wilayahMount);
     if(typeof window.AliflamWilayahInit!=='function')throw Error('Mesin dropdown wilayah belum siap.');
     window.AliflamWilayahInit({});
     const label=document.getElementById('accountAddressLabel');if(label)label.value='';
@@ -3217,12 +3238,18 @@ async function startCheckoutNewAddress(){
     syncModalLock();
   }catch(e){
     addressEditorContext='';
+    window.checkoutAddressPopupFlow=false;
+    restoreCheckoutAddressFormHome();
+    const wilayahMount=document.getElementById('checkoutWilayahMount');
+    const wilayahHome=document.getElementById('checkoutWilayahMountHome');
+    if(wilayahMount&&wilayahHome&&wilayahMount.parentElement!==wilayahHome)wilayahHome.appendChild(wilayahMount);
     showNotice(e.message||'Form alamat baru gagal disiapkan.','Gagal Menyiapkan Alamat');
   }finally{hideLoading();checkoutNewAddressBusy=false;}
 }
 async function openCustomerAddressEditor(id=''){
   const a=customerAddressCache.find(x=>x.addressId===id)||null;
   addressEditorContext='account';editingCustomerAddressId=id||'';
+  window.checkoutAddressPopupFlow=false;
   try{
     await loadWilayahPartial();await loadWilayahData();
     const c=customerSession();
@@ -3237,8 +3264,16 @@ async function openCustomerAddressEditor(id=''){
       const currentLabel=String(a?.label||'').trim().toUpperCase();
       labelInput.value=['RUMAH','TEMPAT KERJA','LAINNYA'].includes(currentLabel)?currentLabel:(a?'LAINNYA':'');
     }
+    moveCheckoutAddressFormIntoAccountPopup();
     setCheckoutAddressMethod('manual');openManualAddressPopup();
-  }catch(error){addressEditorContext='';editingCustomerAddressId='';showNotice(error.message||'Form alamat gagal dibuka.');}
+  }catch(error){
+    addressEditorContext='';editingCustomerAddressId='';
+    restoreCheckoutAddressFormHome();
+    const mount=document.getElementById('checkoutWilayahMount');
+    const home=document.getElementById('checkoutWilayahMountHome');
+    if(mount&&home&&mount.parentElement!==home)home.appendChild(mount);
+    showNotice(error.message||'Form alamat gagal dibuka.');
+  }
 }
 async function removeCustomerAddress(id){
   const target=customerAddressCache.find(a=>a.addressId===id);
@@ -3431,6 +3466,18 @@ function bindAccountInvalidClear(){
   el.addEventListener('input',clear);
   el.addEventListener('change',clear);
  });
+}
+function toggleLoginPasswordVisibility(){
+ const input=document.getElementById('accountLoginPassword');
+ const button=document.getElementById('accountLoginPasswordToggle');
+ if(!input||!button)return;
+ const visible=input.type==='password';
+ input.type=visible?'text':'password';
+ button.setAttribute('aria-pressed',String(visible));
+ button.setAttribute('aria-label',visible?'Sembunyikan password':'Tampilkan password');
+ button.innerHTML=visible
+  ?'<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8"/><path d="M9.9 5.2A10.8 10.8 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.1 3.8M6.2 6.2C3.5 8 2 12 2 12s3.6 7 10 7c1.2 0 2.3-.2 3.3-.6"/></svg>'
+  :'<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
 }
 async function submitCustomerLogin(){
  const whatsapp=document.getElementById('accountLoginPhone').value.trim(),password=document.getElementById('accountLoginPassword').value;
@@ -3797,7 +3844,7 @@ html[data-theme="dark"] .account-modal textarea.invalid-field{
 @media(max-width:420px){.account-address-editor{padding:15px;width:calc(100% - 2px);max-height:94vh}.account-address-editor-actions{bottom:-15px;flex-wrap:wrap}.account-modal{padding:16px!important}.account-modal-head{gap:7px!important}.account-modal-head h2{font-size:18px!important}.account-modal .account-head-actions .account-logout-btn{height:34px!important;min-height:34px!important;padding:0 7px!important;font-size:9px!important}}
 \n/* Form popup pelanggan login: hanya input manual, tanpa pilihan metode tempel. */
 #accountAddressManualView #checkoutAddressFormFields .checkout-address-method,
-#accountAddressManualView #checkoutAddressFormFields>.checkout-actions{display:none!important}
+#accountAddressManualView #checkoutAddressFormFields .checkout-recipient-note{display:none!important}
 /* Kontras Dark Mode untuk popup akun dan editor alamat */
 html[data-theme="dark"] .account-address-editor,
 html[data-theme="dark"] .account-modal{color:var(--ink)!important}
