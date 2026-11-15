@@ -2310,6 +2310,7 @@ function closeManualAddressPopup(){
   if(addressEditorContext==='account'||accountEditor?.classList.contains('open')){
     const overlay=document.getElementById('accountAddressEditorOverlay');
     if(overlay){overlay.classList.remove('open');overlay.setAttribute('aria-hidden','true');}
+    document.body.classList.remove('address-editor-active');
     const mount=document.getElementById('checkoutWilayahMount');
     const home=document.getElementById('checkoutWilayahMountHome');
     if(mount&&home&&mount.parentElement!==home)home.appendChild(mount);
@@ -3377,6 +3378,7 @@ async function startCheckoutNewAddress(){
 async function openCustomerAddressEditor(id=''){
   const a=customerAddressCache.find(x=>x.addressId===id)||null;
   addressEditorContext='account';editingCustomerAddressId=id||'';
+  document.body.classList.add('address-editor-active');
   window.checkoutAddressPopupFlow=false;
   try{
     await loadWilayahPartial();organizeAccountAddressForm();await loadWilayahData();
@@ -3395,6 +3397,7 @@ async function openCustomerAddressEditor(id=''){
     moveCheckoutAddressFormIntoAccountPopup();
     setCheckoutAddressMethod('manual');openManualAddressPopup();
   }catch(error){
+    document.body.classList.remove('address-editor-active');
     addressEditorContext='';editingCustomerAddressId='';
     restoreCheckoutAddressFormHome();
     const mount=document.getElementById('checkoutWilayahMount');
@@ -4140,6 +4143,37 @@ html[data-theme="dark"] .field:has(+ textarea.invalid-field)::after {
   margin-top:18px !important;
   margin-bottom:0 !important;
 }
+</style>
+
+
+<style id="aliflam-modal-responsive-fix">
+/* Akun Saya: pertahankan posisi tombol keluar di header pada semua ukuran layar. */
+.account-modal-head{display:flex!important;align-items:flex-start!important;justify-content:space-between!important;gap:10px!important}
+.account-modal-head>div:first-child{flex:1 1 auto!important;min-width:0!important}
+.account-head-actions{display:flex!important;flex:0 0 auto!important;align-items:center!important;justify-content:flex-end!important;gap:7px!important}
+.account-modal .account-head-actions .account-logout-btn{
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  width:auto!important;min-width:0!important;height:36px!important;min-height:36px!important;
+  margin:0!important;padding:0 10px!important;border-radius:10px!important;
+  font-size:10px!important;white-space:nowrap!important;
+}
+.account-modal .account-head-actions .account-close{
+  display:grid!important;place-items:center!important;flex:0 0 34px!important;
+  width:34px!important;height:34px!important;min-width:34px!important;padding:0!important;
+  border-radius:50%!important;font-size:22px!important;
+}
+@media(max-width:600px){
+  .account-modal-back{padding:14px!important}
+  .account-modal{width:100%!important;max-width:430px!important;max-height:88dvh!important;overflow-y:auto!important}
+  .account-modal-head{gap:7px!important;margin-bottom:14px!important}
+  .account-modal-head h2{font-size:20px!important}
+  .account-head-actions{gap:6px!important}
+  .account-modal .account-head-actions .account-logout-btn{height:34px!important;min-height:34px!important;padding:0 8px!important;font-size:9px!important}
+  .account-modal .account-head-actions .account-close{width:34px!important;height:34px!important;min-width:34px!important}
+}
+/* Saat editor alamat dibuka, popup Akun Saya disembunyikan sementara agar tidak menutupi form. */
+body.address-editor-active #accountModalBack{visibility:hidden!important;pointer-events:none!important}
+#accountAddressEditorOverlay{z-index:20000!important}
 </style>
 
 </body></html>
