@@ -55,6 +55,11 @@ body.modal-open{overflow:hidden!important;overscroll-behavior:none}
 .checkout-next{margin-top:20px;min-height:46px}
 .checkout-actions{display:flex;gap:10px;margin-top:22px}
 .checkout-actions>*{flex:1;min-height:46px}
+/* Checkout pelanggan login memakai tombol di kartu alamat; baris bawah hanya untuk guest. */
+.checkout-step.checkout-login-address-mode>.checkout-actions{display:none!important}
+.account-address-form-toast{margin:12px 0 2px;padding:10px 12px;border:1px solid #16a34a44;border-radius:10px;background:#16a34a12;color:#15803d;font-size:11px;font-weight:800;letter-spacing:.35px}
+.account-address-form-toast.show{animation:addressToastIn .18s ease-out}
+@keyframes addressToastIn{from{opacity:.35;transform:translateY(-3px)}to{opacity:1;transform:translateY(0)}}
 .checkout-success{text-align:left}
 .checkout-success .success-mark{width:58px;height:58px;border-radius:50%;display:grid;place-items:center;background:#e7f6ef;color:#087b55;font-size:30px;margin:4px auto 12px}
 .checkout-success h2{text-align:center;font-size:21px}
@@ -72,6 +77,16 @@ body.modal-open{overflow:hidden!important;overscroll-behavior:none}
 @media(max-width:420px){.checkout-dialog{padding:18px 16px}.checkout-step-heading{font-size:18px}.checkout-section-title{font-size:16px}}
 
 
+/* VALIDASI GLOBAL: semua kolom wajib yang kosong ditandai merah. */
+input.invalid-field,select.invalid-field,textarea.invalid-field{
+  border:1.5px solid #dc2626 !important;
+  background:color-mix(in srgb,#dc2626 6%,var(--card,#fff)) !important;
+  box-shadow:0 0 0 3px rgba(220,38,38,.12) !important;
+}
+input.invalid-field:focus,select.invalid-field:focus,textarea.invalid-field:focus{
+  outline:2px solid rgba(220,38,38,.32) !important;outline-offset:1px;
+}
+.payment-option.invalid-field{border:1.5px solid #dc2626!important;background:#fff1f2!important;box-shadow:0 0 0 3px rgba(220,38,38,.12)!important}
 /* Validasi kolom wajib: tandai merah sampai pengguna memperbaikinya. */
 .checkout-dialog .input.invalid-field,
 .checkout-dialog select.invalid-field,
@@ -1588,6 +1603,7 @@ html[data-theme="dark"] .floating-catalog-back{
         </select>
       </div>
       <div id="accountAddressWilayahHome"></div>
+      <div id="accountAddressFormToast" class="account-address-form-toast" role="status" aria-live="polite" hidden></div>
       <div class="checkout-actions account-address-editor-actions">
         <button class="secondary" type="button" onclick="clearCheckoutNewAddressForm()">BERSIHKAN FORM</button>
         <button class="primary" type="button" onclick="checkoutNext(2)">SIMPAN ALAMAT</button>
@@ -2164,7 +2180,7 @@ function clearVariationHints(){['variation1Hint','variation2Hint','variation3Hin
 function changeQty(delta){const el=document.getElementById('qty');el.value=Math.max(1,Math.floor(Number(el.value)||1)+delta);updateDetail()}
 function customBannerCalc(w,h){function orient(a,b){const width=Math.max(a,b),length=Math.min(a,b);const roll=width<=100?100:width<=120?120:width<=150?150:width<=200?200:width<=250?250:300;const long=Math.max(length,100);let area=roll/100*(long/100);area=Math.ceil(area*2-1e-10)/2;return {roll,area,pcs:area*2}}const a=orient(w,h),b=orient(h,w);return a.pcs<=b.pcs?a:b}
 function updateDetail(){if(!selected)return;const qty=Math.max(1,Math.floor(Number(document.getElementById('qty').value)||1)),v=currentVariant(),w=Number(document.getElementById('customWidth').value),ht=Number(document.getElementById('customHeight').value);let pcs=1,validCustom=true;if(selectedCustom){validCustom=Number.isFinite(w)&&w>0&&Number.isFinite(ht)&&ht>0;if(validCustom)pcs=customBannerCalc(w,ht).pcs}const unit=v?(v.price*pcs):0,canPrice=!!v&&(!selectedCustom||validCustom);document.getElementById('weightLabel').textContent=canPrice&&v.weight?'Berat '+(v.weight*pcs)+' gram/cetak':'';document.getElementById('detailPrice').textContent=canPrice?money(unit*qty):(selectedCustom&&v?'Masukkan lebar dan tinggi':'Pilih variasi terlebih dahulu');document.getElementById('detailNote').textContent=canPrice?(selectedCustom?'Harga dihitung otomatis berdasarkan ukuran dan jumlah cetak.':'SKU: '+v.sku+' · Harga belum termasuk ongkir.'):'Pilih variasi produk untuk melihat harga.';document.getElementById('addButton').disabled=!canPrice;document.getElementById('addButton').style.opacity=canPrice?1:.55}
-function addCart(){if(!selected)return;clearVariationHints();const materials=[...new Set(selected.variants.map(v=>v.material).filter(Boolean))],fins=[...new Set(selected.variants.map(v=>v.finishing).filter(Boolean))],dims=[...new Set(selected.variants.flatMap(v=>(v.sizeOptions||[]).map(x=>x.label)))];if(materials.length>1&&!selectedO1){setVariationHint('variation1Hint','Silakan pilih bahan.');return}if(fins.length>1&&!selectedO3){setVariationHint('variation3Hint','Silakan pilih finishing.');return}const candidates=selected.variants.filter(v=>(!selectedO1||v.material===selectedO1)&&(!selectedO3||v.finishing===selectedO3)&&(!selectedCustom?!v.customSize:v.customSize));for(const label of dims){const vals=[...new Set(candidates.flatMap(v=>(v.sizeOptions||[]).filter(x=>x.label===label).map(x=>x.value)))];if(vals.length>1&&!selectedSizeChoices[label]){showNotice('Silakan pilih '+label.toLowerCase()+' terlebih dahulu.');return}}const v=currentVariant();if(!v)return showNotice('Kombinasi variasi belum tersedia.');const qty=Math.max(1,Math.floor(Number(document.getElementById('qty').value)||1));let item={id:v.id,vid:v.vid,name:v.name,sku:v.sku,o1:v.material,o2:(v.sizeOptions||[]).map(x=>x.label+': '+x.value).join(' | '),o3:v.finishing,sizeChoices:{...selectedSizeChoices},image:v.image,price:v.price,basePrice:v.price,qty,variationId:v.vid,customBanner:false};if(selectedCustom){const width=Number(document.getElementById('customWidth').value),height=Number(document.getElementById('customHeight').value);if(!(width>0&&height>0))return showNotice('Masukkan lebar dan tinggi ukuran cetak terlebih dahulu.');const calc=customBannerCalc(width,height);item={...item,customBanner:true,width,height,internalPcs:calc.pcs,price:v.price*calc.pcs,cartKey:v.vid+'|'+width+'x'+height+'|'+v.finishing}}else item.cartKey=v.vid+'|'+JSON.stringify(selectedSizeChoices);if(editingCartVid){cart=cart.filter(x=>(x.cartKey||x.vid)!==editingCartVid);const old=cart.find(x=>(x.cartKey||x.vid)===item.cartKey);if(old)old.qty+=qty;else cart.push(item);editingCartVid=null;document.getElementById('addButton').textContent='+ Tambah ke Keranjang'}else{const old=cart.find(x=>(x.cartKey||x.vid)===item.cartKey);if(old)old.qty+=qty;else cart.push(item)}saveCart();openCart()}
+function addCart(){if(!selected)return;clearVariationHints();const materials=[...new Set(selected.variants.map(v=>v.material).filter(Boolean))],fins=[...new Set(selected.variants.map(v=>v.finishing).filter(Boolean))],dims=[...new Set(selected.variants.flatMap(v=>(v.sizeOptions||[]).map(x=>x.label)))];if(materials.length>1&&!selectedO1){setVariationHint('variation1Hint','Silakan pilih bahan.');return}if(fins.length>1&&!selectedO3){setVariationHint('variation3Hint','Silakan pilih finishing.');return}const candidates=selected.variants.filter(v=>(!selectedO1||v.material===selectedO1)&&(!selectedO3||v.finishing===selectedO3)&&(!selectedCustom?!v.customSize:v.customSize));for(const label of dims){const vals=[...new Set(candidates.flatMap(v=>(v.sizeOptions||[]).filter(x=>x.label===label).map(x=>x.value)))];if(vals.length>1&&!selectedSizeChoices[label]){showNotice('Silakan pilih '+label.toLowerCase()+' terlebih dahulu.');return}}const v=currentVariant();if(!v)return showNotice('Kombinasi variasi belum tersedia.');const qty=Math.max(1,Math.floor(Number(document.getElementById('qty').value)||1));let item={id:v.id,vid:v.vid,name:v.name,sku:v.sku,o1:v.material,o2:(v.sizeOptions||[]).map(x=>x.label+': '+x.value).join(' | '),o3:v.finishing,sizeChoices:{...selectedSizeChoices},image:v.image,price:v.price,basePrice:v.price,qty,variationId:v.vid,customBanner:false};if(selectedCustom){const width=Number(document.getElementById('customWidth').value),height=Number(document.getElementById('customHeight').value);if(!(width>0&&height>0)){const w=document.getElementById('customWidth'),h=document.getElementById('customHeight');if(!(width>0))w?.classList.add('invalid-field');if(!(height>0))h?.classList.add('invalid-field');const first=!(width>0)?w:h;first?.focus();return showNotice('Masukkan lebar dan tinggi ukuran cetak terlebih dahulu.');}const calc=customBannerCalc(width,height);item={...item,customBanner:true,width,height,internalPcs:calc.pcs,price:v.price*calc.pcs,cartKey:v.vid+'|'+width+'x'+height+'|'+v.finishing}}else item.cartKey=v.vid+'|'+JSON.stringify(selectedSizeChoices);if(editingCartVid){cart=cart.filter(x=>(x.cartKey||x.vid)!==editingCartVid);const old=cart.find(x=>(x.cartKey||x.vid)===item.cartKey);if(old)old.qty+=qty;else cart.push(item);editingCartVid=null;document.getElementById('addButton').textContent='+ Tambah ke Keranjang'}else{const old=cart.find(x=>(x.cartKey||x.vid)===item.cartKey);if(old)old.qty+=qty;else cart.push(item)}saveCart();openCart()}
 function openCart(){renderCart();openOverlay('cartOverlay')}async function removeCart(key){const item=cart.find(x=>(x.cartKey||x.vid)===key);if(!item)return;if(!await askConfirm('Hapus '+item.name+' dari keranjang?','Konfirmasi Hapus'))return;cart=cart.filter(x=>(x.cartKey||x.vid)!==key);saveCart();renderCart();showNotice('Produk berhasil dihapus dari keranjang.','Berhasil')}
 function editCart(key){const item=cart.find(x=>(x.cartKey||x.vid)===key);if(!item)return;editingCartVid=key;closeOverlay('cartOverlay');openDetail(item.id);selectedO1=item.o1||null;selectedO3=item.o3||null;selectedSizeChoices={...(item.sizeChoices||{})};selectedCustom=!!item.customBanner;selectedO2=null;document.getElementById('qty').value=item.qty;if(item.customBanner){document.getElementById('customWidth').value=item.width;document.getElementById('customHeight').value=item.height}renderVariationOptions();updateDetail();document.getElementById('addButton').textContent='✎ Simpan Perubahan'}
 function renderCart(){
@@ -2183,6 +2199,12 @@ function setCheckoutStep(step){
 }
 function checkoutReturnToCart(){closeOverlay('checkoutOverlay');openCart()}
 function checkoutBack(from){if(customerSession()&&from===2){checkoutReturnToCart();return;}setCheckoutStep(Math.max(1,from-1))}
+// Lepas tanda merah otomatis ketika pengguna mulai memperbaiki kolom.
+if(!window.__aliflamGlobalInvalidClearBound){
+ window.__aliflamGlobalInvalidClearBound=true;
+ document.addEventListener('input',event=>{const el=event.target;if(el?.matches?.('input,select,textarea')&&String(el.value||'').trim())el.classList.remove('invalid-field');});
+ document.addEventListener('change',event=>{const el=event.target;if(el?.matches?.('input,select,textarea')&&String(el.value||'').trim())el.classList.remove('invalid-field');if(el?.name==='checkoutPayment'&&el.checked)document.querySelectorAll('#checkoutPaymentOptions .payment-option').forEach(x=>x.classList.remove('invalid-field'));});
+}
 function clearCheckoutInvalidFields(root=document){
   root.querySelectorAll('.invalid-field').forEach(el=>el.classList.remove('invalid-field'));
 }
@@ -2502,8 +2524,10 @@ async function checkoutNext(from){
       const oldAddress=customerAddressCache.find(x=>x.addressId===editingCustomerAddressId)||null;
       const label=(document.getElementById('accountAddressLabel')?.value||'').trim().toUpperCase();
       if(!['RUMAH','TEMPAT KERJA','LAINNYA'].includes(label)){
+        const labelField=document.getElementById('accountAddressLabel');
+        labelField?.classList.add('invalid-field');
         showNotice('Pilih label alamat terlebih dahulu.');
-        document.getElementById('accountAddressLabel')?.focus();
+        labelField?.focus();
         return;
       }
       if(accountAddressSaveInProgress)return;
@@ -2689,7 +2713,7 @@ async function submitOrder(){
     if(province.includes('LUAR PULAU JAWA'))throw Error('Pengiriman di luar Pulau Jawa belum tersedia. Silakan pesan melalui Shopee.');
     const customer={name,whatsapp:phone,email},address={recipientName:recipient,phone:addressPhone,province,city,district,village,postalCode,fullAddress,reference};
     const paymentMethod=document.querySelector('input[name="checkoutPayment"]:checked')?.value||'';
-    if(!paymentMethod||(MASTER_DROPDOWNS['METODE PEMBAYARAN']||[]).indexOf(paymentMethod)<0)throw Error('Pilih metode pembayaran yang tersedia di master.');
+    if(!paymentMethod||(MASTER_DROPDOWNS['METODE PEMBAYARAN']||[]).indexOf(paymentMethod)<0){document.querySelectorAll('#checkoutPaymentOptions .payment-option').forEach(el=>el.classList.add('invalid-field'));throw Error('Pilih metode pembayaran yang tersedia di master.');}
     const notes=document.getElementById('checkoutNotes').value.trim();
     const orderItems=cart.map(x=>({productName:x.name,sku:x.sku,image:x.image||'',qty:x.qty,lineTotal:x.qty*x.price,unitPrice:x.price,variationId:x.variationId,customBanner:!!x.customBanner,width:x.width||0,height:x.height||0,detail:[x.sku,x.o1,x.o2,x.o3].filter(Boolean).join(' · ')}));
     const orderPayload={customer,address,paymentMethod,notes,items:cart.map(x=>({productId:x.variationId,qty:x.qty,...(x.customBanner?{customSize:{width:x.width,height:x.height}}:{})}))};
@@ -2857,7 +2881,7 @@ function sendAliflamWhatsApp(){
   let message='';
   if(aliflamWaTopic==='Produk'){
     const product=document.getElementById('aliflamWaField').value.trim();
-    if(!product){document.getElementById('aliflamWaField').focus();return}
+    if(!product){const field=document.getElementById('aliflamWaField');field?.classList.add('invalid-field');field?.focus();return}
     message='Hallo admin aliflam printing, saya mau menanyakan produk "'+product+'" yang tertera di website';
   }else if(aliflamWaTopic==='Cara Order'){
     message='Hallo admin aliflam printing, bagaimana cara saya agar bisa memesan produk di website?';
@@ -3135,6 +3159,8 @@ function renderCheckoutSavedAddresses(){
   const form=document.getElementById('checkoutAddressFormFields');
   if(!box||!list)return;
   const c=customerSession();
+  const checkoutStep=document.querySelector('[data-checkout-step="2"]');
+  if(checkoutStep)checkoutStep.classList.toggle('checkout-login-address-mode',!!c);
   if(!c){box.hidden=true;if(form)form.hidden=false;return;}
   box.hidden=false;if(form)form.hidden=true;
   list.innerHTML=customerAddressCache.length?customerAddressCache.map(a=>{
@@ -3188,7 +3214,16 @@ function restoreCheckoutAddressFormHome(){
   if(form&&home&&form.parentElement!==home)home.appendChild(form);
   if(form)form.hidden=true;
 }
-function clearCheckoutNewAddressForm(){
+function showAddressFormToast(message){
+  const toast=document.getElementById('accountAddressFormToast');
+  if(!toast)return;
+  toast.textContent=message||'FORM DIBERSIHKAN';
+  toast.hidden=false;
+  toast.classList.remove('show');
+  void toast.offsetWidth;
+  toast.classList.add('show');
+}
+function clearCheckoutNewAddressForm(showFeedback=true){
   const form=document.getElementById('checkoutAddressFormFields');
   if(form)form.querySelectorAll('input,select,textarea').forEach(el=>{
     if(el.type==='checkbox'||el.type==='radio')el.checked=false;
@@ -3202,7 +3237,7 @@ function clearCheckoutNewAddressForm(){
   const phone=document.getElementById('checkoutAddressPhone');if(phone)phone.value='';
   const full=document.getElementById('checkoutFullAddress');if(full)full.value='';
   const reference=document.getElementById('checkoutReference');if(reference)reference.value='';
-  showNotice('Form alamat berhasil dibersihkan.','Form Dibersihkan');
+  if(showFeedback)showAddressFormToast('FORM DIBERSIHKAN');
 }
 async function startCheckoutNewAddress(){
   if(checkoutNewAddressBusy)return;
@@ -3214,17 +3249,18 @@ async function startCheckoutNewAddress(){
     editingCustomerAddressId='';
     checkoutAddressMethod='manual';
     const c=customerSession();
-    const recipient=document.getElementById('checkoutRecipient');
-    const phone=document.getElementById('checkoutAddressPhone');
-    /* Isi default hanya saat form benar-benar masih kosong; X tidak menghapus draft. */
-    if(recipient&&!recipient.value)recipient.value=c?.name||'';
-    if(phone&&!phone.value)phone.value=c?.whatsapp||'';
     await loadWilayahPartial();
     await loadWilayahData();
-    /* Pindahkan modul wilayah ke popup sebelum menginisialisasi dropdown. */
+    /* Pindahkan modul wilayah ke popup sebelum reset dan inisialisasi dropdown. */
     const wilayahMount=document.getElementById('checkoutWilayahMount');
     const wilayahHome=document.getElementById('accountAddressWilayahHome');
     if(wilayahMount&&wilayahHome&&wilayahMount.parentElement!==wilayahHome)wilayahHome.appendChild(wilayahMount);
+    /* Form tambah baru selalu bersih; identitas penerima hanya memakai data akun. */
+    clearCheckoutNewAddressForm(false);
+    const recipient=document.getElementById('checkoutRecipient');
+    const phone=document.getElementById('checkoutAddressPhone');
+    if(recipient)recipient.value=c?.name||c?.customerName||'';
+    if(phone)phone.value=c?.whatsapp||c?.phone||'';
     if(typeof window.AliflamWilayahInit!=='function')throw Error('Mesin dropdown wilayah belum siap.');
     window.AliflamWilayahInit({});
     const label=document.getElementById('accountAddressLabel');if(label)label.value='';
@@ -3294,6 +3330,7 @@ async function removeCustomerAddress(id){
     const r=await api('deleteCustomerAddress',{customerSessionToken:c.sessionToken,addressId:id});
     if(!r?.ok)throw Error(r?.error||'Alamat gagal dihapus.');
     customerAddressCache=customerAddressCache.filter(a=>a.addressId!==id);
+    if(String(selectedCheckoutAddressId||'')===String(id))selectedCheckoutAddressId='';
     renderCustomerAddressList();
     renderCheckoutSavedAddresses();
     showNotice('Alamat berhasil dihapus.','Berhasil');
@@ -3524,9 +3561,11 @@ async function checkCustomerResetApproval(){
 }
 async function submitNewCustomerPassword(){
  const requestId=document.getElementById('accountResetRequestId').value.trim(),password=document.getElementById('accountNewPassword').value,confirmPassword=document.getElementById('accountNewPasswordConfirm').value,whatsapp=document.getElementById('accountResetPhone').value.trim()||localStorage.getItem('ALIFLAM_RESET_PHONE')||'';
- if(!password||password.length<8)return accountMessage('Password baru minimal 8 karakter.');
+ if(!password)return markAccountRequired(['accountNewPassword'],'Password baru wajib diisi. Kolom ditandai merah.');
+ if(password.length<8)return accountMessage('Password baru minimal 8 karakter.');
+ if(!confirmPassword)return markAccountRequired(['accountNewPasswordConfirm'],'Konfirmasi password wajib diisi. Kolom ditandai merah.');
  if(password!==confirmPassword)return accountMessage('Konfirmasi password baru tidak sama.');
- if(!whatsapp)return accountMessage('Masukkan kembali nomor WhatsApp terdaftar.');
+ if(!whatsapp)return markAccountRequired(['accountResetPhone'],'Nomor WhatsApp wajib diisi. Kolom ditandai merah.');
  accountMessage('Menyimpan password baru...');showLoading('Menyimpan password baru...');
  try{
   const r=await api('resetCustomerPassword',{requestId,whatsapp,password,confirmPassword});if(!r.ok)throw Error(r.error||'Reset gagal');
