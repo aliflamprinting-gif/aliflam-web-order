@@ -59,6 +59,8 @@ body.modal-open{overflow:hidden!important;overscroll-behavior:none}
 .checkout-step.checkout-login-address-mode>.checkout-actions{display:none!important}
 /* REVISI 1: user login langsung menggunakan alur alamat manual; metode hanya untuk Guest. */
 .checkout-step.checkout-login-address-mode .checkout-address-method{display:none!important}
+/* Form di popup DATA ALAMAT hanya dipakai pelanggan login; sembunyikan pilihan metode di sana. */
+#accountAddressManualView .checkout-address-method{display:none!important}
 .account-address-form-toast{margin:12px 0 2px;padding:10px 12px;border:1px solid #16a34a44;border-radius:10px;background:#16a34a12;color:#15803d;font-size:11px;font-weight:800;letter-spacing:.35px}
 .account-address-form-toast.show{animation:addressToastIn .18s ease-out}
 @keyframes addressToastIn{from{opacity:.35;transform:translateY(-3px)}to{opacity:1;transform:translateY(0)}}
@@ -119,7 +121,8 @@ input.invalid-field:focus,select.invalid-field:focus,textarea.invalid-field:focu
 #checkoutWizard,#checkoutSuccess,#checkoutResult{margin-left:18px;margin-right:18px}
 #checkoutWizard{padding-top:18px;padding-bottom:18px}
 #checkoutSuccess{padding-top:18px;padding-bottom:18px}
-#checkoutResult{display:block;padding-bottom:12px}
+/* REVISI 18: area notifikasi lama di bawah checkout tidak ditampilkan lagi. */
+#checkoutResult{display:none!important}
 @media(max-width:420px){.checkout-header{padding:16px}.checkout-header-icon{width:44px;height:44px;flex-basis:44px}#checkoutWizard,#checkoutSuccess,#checkoutResult{margin-left:16px;margin-right:16px}}
 
 /* Standarisasi tombol X pada seluruh popup */
@@ -4071,6 +4074,17 @@ html[data-theme="dark"] .field:has(+ textarea.invalid-field)::after {
   font-size: 9px;
   font-weight: 900;
   letter-spacing: .25px;
+}
+
+/* REVISI 19: tombol popup alamat berada di akhir konten, bukan sticky saat scroll. */
+.account-address-editor .account-address-editor-actions{
+  position:static !important;
+  bottom:auto !important;
+  z-index:auto !important;
+  background:transparent !important;
+  padding:12px 0 2px !important;
+  margin-top:18px !important;
+  margin-bottom:0 !important;
 }
 </style>
 
