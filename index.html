@@ -122,7 +122,7 @@ input.invalid-field:focus,select.invalid-field:focus,textarea.invalid-field:focu
 #checkoutWizard{padding-top:18px;padding-bottom:18px}
 #checkoutSuccess{padding-top:18px;padding-bottom:18px}
 /* REVISI 18: area notifikasi lama di bawah checkout tidak ditampilkan lagi. */
-#checkoutResult{display:none!important}
+#checkoutResult{display:block!important;min-height:0;color:#dc2626;font-size:12px;line-height:1.45}
 @media(max-width:420px){.checkout-header{padding:16px}.checkout-header-icon{width:44px;height:44px;flex-basis:44px}#checkoutWizard,#checkoutSuccess,#checkoutResult{margin-left:16px;margin-right:16px}}
 
 /* Standarisasi tombol X pada seluruh popup */
@@ -1787,11 +1787,16 @@ async function loadCheckoutDropdowns(){
   const paymentWrap=document.getElementById('checkoutPaymentOptions'),errorBox=document.getElementById('checkoutDropdownError'),submitButton=document.getElementById('submitOrderBtn');
   if(submitButton)submitButton.disabled=true;
   checkoutDropdownsPromise=(async()=>{
-    await loadWilayahPartial();
-    organizeAccountAddressForm();
-    await loadWilayahData();
-    if(typeof window.AliflamWilayahInit!=='function')throw Error('Mesin dropdown wilayah belum siap.');
-    window.AliflamWilayahInit(savedBuyer.address||{});bindCheckoutInvalidClear();
+    /* REVISI 21: jalur akun memakai alamat tersimpan, jadi tidak perlu memuat
+       database wilayah. Form wilayah hanya disiapkan saat pelanggan membuat
+       atau mengedit alamat baru. */
+    if(!customerSession()){
+      await loadWilayahPartial();
+      organizeAccountAddressForm();
+      await loadWilayahData();
+      if(typeof window.AliflamWilayahInit!=='function')throw Error('Mesin dropdown wilayah belum siap.');
+      window.AliflamWilayahInit(savedBuyer.address||{});bindCheckoutInvalidClear();
+    }
     const master=await api('masterDropdowns',{});if(!master.ok)throw Error(master.error||'Master pembayaran gagal dimuat.');
     MASTER_DROPDOWNS=master.data?.options||{};const payments=MASTER_DROPDOWNS['METODE PEMBAYARAN']||[];
     if(!payments.length)throw Error('METODE PEMBAYARAN belum tersedia di MASTER DROPDOWN.');
@@ -2589,7 +2594,7 @@ async function checkoutNext(from){
           customerAddressCache=refreshed.data?.addresses||[];
           if(window.checkoutAddressPopupFlow&&!isEdit){
             /* Alamat baru hanya disimpan ke daftar. Pelanggan wajib memilihnya sendiri di checkout. */
-            selectedCheckoutAddressId='';
+            selectedCheckoutAddressId='';selectedCheckoutAddressData=null;
           }
         }catch(refreshError){
           refreshWarning='Alamat sudah tersimpan, tetapi daftar belum berhasil diperbarui. Buka ulang tab DATA ALAMAT untuk memuat ulang.';
@@ -2685,7 +2690,7 @@ async function checkoutInfo(){
     document.getElementById('checkoutResult').textContent='';
     document.getElementById('checkoutWizard').style.display='block';
     document.getElementById('checkoutSuccess').style.display='none';
-    checkoutAddressMethod='';selectedCheckoutAddressId='';addressEditorContext='';
+    checkoutAddressMethod='';selectedCheckoutAddressId='';selectedCheckoutAddressData=null;addressEditorContext='';
     const manual=document.getElementById('checkoutManualMethod'),paste=document.getElementById('checkoutPasteMethod');
     [manual,paste].forEach(el=>{if(el){el.classList.remove('selected');el.setAttribute('aria-pressed','false')}});
     closeManualAddressPopup();closePasteAddressPopup();applySavedBuyerData();
@@ -2740,12 +2745,22 @@ async function submitOrder(){
   const btn=document.getElementById('submitOrderBtn'),out=document.getElementById('checkoutResult');
   btn.disabled=true;
   try{
-    if(!window.ALIFLAM_WILAYAH_DATA||!document.getElementById('checkoutProvince'))throw Error('Form wilayah belum selesai dimuat. Tutup checkout lalu buka kembali.');
     if(!cart.length)throw Error('Keranjang masih kosong.');
-    const name=document.getElementById('checkoutName').value.trim(),phone=document.getElementById('checkoutPhone').value.trim(),email=document.getElementById('checkoutEmail').value.trim(),recipient=document.getElementById('checkoutRecipient').value.trim(),addressPhone=document.getElementById('checkoutAddressPhone').value.trim(),province=document.getElementById('checkoutProvince').value.trim().toUpperCase(),city=document.getElementById('checkoutCity').value.trim().toUpperCase(),district=document.getElementById('checkoutDistrict').value.trim().toUpperCase(),village=document.getElementById('checkoutVillage').value.trim().toUpperCase(),postalCode=document.getElementById('checkoutPostal').value.trim(),fullAddress=document.getElementById('checkoutFullAddress').value.trim(),reference=document.getElementById('checkoutReference').value.trim();
-    const requiredIds=['checkoutName','checkoutPhone','checkoutRecipient','checkoutAddressPhone','checkoutProvince','checkoutCity','checkoutDistrict','checkoutVillage','checkoutFullAddress'];const missingRequired=requiredIds.filter(id=>!String(document.getElementById(id)?.value||'').trim());if(missingRequired.length){markCheckoutInvalid(missingRequired,'Kolom yang wajib diisi ditandai merah.');throw Error('Lengkapi kolom wajib yang ditandai merah.');}
-    if(province.includes('LUAR PULAU JAWA'))throw Error('Pengiriman di luar Pulau Jawa belum tersedia. Silakan pesan melalui Shopee.');
-    const customer={name,whatsapp:phone,email},address={recipientName:recipient,phone:addressPhone,province,city,district,village,postalCode,fullAddress,reference};
+    const activeCustomer=customerSession();
+    const name=document.getElementById('checkoutName').value.trim(),phone=document.getElementById('checkoutPhone').value.trim(),email=document.getElementById('checkoutEmail').value.trim();
+    let address;
+    if(activeCustomer&&selectedCheckoutAddressId&&selectedCheckoutAddressData){
+      address={recipientName:String(selectedCheckoutAddressData.recipientName||'').trim(),phone:String(selectedCheckoutAddressData.phone||'').trim(),province:String(selectedCheckoutAddressData.province||'').trim().toUpperCase(),city:String(selectedCheckoutAddressData.city||'').trim().toUpperCase(),district:String(selectedCheckoutAddressData.district||'').trim().toUpperCase(),village:String(selectedCheckoutAddressData.village||'').trim().toUpperCase(),postalCode:String(selectedCheckoutAddressData.postalCode||'').trim(),fullAddress:String(selectedCheckoutAddressData.fullAddress||'').trim(),reference:String(selectedCheckoutAddressData.reference||'').trim()};
+      const missing=Object.entries({recipientName:address.recipientName,phone:address.phone,province:address.province,city:address.city,district:address.district,village:address.village,fullAddress:address.fullAddress}).filter(([,v])=>!v).map(([k])=>k);
+      if(missing.length)throw Error('Alamat tersimpan belum lengkap. Silakan edit alamat tersebut terlebih dahulu.');
+    }else{
+      if(!window.ALIFLAM_WILAYAH_DATA||!document.getElementById('checkoutProvince'))throw Error('Form wilayah belum selesai dimuat. Tutup checkout lalu buka kembali.');
+      const recipient=document.getElementById('checkoutRecipient').value.trim(),addressPhone=document.getElementById('checkoutAddressPhone').value.trim(),province=document.getElementById('checkoutProvince').value.trim().toUpperCase(),city=document.getElementById('checkoutCity').value.trim().toUpperCase(),district=document.getElementById('checkoutDistrict').value.trim().toUpperCase(),village=document.getElementById('checkoutVillage').value.trim().toUpperCase(),postalCode=document.getElementById('checkoutPostal').value.trim(),fullAddress=document.getElementById('checkoutFullAddress').value.trim(),reference=document.getElementById('checkoutReference').value.trim();
+      const requiredIds=['checkoutName','checkoutPhone','checkoutRecipient','checkoutAddressPhone','checkoutProvince','checkoutCity','checkoutDistrict','checkoutVillage','checkoutFullAddress'];const missingRequired=requiredIds.filter(id=>!String(document.getElementById(id)?.value||'').trim());if(missingRequired.length){markCheckoutInvalid(missingRequired,'Kolom wajib belum lengkap.');throw Error('Lengkapi kolom wajib yang ditandai merah.');}
+      address={recipientName:recipient,phone:addressPhone,province,city,district,village,postalCode,fullAddress,reference};
+    }
+    if(String(address.province||'').toUpperCase().includes('LUAR PULAU JAWA'))throw Error('Pengiriman di luar Pulau Jawa belum tersedia. Silakan pesan melalui Shopee.');
+    const customer={name,whatsapp:phone,email};
     const paymentMethod=document.querySelector('input[name="checkoutPayment"]:checked')?.value||'';
     if(!paymentMethod||(MASTER_DROPDOWNS['METODE PEMBAYARAN']||[]).indexOf(paymentMethod)<0){document.querySelectorAll('#checkoutPaymentOptions .payment-option').forEach(el=>el.classList.add('invalid-field'));throw Error('Pilih metode pembayaran yang tersedia di master.');}
     const notes=document.getElementById('checkoutNotes').value.trim();
@@ -2753,7 +2768,7 @@ async function submitOrder(){
     const orderPayload={customer,address,paymentMethod,notes,items:cart.map(x=>({productId:x.variationId,qty:x.qty,...(x.customBanner?{customSize:{width:x.width,height:x.height}}:{})}))};
     btn.textContent='MEMPROSES PESANAN...';out.textContent='';
     showCheckoutLoading();
-    const activeCustomer=customerSession();if(activeCustomer){clearTimeout(customerCartSaveTimer);await persistCustomerCart()}
+    if(activeCustomer){clearTimeout(customerCartSaveTimer);await persistCustomerCart()}
     const data={...orderPayload,idempotencyKey:getCheckoutAttemptKey(orderPayload),...(activeCustomer?{customerSessionToken:activeCustomer.sessionToken,cartId:customerCartId}:{})};
     const r=await api('createWebOrder',data);if(!r.ok)throw Error(r.error||'Pesanan belum dapat dikirim.');
     clearCheckoutAttemptKey(data.idempotencyKey);
@@ -3179,7 +3194,7 @@ html[data-theme="dark"] .account-unregistered-icon{background:#49351c;color:#ffd
 function getStoredCustomer(){
  try{return JSON.parse(localStorage.getItem('ALIFLAM_CUSTOMER')||'null')}catch(e){return null}
 }
-let customerAddressCache=[],addressEditorContext='',editingCustomerAddressId='',selectedCheckoutAddressId='';
+let customerAddressCache=[],addressEditorContext='',editingCustomerAddressId='',selectedCheckoutAddressId='',selectedCheckoutAddressData=null;
 let accountAddressSaveInProgress=false;
 const deletingCustomerAddressIds=new Set();
 function customerAddressPayloadFromForm(){const v=id=>(document.getElementById(id)?.value||'').trim();return {recipientName:v('checkoutRecipient'),phone:v('checkoutAddressPhone'),province:v('checkoutProvince'),city:v('checkoutCity'),district:v('checkoutDistrict'),village:v('checkoutVillage'),postalCode:v('checkoutPostal'),fullAddress:v('checkoutFullAddress'),reference:v('checkoutReference')};}
@@ -3204,7 +3219,7 @@ function renderCheckoutSavedAddresses(){
   }).join(''):'<div class="account-note" style="padding:12px">Belum ada alamat tersimpan. Klik TAMBAH ALAMAT untuk membuat alamat baru.</div>';
   const panel=document.getElementById('checkoutAddressPickerPanel');if(panel)panel.hidden=false;
   const hasExplicitSelection=!!selectedCheckoutAddressId&&customerAddressCache.some(a=>String(a.addressId)===String(selectedCheckoutAddressId));
-  if(!hasExplicitSelection)selectedCheckoutAddressId='';
+  if(!hasExplicitSelection){selectedCheckoutAddressId='';selectedCheckoutAddressData=null;}
   const hint=document.getElementById('checkoutAddressSelectionHint');
   /* Pesan kuning hanya relevan jika ada alamat tersimpan tetapi belum dipilih. */
   if(hint)hint.hidden=!customerAddressCache.length||hasExplicitSelection;
@@ -3234,7 +3249,13 @@ function continueCheckoutWithSelectedAddress(){
   saveBuyerData({name:document.getElementById('checkoutName').value,whatsapp:document.getElementById('checkoutPhone').value,email:document.getElementById('checkoutEmail').value},a);
   setCheckoutStep(3);
 }
-async function fillCheckoutAddress(a){await loadWilayahPartial();await loadWilayahData();if(typeof window.AliflamWilayahInit!=='function')throw Error('Mesin dropdown wilayah belum siap.');const vals={checkoutRecipient:a.recipientName,checkoutAddressPhone:a.phone,checkoutFullAddress:a.fullAddress,checkoutReference:a.reference||''};Object.entries(vals).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.value=v||'';});await Promise.resolve(window.AliflamWilayahInit({province:a.province,city:a.city,district:a.district,village:a.village,postalCode:a.postalCode,fullAddress:a.fullAddress,reference:a.reference}));}
+async function fillCheckoutAddress(a){
+  /* REVISI 21: alamat tersimpan sudah memiliki data wilayah lengkap dari DB.
+     Simpan objek aslinya untuk payload checkout; jangan bangun ulang dropdown. */
+  selectedCheckoutAddressData={...a};
+  const vals={checkoutRecipient:a.recipientName,checkoutAddressPhone:a.phone,checkoutFullAddress:a.fullAddress,checkoutReference:a.reference||''};
+  Object.entries(vals).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.value=v||'';});
+}
 let checkoutAddressSelectionBusy=false,checkoutNewAddressBusy=false;
 function organizeAccountAddressForm(){
   const target=document.getElementById('accountAddressManualView');
@@ -3401,7 +3422,7 @@ async function removeCustomerAddress(id){
     const r=await api('deleteCustomerAddress',{customerSessionToken:c.sessionToken,addressId:id});
     if(!r?.ok)throw Error(r?.error||'Alamat gagal dihapus.');
     customerAddressCache=customerAddressCache.filter(a=>a.addressId!==id);
-    if(String(selectedCheckoutAddressId||'')===String(id))selectedCheckoutAddressId='';
+    if(String(selectedCheckoutAddressId||'')===String(id)){selectedCheckoutAddressId='';selectedCheckoutAddressData=null;}
     renderCustomerAddressList();
     renderCheckoutSavedAddresses();
     showNotice('Alamat berhasil dihapus.','Berhasil');
