@@ -2606,6 +2606,8 @@ async function checkoutNext(from){
         restoreCheckoutAddressFormHome();
         const editor=document.getElementById('accountAddressEditorOverlay');
         if(editor){editor.classList.remove('open');editor.setAttribute('aria-hidden','true');}
+        /* Pastikan popup Akun Saya dapat dibuka kembali setelah alamat berhasil disimpan. */
+        document.body.classList.remove('address-editor-active');
         const mount=document.getElementById('checkoutWilayahMount');
         const home=document.getElementById('checkoutWilayahMountHome');
         if(mount&&home&&mount.parentElement!==home)home.appendChild(mount);
