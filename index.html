@@ -1567,10 +1567,14 @@ html[data-theme="dark"] .floating-catalog-back{
       <button class="account-address-editor-close" type="button" aria-label="Tutup" onclick="closeManualAddressPopup()">×</button>
     </div>
     <section id="accountAddressManualView">
-      <div id="accountAddressLabelWrap" hidden>
-        <label class="field" for="accountAddressLabel">NAMA LABEL ALAMAT <span style="font-weight:500;color:var(--muted)">(opsional)</span></label>
-        <input class="input" id="accountAddressLabel" type="text" maxlength="40" placeholder="Contoh: Rumah, Kantor, Toko">
-        <p class="paste-address-stage-note">Kosongkan jika tidak ingin mengubah label yang sekarang.</p>
+      <div id="accountAddressLabelWrap">
+        <label class="field" for="accountAddressLabel">LABEL ALAMAT</label>
+        <select class="input" id="accountAddressLabel" required>
+          <option value="">PILIH LABEL ALAMAT</option>
+          <option value="RUMAH">RUMAH</option>
+          <option value="TEMPAT KERJA">TEMPAT KERJA</option>
+          <option value="LAINNYA">LAINNYA</option>
+        </select>
       </div>
       <div id="accountAddressWilayahHome"></div>
       <div class="checkout-actions account-address-editor-actions">
@@ -2220,7 +2224,8 @@ function openManualAddressPopup(){
   overlay.style.zIndex='50';openOverlay('manualAddressOverlay');overlay.setAttribute('aria-hidden','false');
 }
 function closeManualAddressPopup(){
-  if(addressEditorContext==='account'){
+  const accountEditor=document.getElementById('accountAddressEditorOverlay');
+  if(addressEditorContext==='account'||accountEditor?.classList.contains('open')){
     const overlay=document.getElementById('accountAddressEditorOverlay');
     if(overlay){overlay.classList.remove('open');overlay.setAttribute('aria-hidden','true');}
     const mount=document.getElementById('checkoutWilayahMount');
@@ -2476,19 +2481,19 @@ async function checkoutNext(from){
       const originalButtonText=saveButton?.textContent||'SIMPAN ALAMAT';
       const isEdit=!!editingCustomerAddressId;
       const oldAddress=customerAddressCache.find(x=>x.addressId===editingCustomerAddressId)||null;
-      const typedLabel=(document.getElementById('accountAddressLabel')?.value||'').trim();
-      let label;
-      if(isEdit){
-        label=typedLabel||oldAddress?.label||'Alamat';
-      }else{
-        const usedNumbers=customerAddressCache.map(x=>Number(String(x.label||'').match(/^Alamat\\s+(\\d+)$/i)?.[1]||0));
-        label='Alamat '+(Math.max(0,...usedNumbers)+1);
+      const label=(document.getElementById('accountAddressLabel')?.value||'').trim().toUpperCase();
+      if(!['RUMAH','TEMPAT KERJA','LAINNYA'].includes(label)){
+        showNotice('Pilih label alamat terlebih dahulu.');
+        document.getElementById('accountAddressLabel')?.focus();
+        return;
       }
-      const c=customerSession();
-      if(!c?.sessionToken)throw Error('Sesi akun tidak ditemukan. Silakan login kembali.');
-      if(saveButton){saveButton.disabled=true;saveButton.textContent='MENYIMPAN...';}
-      showLoading(isEdit?'Memperbarui alamat...':'Menyimpan alamat...');
+      if(accountAddressSaveInProgress)return;
+      accountAddressSaveInProgress=true;
+      if(saveButton){saveButton.disabled=true;saveButton.textContent=isEdit?'MEMPERBARUI...':'MENYIMPAN...';}
       try{
+        showLoading(isEdit?'Memperbarui alamat...':'Menyimpan alamat...');
+        const c=customerSession();
+        if(!c?.sessionToken)throw Error('Sesi akun tidak ditemukan. Silakan login kembali.');
         const r=await api('saveCustomerAddress',{customerSessionToken:c.sessionToken,addressId:editingCustomerAddressId,label,address});
         if(!r?.ok)throw Error(r?.error||'Alamat gagal disimpan.');
         let refreshWarning='';
@@ -2523,6 +2528,7 @@ async function checkoutNext(from){
         showNotice(error.message||'Alamat gagal disimpan. Silakan coba lagi.','Gagal Menyimpan Alamat');
       }finally{
         hideLoading();
+        accountAddressSaveInProgress=false;
         if(saveButton){saveButton.disabled=false;saveButton.textContent=originalButtonText;}
       }
       return;
@@ -3009,6 +3015,8 @@ function getStoredCustomer(){
  try{return JSON.parse(localStorage.getItem('ALIFLAM_CUSTOMER')||'null')}catch(e){return null}
 }
 let customerAddressCache=[],addressEditorContext='',editingCustomerAddressId='',selectedCheckoutAddressId='';
+let accountAddressSaveInProgress=false;
+const deletingCustomerAddressIds=new Set();
 function customerAddressPayloadFromForm(){const v=id=>(document.getElementById(id)?.value||'').trim();return {recipientName:v('checkoutRecipient'),phone:v('checkoutAddressPhone'),province:v('checkoutProvince'),city:v('checkoutCity'),district:v('checkoutDistrict'),village:v('checkoutVillage'),postalCode:v('checkoutPostal'),fullAddress:v('checkoutFullAddress'),reference:v('checkoutReference')};}
 function showCustomerProfileTab(tab){const buyer=tab==='buyer';document.getElementById('accountBuyerPanel').hidden=!buyer;document.getElementById('accountAddressesPanel').hidden=buyer;document.getElementById('accountTabBuyer').classList.toggle('primary',buyer);document.getElementById('accountTabAddresses').classList.toggle('primary',!buyer);if(!buyer)loadCustomerAddresses();}
 async function loadCustomerAddresses(){const c=customerSession();if(!c)return;const wrap=document.getElementById('accountAddressList');if(wrap)wrap.innerHTML='<div class="account-note">Memuat alamat...</div>';try{const r=await api('customerAddresses',{customerSessionToken:c.sessionToken});if(!r.ok)throw Error(r.error||'Alamat gagal dimuat.');customerAddressCache=r.data.addresses||[];renderCustomerAddressList();renderCheckoutSavedAddresses();}catch(e){if(wrap)wrap.innerHTML='<div class="account-note">'+esc(e.message||'Alamat gagal dimuat.')+'</div>';}}
@@ -3030,14 +3038,43 @@ async function openCustomerAddressEditor(id=''){
     document.getElementById('checkoutReference').value=a?.reference||'';
     window.AliflamWilayahInit(a||{});
     document.getElementById('accountAddressEditorTitle').textContent=a?'EDIT ALAMAT':'TAMBAH ALAMAT';
-    const labelWrap=document.getElementById('accountAddressLabelWrap');
     const labelInput=document.getElementById('accountAddressLabel');
-    if(labelWrap)labelWrap.hidden=!a;
-    if(labelInput)labelInput.value=a?.label||'';
+    if(labelInput){
+      const currentLabel=String(a?.label||'').trim().toUpperCase();
+      labelInput.value=['RUMAH','TEMPAT KERJA','LAINNYA'].includes(currentLabel)?currentLabel:(a?'LAINNYA':'');
+    }
     setCheckoutAddressMethod('manual');openManualAddressPopup();
   }catch(error){addressEditorContext='';editingCustomerAddressId='';showNotice(error.message||'Form alamat gagal dibuka.');}
 }
-async function removeCustomerAddress(id){if(!confirm('Hapus alamat ini dari akun kamu?'))return;const c=customerSession();try{const r=await api('deleteCustomerAddress',{customerSessionToken:c.sessionToken,addressId:id});if(!r.ok)throw Error(r.error||'Alamat gagal dihapus.');customerAddressCache=customerAddressCache.filter(a=>a.addressId!==id);renderCustomerAddressList();renderCheckoutSavedAddresses();}catch(e){showNotice(e.message||'Alamat gagal dihapus.');}}
+async function removeCustomerAddress(id){
+  const target=customerAddressCache.find(a=>a.addressId===id);
+  if(!target)return;
+  const accepted=await askConfirm(
+    'Alamat "'+(target.label||'Alamat')+'" akan dihapus dari akun kamu. Pesanan yang sudah dibuat tidak akan berubah. Lanjutkan?',
+    'HAPUS ALAMAT',
+    'YA, HAPUS ALAMAT',
+    'danger'
+  );
+  if(!accepted)return;
+  if(deletingCustomerAddressIds.has(id))return;
+  deletingCustomerAddressIds.add(id);
+  try{
+    showLoading('Menghapus alamat...');
+    const c=customerSession();
+    if(!c?.sessionToken)throw Error('Sesi akun tidak ditemukan. Silakan login kembali.');
+    const r=await api('deleteCustomerAddress',{customerSessionToken:c.sessionToken,addressId:id});
+    if(!r?.ok)throw Error(r?.error||'Alamat gagal dihapus.');
+    customerAddressCache=customerAddressCache.filter(a=>a.addressId!==id);
+    renderCustomerAddressList();
+    renderCheckoutSavedAddresses();
+    showNotice('Alamat berhasil dihapus.','Berhasil');
+  }catch(e){
+    showNotice(e.message||'Alamat gagal dihapus. Silakan coba lagi.','Gagal Menghapus');
+  }finally{
+    deletingCustomerAddressIds.delete(id);
+    hideLoading();
+  }
+}
 function openAccountModal(){  bindAccountInvalidClear();
  const back=document.getElementById('accountModalBack');back.classList.add('show');
  const customer=getStoredCustomer();
@@ -3547,7 +3584,7 @@ html[data-theme="dark"] .account-modal textarea.invalid-field{
 <style id="account-address-editor-isolated">
 .account-address-editor-overlay{position:fixed;inset:0;z-index:1600;display:none;align-items:center;justify-content:center;padding:12px;background:rgba(8,18,32,.72);overscroll-behavior:contain}
 .account-address-editor-overlay.open{display:flex}
-.account-address-editor{width:min(560px,100%);max-height:92vh;overflow:auto;overscroll-behavior:contain;padding:18px;background:var(--card,#fff);color:var(--text,#202938);border:1px solid var(--line,#dbe3ec);border-radius:20px;box-shadow:0 24px 70px rgba(0,0,0,.35)}
+.account-address-editor{width:min(560px,100%);max-height:92vh;overflow:auto;overscroll-behavior:contain;padding:18px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:20px;box-shadow:0 24px 70px rgba(0,0,0,.35)}
 .account-address-editor-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
 .account-address-editor-head h2{margin:0 0 5px;font-size:19px;line-height:1.2;white-space:nowrap}
 .account-address-editor-head .account-subtitle{margin:0}
@@ -3564,6 +3601,28 @@ html[data-theme="dark"] .account-modal textarea.invalid-field{
 .account-modal .account-head-actions .account-logout-btn span{white-space:nowrap}
 .account-modal .account-head-actions .account-close{width:34px!important;height:34px!important;min-width:34px!important}
 @media(max-width:420px){.account-address-editor{padding:15px;width:calc(100% - 2px);max-height:94vh}.account-address-editor-actions{bottom:-15px;flex-wrap:wrap}.account-modal{padding:16px!important}.account-modal-head{gap:7px!important}.account-modal-head h2{font-size:18px!important}.account-modal .account-head-actions .account-logout-btn{height:34px!important;min-height:34px!important;padding:0 7px!important;font-size:9px!important}}
+/* Kontras Dark Mode untuk popup akun dan editor alamat */
+html[data-theme="dark"] .account-address-editor,
+html[data-theme="dark"] .account-modal{color:var(--ink)!important}
+html[data-theme="dark"] .account-address-editor .field,
+html[data-theme="dark"] .account-address-editor label,
+html[data-theme="dark"] .account-modal label,
+html[data-theme="dark"] .account-modal h2,
+html[data-theme="dark"] .account-modal h3,
+html[data-theme="dark"] .account-modal p,
+html[data-theme="dark"] .account-modal small,
+html[data-theme="dark"] .account-modal strong{color:var(--ink)}
+html[data-theme="dark"] .account-address-editor input,
+html[data-theme="dark"] .account-address-editor select,
+html[data-theme="dark"] .account-address-editor textarea,
+html[data-theme="dark"] .account-modal input,
+html[data-theme="dark"] .account-modal select,
+html[data-theme="dark"] .account-modal textarea{background:var(--soft)!important;color:var(--ink)!important;border-color:var(--line)!important}
+html[data-theme="dark"] .account-address-editor input::placeholder,
+html[data-theme="dark"] .account-address-editor textarea::placeholder,
+html[data-theme="dark"] .account-modal input::placeholder,
+html[data-theme="dark"] .account-modal textarea::placeholder{color:var(--muted)!important;opacity:1}
+html[data-theme="dark"] .account-address-editor .paste-address-stage-note{color:var(--muted)!important}
 </style>
 
 </body></html>
