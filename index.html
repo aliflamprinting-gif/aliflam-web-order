@@ -1417,6 +1417,10 @@ html[data-theme="dark"] .floating-catalog-back{
 })();
 </script>
 
+
+<style id="customer-order-discount-style">
+.customer-order-discount{display:grid;gap:5px;margin:10px 0 12px;padding:11px 12px;border:1px solid #b9e8cb;border-radius:11px;background:#edfff3;color:#087b4d}.customer-order-discount>b{font-size:11px;font-weight:900}.customer-order-discount>span{display:flex;justify-content:space-between;gap:8px;color:#426b54;font-size:10px}.customer-order-discount>span strong{color:#087b4d;font-size:13px}.customer-detail-discount{display:grid;gap:8px;margin:9px 0;padding:11px 12px;border:1px solid #b9e8cb;border-radius:11px;background:#edfff3}.customer-detail-discount>div{display:flex;justify-content:space-between;align-items:center;gap:12px}.customer-detail-discount span{color:#087b4d;font-size:10px;font-weight:800}.customer-detail-discount strong{color:#087b4d;font-size:12px;font-weight:900;text-align:right}html[data-theme="dark"] .customer-order-discount,html[data-theme="dark"] .customer-detail-discount{background:#123b2b;border-color:#246e4b}html[data-theme="dark"] .customer-order-discount>span{color:#b5ddc4}html[data-theme="dark"] .customer-order-discount>span strong,html[data-theme="dark"] .customer-detail-discount span,html[data-theme="dark"] .customer-detail-discount strong{color:#8df0b5}
+</style>
 </head><body><div class="startup-loader" id="startupLoader" role="status" aria-live="polite" aria-label="Memuat Aliflam Printing"><div class="startup-loader-card"><img class="startup-loader-logo" src="https://aliflamprinting-gif.github.io/aliflam-web-order/assets/products/LOGO.webp" alt=""/><div class="startup-loader-title">Menyiapkan Aliflam Printing</div><div class="startup-loader-caption">Sebentar ya, kami siapkan katalog dan gambar untuk kamu.</div><div class="startup-loader-track" aria-hidden="true"></div></div></div><header><div class="wrap header"><a class="brand" href="#" onclick="navigate('home');return false"><img alt="Logo Aliflam Printing" id="logo" src="https://aliflamprinting-gif.github.io/aliflam-web-order/assets/products/LOGO.webp"/><span class="brandwords"><b class="brand-name"><span class="brand-name-main">ALIFLAM</span><span class="brand-name-accent">PRINTING</span></b><small>DESAIN &amp; PERCETAKAN</small></span></a><div class="tools"><button class="iconbtn" id="themeBtn" title="Ganti tema">☾</button><button class="iconbtn" onclick="openCart()" title="Keranjang">🛒 <span class="cartcount" id="cartCount">0</span></button></div></div></header>
 <main class="wrap"><section class="page active" id="homePage"><section class="home-hero" aria-label="Tentang Aliflam Printing">
   <div class="home-hero-copy">
@@ -1983,8 +1987,11 @@ async function syncCustomerOrderStatuses(showFeedback=false){
         const nextStatus=normalizeOrderStatus(remote.status||local.status);
         const nextProgress=String(remote.progress??local.progress??'');
         const nextPayment=String(remote.paymentStatus??local.paymentStatus??'');
-        if(nextStatus!==normalizeOrderStatus(local.status)||nextProgress!==String(local.progress??'')||nextPayment!==String(local.paymentStatus??''))changed=true;
-        return {...local,status:nextStatus,progress:nextProgress,paymentStatus:nextPayment};
+        const nextSubtotal=Number(remote.subtotal??local.subtotal)||0;
+        const nextShipping=Number(remote.shippingCost??local.shippingCost)||0;
+        const nextGrandTotal=Number(remote.grandTotal??local.grandTotal)||0;
+        if(nextStatus!==normalizeOrderStatus(local.status)||nextProgress!==String(local.progress??'')||nextPayment!==String(local.paymentStatus??'')||nextSubtotal!==Number(local.subtotal||0)||nextShipping!==Number(local.shippingCost||0)||nextGrandTotal!==Number(local.grandTotal||0))changed=true;
+        return {...local,status:nextStatus,progress:nextProgress,paymentStatus:nextPayment,subtotal:nextSubtotal,shippingCost:nextShipping,grandTotal:nextGrandTotal};
       });
     }
     if(changed)saveLocalOrders();
@@ -1998,6 +2005,11 @@ async function syncCustomerOrderStatuses(showFeedback=false){
     myOrderSyncBusy=false;
     if(button){button.disabled=false;button.classList.remove('is-loading')}
   }
+}
+function orderDiscountAmount(order){
+  const normalTotal=(Number(order?.subtotal)||0)+(Number(order?.shippingCost)||0);
+  const currentTotal=Number(order?.grandTotal)||0;
+  return Math.max(0,Math.round(normalTotal-currentTotal));
 }
 function renderMyOrders(){
   const out=document.getElementById('myOrdersResult');
@@ -2016,7 +2028,9 @@ function renderMyOrders(){
     const items=(o.items||[]).map(it=>{
       return '<div class="order-history-product">'+renderOrderProductImage(it)+'<div class="order-history-product-info"><b>'+esc(it.productName||it.name||it.sku||'Produk')+'</b><small>'+esc(it.sku||'')+' · Jumlah '+Number(it.qty||0)+'</small></div><strong class="order-history-product-price">'+money(it.lineTotal||0)+'</strong></div>';
     }).join('');
-    return '<article class="panel order-history-card"><div class="order-history-head"><div><b>'+esc(o.orderId||'-')+'</b><p class="order-history-date">Tanggal pesanan: '+esc(formatOrderDate(o.orderDate))+'</p></div><span class="order-history-status">'+esc(normalizeOrderStatus(o.status))+'</span></div><div class="order-history-products">'+items+'</div><button class="order-history-more" type="button" onclick="openMyOrderDetail(&quot;'+encodeURIComponent(String(o.orderId||''))+'&quot;)">LIHAT SELENGKAPNYA <span aria-hidden="true">→</span></button></article>';
+    const discount=orderDiscountAmount(o);
+    const discountHighlight=discount>0?'<div class="customer-order-discount"><b>🎉 KAMU MENDAPATKAN DISKON '+money(discount)+'</b><span>TOTAL BAYAR SEKARANG: <strong>'+money(o.grandTotal||0)+'</strong></span></div>':'';
+    return '<article class="panel order-history-card"><div class="order-history-head"><div><b>'+esc(o.orderId||'-')+'</b><p class="order-history-date">Tanggal pesanan: '+esc(formatOrderDate(o.orderDate))+'</p></div><span class="order-history-status">'+esc(normalizeOrderStatus(o.status))+'</span></div><div class="order-history-products">'+items+'</div>'+discountHighlight+'<button class="order-history-more" type="button" onclick="openMyOrderDetail(&quot;'+encodeURIComponent(String(o.orderId||''))+'&quot;)">LIHAT SELENGKAPNYA <span aria-hidden="true">→</span></button></article>';
   }).join('');
 }
 function renderOrderPinGate(orderId,errorMessage=""){
@@ -2096,7 +2110,7 @@ function renderMyOrderDetail(orderId,verifiedOrder=null){
     '<div class="order-status-highlight status-'+statusMeta.tone+'"><div class="order-status-main"><span class="order-status-icon"><svg viewBox="0 0 24 24" aria-hidden="true">'+statusMeta.icon+'</svg></span><div class="order-status-copy"><small>STATUS PESANAN</small><strong>'+esc(status)+'</strong><span>'+esc(statusMeta.hint)+'</span></div></div><div class="order-status-id">'+esc(order.orderId||'-')+'</div></div>'+
     '<div class="panel order-detail-card">'+sectionTitle("▤","INFORMASI PESANAN","cyan")+'<div class="order-detail-row"><span>NO PESANAN</span><strong>'+esc(order.orderId||'-')+'</strong></div><div class="order-detail-row"><span>TANGGAL PESANAN</span><strong>'+esc(formatOrderDate(order.orderDate))+'</strong></div><div class="order-detail-row"><span>PROGRES PRODUKSI</span><strong>'+esc(order.progress||'MENUNGGU KONFIRMASI')+'</strong></div><div class="order-detail-row"><span>STATUS PEMBAYARAN</span><strong>'+esc(order.paymentStatus||'BELUM LUNAS')+'</strong></div></div>'+
     '<div class="panel order-detail-card">'+sectionTitle("▦","PRODUK YANG DIPESAN","pink")+items+'</div>'+
-    '<div class="panel order-detail-card">'+sectionTitle("▧","RINGKASAN PEMBAYARAN","orange")+'<div class="order-detail-row"><span>HARGA BARANG</span><strong>'+money(order.subtotal||0)+'</strong></div><div class="order-detail-row"><span>HARGA ONGKIR</span><strong>'+money(order.shippingCost||0)+'</strong></div><div class="order-detail-row order-detail-total"><span>TOTAL PEMBAYARAN</span><strong>'+money(order.grandTotal||0)+'</strong></div><div class="order-detail-row"><span>METODE PEMBAYARAN</span><strong>'+esc(order.paymentMethod||'-')+'</strong></div></div>'+
+    '<div class="panel order-detail-card">'+sectionTitle("▧","RINGKASAN PEMBAYARAN","orange")+'<div class="order-detail-row"><span>HARGA BARANG</span><strong>'+money(order.subtotal||0)+'</strong></div><div class="order-detail-row"><span>HARGA ONGKIR</span><strong>'+money(order.shippingCost||0)+'</strong></div>'+(orderDiscountAmount(order)>0?'<div class="customer-detail-discount"><div><span>TOTAL PEMBAYARAN SEBELUM DISKON</span><strong>'+money((Number(order.subtotal)||0)+(Number(order.shippingCost)||0))+'</strong></div><div><span>🎉 KAMU MENDAPATKAN DISKON</span><strong>−'+money(orderDiscountAmount(order))+'</strong></div></div>':'')+'<div class="order-detail-row order-detail-total"><span>TOTAL YANG HARUS DIBAYAR</span><strong>'+money(order.grandTotal||0)+'</strong></div><div class="order-detail-row"><span>METODE PEMBAYARAN</span><strong>'+esc(order.paymentMethod||'-')+'</strong></div></div>'+
     '<div class="panel order-detail-card">'+sectionTitle("⌖","ALAMAT PENGIRIMAN","purple")+'<div class="order-address-centered"><strong class="order-address-name">'+esc(address.recipientName||'-')+'</strong><span class="order-address-phone">'+esc(address.phone||'-')+'</span><p class="order-detail-address">'+esc(fullAddress||'-')+'</p></div><div class="order-address-note"><span aria-hidden="true">ⓘ</span><span>Pastikan alamatmu sesuai, karena kesesuaian alamat akan mempermudah kurir menemukan alamat penerima</span></div></div>'+
     (order.notes?'<div class="panel order-detail-card">'+sectionTitle("✎","CATATAN PESANAN","orange")+'<div class="order-detail-address">'+esc(order.notes)+'</div></div>':'');
 }
