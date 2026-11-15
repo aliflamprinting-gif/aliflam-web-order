@@ -1484,7 +1484,16 @@ html[data-theme="dark"] .floating-catalog-back{
     <button class="secondary full" type="button" style="margin-top:10px;min-height:46px" onclick="checkoutReturnToCart()">Kembali Ke Keranjang</button>
   </section>
   <section class="checkout-step" data-checkout-step="2">
-    <div id="checkoutSavedAddresses" hidden style="margin:0 0 16px"><div class="field">PILIH ALAMAT TERSIMPAN</div><div id="checkoutSavedAddressList" style="display:grid;gap:9px"></div><button class="secondary full" type="button" style="margin-top:10px" onclick="startCheckoutNewAddress()">＋ TAMBAH ALAMAT BARU</button><div style="text-align:center;color:var(--muted);font-size:10px;margin:12px 0">ATAU GUNAKAN FORM ALAMAT DI BAWAH</div></div>
+    <div id="checkoutSavedAddresses" hidden class="checkout-address-picker">
+      <div id="checkoutSelectedAddressPreview" hidden></div>
+      <button id="checkoutAddressToggle" class="checkout-address-toggle" type="button" aria-expanded="false" onclick="toggleCheckoutAddressPicker()"><span class="checkout-address-toggle-icon">＋</span><span><b>TAMBAH ALAMAT</b><small>Pilih alamat tersimpan atau tambahkan alamat baru</small></span><span class="checkout-address-toggle-chevron">⌄</span></button>
+      <div id="checkoutAddressPickerPanel" class="checkout-address-picker-panel" hidden>
+        <div class="checkout-address-picker-title">PILIH ALAMAT PENGIRIMAN</div>
+        <div id="checkoutSavedAddressList" style="display:grid;gap:11px"></div>
+        <button class="checkout-add-new-address" type="button" onclick="startCheckoutNewAddress()"><span>＋</span> TAMBAH ALAMAT BARU</button>
+      </div>
+    </div>
+    <div id="checkoutAddressFormFields">
     <label class="field" for="checkoutRecipient">Nama penerima *</label><input class="input" id="checkoutRecipient" placeholder="Nama penerima"/>
     <label class="field" for="checkoutAddressPhone">No. HP penerima *</label><input class="input" id="checkoutAddressPhone" inputmode="tel" maxlength="22" placeholder="08xx-xxxx-xxxx"/>
     <p class="checkout-recipient-note">Nama penerima dan nomor HP diambil dari DATA PEMBELI. Kamu bisa mengubahnya sesuai dengan alamat penerima sebenarnya.</p>
@@ -1499,6 +1508,7 @@ html[data-theme="dark"] .floating-catalog-back{
       </button>
     </div>
 
+    </div>
     <div class="checkout-actions"><button class="secondary" type="button" onclick="checkoutBack(2)">Kembali</button><button class="primary" type="button" onclick="continueCheckoutAddressMethod()">Lanjutkan</button></div>
   </section>
   <section class="checkout-step" data-checkout-step="3">
@@ -2238,7 +2248,9 @@ function closeManualAddressPopup(){
     addressEditorContext='';editingCustomerAddressId='';syncModalLock();return;
   }
   const overlay=document.getElementById('manualAddressOverlay');if(!overlay)return;
-  overlay.classList.remove('open');overlay.setAttribute('aria-hidden','true');syncModalLock();
+  overlay.classList.remove('open');overlay.setAttribute('aria-hidden','true');
+  if(customerSession()){const form=document.getElementById('checkoutAddressFormFields');if(form)form.hidden=true;}
+  syncModalLock();
 }
 function openPasteAddressPopup(){
   if(addressEditorContext==='account'){
@@ -3037,6 +3049,33 @@ html[data-theme="dark"] .account-unregistered-icon{background:#49351c;color:#ffd
 .account-pending-card p{font-size:12px;line-height:1.6;color:var(--muted);margin:0}
 .account-pending-card .account-pending-next{margin:13px 0 17px;color:var(--ink)}
 .account-pending-wa{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;min-height:49px;padding:12px 14px;border-radius:12px;background:#16a34a;color:#fff!important;font-size:12px;font-weight:900;text-decoration:none}
+
+/* Checkout address picker: spacious cards, collapsed by default */
+.checkout-address-picker{margin:4px 0 18px}
+.checkout-address-toggle{width:100%;min-height:68px;display:flex;align-items:center;gap:13px;padding:13px 15px;border:1px solid var(--line);border-radius:15px;background:var(--soft);color:var(--ink);text-align:left;cursor:pointer}
+.checkout-address-toggle-icon{width:40px;height:40px;display:grid;place-items:center;flex:0 0 40px;border-radius:12px;background:var(--blue-soft);color:var(--blue);font-size:25px;font-weight:800}
+.checkout-address-toggle b{display:block;font-size:12px;font-weight:900;letter-spacing:.25px}
+.checkout-address-toggle small{display:block;margin-top:4px;color:var(--muted);font-size:10px;line-height:1.4}
+.checkout-address-toggle-chevron{margin-left:auto;color:var(--muted);font-size:20px}
+.checkout-address-picker-panel{margin-top:12px;padding:13px;border:1px solid var(--line);border-radius:16px;background:var(--soft)}
+.checkout-address-picker-title{margin:0 0 11px;color:var(--muted);font-size:10px;font-weight:900;letter-spacing:.65px}
+.checkout-saved-address-card{width:100%;display:grid;grid-template-columns:minmax(0,1fr) 30px;gap:12px;align-items:center;padding:16px;border:1.5px solid var(--line);border-radius:14px;background:var(--card,var(--bg));color:var(--ink);text-align:left;cursor:pointer;min-height:112px}
+.checkout-saved-address-card:active{transform:scale(.99)}
+.checkout-saved-address-card.selected{border-color:var(--blue);background:var(--blue-soft)}
+.checkout-saved-address-card .address-label{display:inline-flex;align-items:center;gap:6px;margin-bottom:9px;font-size:11px;font-weight:900;letter-spacing:.4px;color:var(--blue)}
+.checkout-saved-address-card .address-recipient{display:block;font-size:14px;font-weight:900;line-height:1.35}
+.checkout-saved-address-card .address-phone{display:block;margin-top:3px;font-size:12px;font-weight:700;color:var(--muted)}
+.checkout-saved-address-card .address-full{display:block;margin-top:9px;font-size:12px;line-height:1.55;color:var(--ink);overflow-wrap:anywhere}
+.checkout-saved-address-card .address-check{width:27px;height:27px;display:grid;place-items:center;border:1.5px solid var(--line);border-radius:50%;color:transparent;font-size:15px;font-weight:900}
+.checkout-saved-address-card.selected .address-check{border-color:var(--blue);background:var(--blue);color:#fff}
+.checkout-add-new-address{width:100%;min-height:54px;margin-top:11px;border:1.5px dashed var(--blue);border-radius:13px;background:transparent;color:var(--blue);font-size:12px;font-weight:900;cursor:pointer}
+.checkout-add-new-address span{font-size:20px;vertical-align:-2px;margin-right:5px}
+.checkout-selected-address-summary{margin:0 0 12px;padding:14px;border:1.5px solid var(--blue);border-radius:14px;background:var(--blue-soft);color:var(--ink)}
+.checkout-selected-address-summary .summary-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;font-size:11px;font-weight:900;color:var(--blue)}
+.checkout-selected-address-summary .summary-name{font-size:13px;font-weight:900}
+.checkout-selected-address-summary .summary-detail{margin-top:6px;font-size:11px;line-height:1.55;overflow-wrap:anywhere}
+.checkout-address-picker[hidden],.checkout-address-picker-panel[hidden],#checkoutSelectedAddressPreview[hidden]{display:none!important}
+#checkoutAddressFormFields{display:block}
 .account-pending-wa svg{width:21px;height:21px;flex:0 0 21px}
 .account-pending-wa:hover{background:#15803d}
 .account-pending-continue{display:block;width:100%;min-height:47px;margin-top:10px;padding:12px;border:1px solid var(--blue);border-radius:12px;background:var(--blue-soft);color:var(--blue);font-size:11px;font-weight:900}
@@ -3054,11 +3093,13 @@ function showCustomerProfileTab(tab){const buyer=tab==='buyer';document.getEleme
 async function loadCustomerAddresses(throwOnError=false){const c=customerSession();if(!c)return [];const wrap=document.getElementById('accountAddressList');if(wrap)wrap.innerHTML='<div class="account-inline-loading" role="status"><span class="account-inline-spinner" aria-hidden="true"></span>Memuat daftar alamat...</div>';try{const r=await api('customerAddresses',{customerSessionToken:c.sessionToken});if(!r.ok)throw Error(r.error||'Alamat gagal dimuat.');customerAddressCache=r.data.addresses||[];renderCustomerAddressList();renderCheckoutSavedAddresses();return customerAddressCache;}catch(e){if(wrap)wrap.innerHTML='<div class="account-note">'+esc(e.message||'Alamat gagal dimuat.')+'</div>';if(throwOnError)throw e;return [];}}
 function addressText(a){return [a.fullAddress,a.village,a.district,a.city,a.province,a.postalCode].filter(Boolean).join(', ');}
 function renderCustomerAddressList(){const wrap=document.getElementById('accountAddressList');if(!wrap)return;if(!customerAddressCache.length){wrap.innerHTML='<div class="account-note">Belum ada alamat tersimpan. Tambahkan alamat pertama kamu.</div>';return;}wrap.innerHTML=customerAddressCache.map(a=>`<article style="border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--soft)"><div style="display:flex;justify-content:space-between;gap:8px"><b>${esc(a.label||'Alamat')}</b><span style="font-size:10px;color:var(--muted)">TERSIMPAN</span></div><b style="display:block;margin-top:7px;font-size:12px">${esc(a.recipientName)}</b><div style="font-size:11px;color:var(--muted);margin-top:3px">${esc(a.phone)}</div><div style="font-size:11px;line-height:1.55;margin-top:7px">${esc(addressText(a))}</div>${a.reference?`<div style="font-size:10px;color:var(--muted);margin-top:4px">Patokan: ${esc(a.reference)}</div>`:''}<div style="display:flex;gap:8px;margin-top:10px"><button class="secondary" type="button" onclick="openCustomerAddressEditor('${esc(a.addressId)}')">EDIT</button><button class="secondary" type="button" onclick="removeCustomerAddress('${esc(a.addressId)}')">HAPUS</button></div></article>`).join('');}
-function renderCheckoutSavedAddresses(){const box=document.getElementById('checkoutSavedAddresses'),list=document.getElementById('checkoutSavedAddressList');if(!box||!list)return;const c=customerSession();if(!c){box.hidden=true;return;}box.hidden=false;if(!customerAddressCache.length){list.innerHTML='<div class="account-note">Belum ada alamat tersimpan. Tambahkan alamat baru untuk melanjutkan.</div>';return;}list.innerHTML=customerAddressCache.map(a=>{const chosen=selectedCheckoutAddressId===a.addressId;return `<button type="button" class="checkout-address-method-btn ${chosen?'selected':''}" style="text-align:left" aria-pressed="${chosen?'true':'false'}" onclick="selectCheckoutSavedAddress('${esc(a.addressId)}')"><span><b>${esc(a.label||'Alamat')}</b><small>${esc(a.recipientName)} · ${esc(a.phone)}<br>${esc(addressText(a))}</small></span><span class="checkout-method-check" aria-hidden="true">✓</span></button>`}).join('');}
+function toggleCheckoutAddressPicker(force){const panel=document.getElementById('checkoutAddressPickerPanel'),btn=document.getElementById('checkoutAddressToggle');if(!panel||!btn)return;const open=typeof force==='boolean'?force:panel.hidden;panel.hidden=!open;btn.setAttribute('aria-expanded',String(open));const title=btn.querySelector('b');if(title)title.textContent=open?'TUTUP PILIHAN ALAMAT':(selectedCheckoutAddressId?'UBAH ALAMAT':'TAMBAH ALAMAT');const icon=btn.querySelector('.checkout-address-toggle-icon');if(icon)icon.textContent=open?'−':'＋';}
+function renderCheckoutSavedAddresses(){const box=document.getElementById('checkoutSavedAddresses'),list=document.getElementById('checkoutSavedAddressList'),preview=document.getElementById('checkoutSelectedAddressPreview'),form=document.getElementById('checkoutAddressFormFields');if(!box||!list)return;const c=customerSession();if(!c){box.hidden=true;if(form)form.hidden=false;return;}box.hidden=false;if(form)form.hidden=true;const selected=customerAddressCache.find(a=>a.addressId===selectedCheckoutAddressId);if(selected){preview.hidden=false;preview.innerHTML=`<div class="checkout-selected-address-summary"><div class="summary-head"><span>✓ ALAMAT TERPILIH</span><span>${esc(selected.label||'LAINNYA')}</span></div><div class="summary-name">${esc(selected.recipientName||'')}</div><div class="summary-detail">${esc(selected.phone||'')}<br>${esc(addressText(selected))}${selected.reference?'<br>Patokan: '+esc(selected.reference):''}</div></div>`;}else{preview.hidden=true;preview.innerHTML='';}list.innerHTML=customerAddressCache.length?customerAddressCache.map(a=>{const chosen=selectedCheckoutAddressId===a.addressId;return `<button type="button" class="checkout-saved-address-card ${chosen?'selected':''}" aria-pressed="${chosen?'true':'false'}" onclick="selectCheckoutSavedAddress('${esc(a.addressId)}')"><span><span class="address-label">${esc(a.label||'LAINNYA')}</span><span class="address-recipient">${esc(a.recipientName||'')}</span><span class="address-phone">${esc(a.phone||'')}</span><span class="address-full">${esc(addressText(a))}${a.reference?'<br>Patokan: '+esc(a.reference):''}</span></span><span class="address-check" aria-hidden="true">✓</span></button>`}).join(''):'<div class="account-note" style="padding:12px">Belum ada alamat tersimpan. Kamu bisa menambahkan alamat baru.</div>';const panel=document.getElementById('checkoutAddressPickerPanel');if(panel)panel.hidden=true;const btn=document.getElementById('checkoutAddressToggle');if(btn){btn.setAttribute('aria-expanded','false');const title=btn.querySelector('b');if(title)title.textContent=selected?'UBAH ALAMAT':'TAMBAH ALAMAT';const icon=btn.querySelector('.checkout-address-toggle-icon');if(icon)icon.textContent='＋';}}
+
 async function selectCheckoutSavedAddress(id){if(checkoutAddressSelectionBusy)return;const a=customerAddressCache.find(x=>x.addressId===id);if(!a)return;checkoutAddressSelectionBusy=true;try{showLoading('Memuat alamat terpilih...');await fillCheckoutAddress(a);selectedCheckoutAddressId=id;saveBuyerData({name:document.getElementById('checkoutName').value,whatsapp:document.getElementById('checkoutPhone').value,email:document.getElementById('checkoutEmail').value},a);renderCheckoutSavedAddresses();setCheckoutStep(3);}catch(e){showNotice(e.message||'Alamat terpilih gagal dimuat. Silakan coba lagi.','Gagal Memuat Alamat');}finally{hideLoading();checkoutAddressSelectionBusy=false;}}
 async function fillCheckoutAddress(a){await loadWilayahPartial();await loadWilayahData();if(typeof window.AliflamWilayahInit!=='function')throw Error('Mesin dropdown wilayah belum siap.');const vals={checkoutRecipient:a.recipientName,checkoutAddressPhone:a.phone,checkoutFullAddress:a.fullAddress,checkoutReference:a.reference||''};Object.entries(vals).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.value=v||'';});await Promise.resolve(window.AliflamWilayahInit({province:a.province,city:a.city,district:a.district,village:a.village,postalCode:a.postalCode,fullAddress:a.fullAddress,reference:a.reference}));}
 let checkoutAddressSelectionBusy=false,checkoutNewAddressBusy=false;
-async function startCheckoutNewAddress(){if(checkoutNewAddressBusy)return;checkoutNewAddressBusy=true;try{showLoading('Menyiapkan form alamat...');addressEditorContext='checkout';editingCustomerAddressId='';checkoutAddressMethod='';selectedCheckoutAddressId='';['checkoutRecipient','checkoutAddressPhone','checkoutFullAddress','checkoutReference'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});await loadWilayahPartial();await loadWilayahData();if(typeof window.AliflamWilayahInit!=='function')throw Error('Mesin dropdown wilayah belum siap.');window.AliflamWilayahInit({});renderCheckoutSavedAddresses();setCheckoutAddressMethod('manual');hideLoading();openManualAddressPopup();}catch(e){hideLoading();showNotice(e.message||'Form alamat baru gagal disiapkan.','Gagal Menyiapkan Alamat');}finally{checkoutNewAddressBusy=false;}}
+async function startCheckoutNewAddress(){if(checkoutNewAddressBusy)return;checkoutNewAddressBusy=true;try{showLoading('Menyiapkan form alamat...');const formFields=document.getElementById('checkoutAddressFormFields');if(formFields)formFields.hidden=false;addressEditorContext='checkout';editingCustomerAddressId='';checkoutAddressMethod='';selectedCheckoutAddressId='';['checkoutRecipient','checkoutAddressPhone','checkoutFullAddress','checkoutReference'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});await loadWilayahPartial();await loadWilayahData();if(typeof window.AliflamWilayahInit!=='function')throw Error('Mesin dropdown wilayah belum siap.');window.AliflamWilayahInit({});renderCheckoutSavedAddresses();setCheckoutAddressMethod('manual');hideLoading();openManualAddressPopup();}catch(e){hideLoading();showNotice(e.message||'Form alamat baru gagal disiapkan.','Gagal Menyiapkan Alamat');}finally{checkoutNewAddressBusy=false;}}
 async function openCustomerAddressEditor(id=''){
   const a=customerAddressCache.find(x=>x.addressId===id)||null;
   addressEditorContext='account';editingCustomerAddressId=id||'';
