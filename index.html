@@ -2683,11 +2683,7 @@ async function checkoutInfo(){
   if(checkoutButton){checkoutButton.disabled=true;checkoutButton.dataset.originalText=checkoutButton.textContent;checkoutButton.textContent='MENYIAPKAN...';}
   showLoading('Menyiapkan checkout...');
   try{
-    if(customerSession()){
-      clearTimeout(customerCartSaveTimer);
-      await persistCustomerCart();
-      await loadCustomerAddresses(true);
-    }
+    const activeCustomer=customerSession();
     const total=money(cart.reduce((a,b)=>a+b.qty*b.price,0));
     document.getElementById('checkoutTotal').textContent=total;
     document.getElementById('checkoutResult').textContent='';
@@ -2697,7 +2693,6 @@ async function checkoutInfo(){
     const manual=document.getElementById('checkoutManualMethod'),paste=document.getElementById('checkoutPasteMethod');
     [manual,paste].forEach(el=>{if(el){el.classList.remove('selected');el.setAttribute('aria-pressed','false')}});
     closeManualAddressPopup();closePasteAddressPopup();applySavedBuyerData();
-    const activeCustomer=customerSession();
     if(activeCustomer){
       // Akun login langsung ke alamat; identitas pembeli diambil dari sesi akun.
       const buyerName=activeCustomer.name||activeCustomer.customerName||'';
@@ -2717,7 +2712,22 @@ async function checkoutInfo(){
       setCheckoutStep(1);
     }
     closeOverlay('cartOverlay');openOverlay('checkoutOverlay');
-    await loadCheckoutDropdowns();
+
+    // Persiapan checkout dijalankan paralel agar waktu tunggu tidak menumpuk.
+    // Data alamat dan pembayaran tetap wajib selesai dimuat sebelum loading ditutup.
+    const checkoutPrepTasks=[loadCheckoutDropdowns()];
+    if(activeCustomer){
+      clearTimeout(customerCartSaveTimer);
+      const pendingCartSave=customerCartSavePromise;
+      const addressLoadPromise=loadCustomerAddresses(true);
+      const cartSavePromise=(async()=>{
+        // Hindari dua penyimpanan keranjang akun berjalan bersamaan.
+        if(pendingCartSave)await pendingCartSave;
+        await persistCustomerCart();
+      })();
+      checkoutPrepTasks.push(addressLoadPromise,cartSavePromise);
+    }
+    await Promise.all(checkoutPrepTasks);
   }catch(e){
     showNotice(e.message||'Checkout belum dapat disiapkan.','Persiapan Checkout');
   }finally{
