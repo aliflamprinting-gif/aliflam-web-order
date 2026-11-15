@@ -1706,7 +1706,40 @@ const money=n=>'Rp'+Number(n||0).toLocaleString('id-ID');
 const imageKey=x=>String(x||'').trim().toLowerCase();
 const IMG=x=>x?IMAGE_BASE+encodeURIComponent(String(x)).replace(/%2F/gi,'/'):'';
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-async function api(action,data={}){const response=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,data})});if(!response.ok)throw Error('Server merespons HTTP '+response.status);const result=await response.json();if(!result||typeof result!=='object')throw Error('Respons server tidak valid.');return result}
+let customerSessionExpiredHandling=false;
+async function api(action,data={}){
+ const response=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,data})});
+ if(!response.ok)throw Error('Server merespons HTTP '+response.status);
+ const result=await response.json();
+ if(!result||typeof result!=='object')throw Error('Respons server tidak valid.');
+ if(result.ok===false&&result.error){
+  const rawError=String(result.error);
+  const expired=/SESI_AKUN_(?:KEDALUWARSA|TIDAK_VALID)|SESI_AKUN_EXPIRED|Sesi akun kamu sudah berakhir/i.test(rawError);
+  const inactive=/AKUN_TIDAK_AKTIF|Akun kamu sedang tidak aktif/i.test(rawError);
+  if(expired||inactive){
+   const customer=typeof getStoredCustomer==='function'?getStoredCustomer():null;
+   if(customer&&customer.sessionToken){
+    if(customerCartId&&Array.isArray(cart)&&cart.length&&typeof captureDeviceCartForRestore==='function'){
+     captureDeviceCartForRestore(cart);
+    }
+    localStorage.removeItem('ALIFLAM_CUSTOMER');
+    if(customerCartId){
+     customerCartId='';
+     customerCartSyncReady=true;
+     if(typeof saveCart==='function')saveCart();
+    }
+    if(!customerSessionExpiredHandling&&typeof openAccountModal==='function'){
+     customerSessionExpiredHandling=true;
+     try{openAccountModal()}finally{customerSessionExpiredHandling=false}
+    }
+   }
+   result.error=inactive
+    ?'Akun kamu sedang tidak aktif. Silakan hubungi admin Aliflam Printing.'
+    :'Sesi akun kamu sudah berakhir. Silakan masuk kembali untuk melanjutkan. Keranjang dan data pesanan kamu tetap aman.';
+  }
+ }
+ return result;
+}
 let MASTER_DROPDOWNS={};
 let wilayahPartialPromise=null, wilayahDataPromise=null, checkoutDropdownsPromise=null;
 async function loadWilayahPartial(){
