@@ -2173,7 +2173,7 @@ function setCheckoutStep(step){
   const success=document.getElementById('checkoutSuccess');if(success)success.style.display='none';
 }
 function checkoutReturnToCart(){closeOverlay('checkoutOverlay');openCart()}
-function checkoutBack(from){setCheckoutStep(Math.max(1,from-1))}
+function checkoutBack(from){if(customerSession()&&from===2){checkoutReturnToCart();return;}setCheckoutStep(Math.max(1,from-1))}
 function clearCheckoutInvalidFields(root=document){
   root.querySelectorAll('.invalid-field').forEach(el=>el.classList.remove('invalid-field'));
 }
@@ -2595,7 +2595,26 @@ async function checkoutInfo(){
     checkoutAddressMethod='';selectedCheckoutAddressId='';addressEditorContext='';
     const manual=document.getElementById('checkoutManualMethod'),paste=document.getElementById('checkoutPasteMethod');
     [manual,paste].forEach(el=>{if(el){el.classList.remove('selected');el.setAttribute('aria-pressed','false')}});
-    closeManualAddressPopup();closePasteAddressPopup();setCheckoutStep(1);applySavedBuyerData();
+    closeManualAddressPopup();closePasteAddressPopup();applySavedBuyerData();
+    const activeCustomer=customerSession();
+    if(activeCustomer){
+      // Akun login langsung ke alamat; identitas pembeli diambil dari sesi akun.
+      const buyerName=activeCustomer.name||activeCustomer.customerName||'';
+      const buyerPhone=activeCustomer.whatsapp||activeCustomer.phone||'';
+      const buyerEmail=activeCustomer.email||'';
+      document.getElementById('checkoutName').value=buyerName;
+      document.getElementById('checkoutPhone').value=buyerPhone;
+      document.getElementById('checkoutEmail').value=buyerEmail;
+      document.getElementById('checkoutRecipient').value=buyerName;
+      document.getElementById('checkoutAddressPhone').value=buyerPhone;
+      const backButton=document.querySelector('[data-checkout-step="2"] .checkout-actions .secondary');
+      if(backButton)backButton.textContent='Kembali Ke Keranjang';
+      setCheckoutStep(2);
+    }else{
+      const backButton=document.querySelector('[data-checkout-step="2"] .checkout-actions .secondary');
+      if(backButton)backButton.textContent='Kembali';
+      setCheckoutStep(1);
+    }
     closeOverlay('cartOverlay');openOverlay('checkoutOverlay');
     await loadCheckoutDropdowns();
   }catch(e){
