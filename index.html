@@ -1504,6 +1504,7 @@ html[data-theme="dark"] .floating-catalog-back{
     <div id="checkoutSavedAddresses" hidden class="checkout-address-picker">
       <div id="checkoutAddressPickerPanel" class="checkout-address-picker-panel">
         <div class="checkout-address-picker-title">PILIH ALAMAT PENGIRIMAN</div>
+        <div id="checkoutAddressSelectionHint" class="checkout-address-selection-hint" role="status">Silahkan pilih alamat terlebih dahulu</div>
         <div id="checkoutSavedAddressList" style="display:grid;gap:11px"></div>
         <button class="checkout-add-new-address" type="button" onclick="startCheckoutNewAddress()"><span>＋</span> TAMBAH ALAMAT</button>
         <button id="checkoutContinueWithAddress" class="primary full" type="button" style="margin-top:12px;min-height:48px" onclick="continueCheckoutWithSelectedAddress()">LANJUTKAN</button>
@@ -2551,16 +2552,8 @@ async function checkoutNext(from){
           if(!refreshed?.ok)throw Error(refreshed?.error||'Daftar alamat gagal diperbarui.');
           customerAddressCache=refreshed.data?.addresses||[];
           if(window.checkoutAddressPopupFlow&&!isEdit){
-            const saved=customerAddressCache.find(x=>!previousAddressIds.has(x.addressId)&&
-              String(x.recipientName||'').trim()===String(address.recipientName||'').trim()&&
-              String(x.phone||'').trim()===String(address.phone||'').trim()) ||
-              customerAddressCache.find(x=>String(x.recipientName||'').trim()===String(address.recipientName||'').trim()&&
-              String(x.phone||'').trim()===String(address.phone||'').trim()&&
-              String(x.fullAddress||'').trim()===String(address.fullAddress||'').trim());
-            if(saved){
-              selectedCheckoutAddressId=saved.addressId;
-              saveBuyerData({name:document.getElementById('checkoutName').value,whatsapp:document.getElementById('checkoutPhone').value,email:document.getElementById('checkoutEmail').value},saved);
-            }
+            /* Alamat baru hanya disimpan ke daftar. Pelanggan wajib memilihnya sendiri di checkout. */
+            selectedCheckoutAddressId='';
           }
         }catch(refreshError){
           refreshWarning='Alamat sudah tersimpan, tetapi daftar belum berhasil diperbarui. Buka ulang tab DATA ALAMAT untuk memuat ulang.';
@@ -3117,6 +3110,7 @@ html[data-theme="dark"] .account-unregistered-icon{background:#49351c;color:#ffd
 .checkout-address-toggle-chevron{margin-left:auto;color:var(--muted);font-size:20px}
 .checkout-address-picker-panel{margin-top:12px;padding:13px;border:1px solid var(--line);border-radius:16px;background:var(--soft)}
 .checkout-address-picker-title{margin:0 0 11px;color:var(--muted);font-size:10px;font-weight:900;letter-spacing:.65px}
+.checkout-address-selection-hint{margin:-4px 0 12px;color:#f5c542;font-size:12px;font-weight:800;line-height:1.45}.checkout-address-selection-hint[hidden]{display:none!important}
 .checkout-saved-address-card{width:100%;display:grid;grid-template-columns:minmax(0,1fr) 30px;gap:12px;align-items:center;padding:16px;border:1.5px solid var(--line);border-radius:14px;background:var(--card,var(--bg));color:var(--ink);text-align:left;cursor:pointer;min-height:112px}
 .checkout-saved-address-card:active{transform:scale(.99)}
 .checkout-saved-address-card.selected{border-color:var(--blue);background:var(--blue-soft)}
@@ -3173,8 +3167,13 @@ function renderCheckoutSavedAddresses(){
     return `<button type="button" class="checkout-saved-address-card ${chosen?'selected':''}" aria-pressed="${chosen?'true':'false'}" onclick="selectCheckoutSavedAddress('${esc(a.addressId)}')"><span><span class="address-label">${esc(a.label||'LAINNYA')}</span><span class="address-name">${esc(a.recipientName||'')}</span><span class="address-phone">${esc(a.phone||'')}</span><span class="address-full">${esc(addressText(a))}${a.reference?'<br>Patokan: '+esc(a.reference):''}</span></span><span class="address-check" aria-hidden="true">✓</span></button>`;
   }).join(''):'<div class="account-note" style="padding:12px">Belum ada alamat tersimpan. Klik TAMBAH ALAMAT untuk membuat alamat baru.</div>';
   const panel=document.getElementById('checkoutAddressPickerPanel');if(panel)panel.hidden=false;
+  const hasExplicitSelection=!!selectedCheckoutAddressId&&customerAddressCache.some(a=>String(a.addressId)===String(selectedCheckoutAddressId));
+  if(!hasExplicitSelection)selectedCheckoutAddressId='';
+  const hint=document.getElementById('checkoutAddressSelectionHint');
+  /* Pesan kuning hanya relevan jika ada alamat tersimpan tetapi belum dipilih. */
+  if(hint)hint.hidden=!customerAddressCache.length||hasExplicitSelection;
   const next=document.getElementById('checkoutContinueWithAddress');
-  if(next)next.disabled=false;
+  if(next)next.disabled=!hasExplicitSelection;
 }
 
 async function selectCheckoutSavedAddress(id){
@@ -3224,15 +3223,25 @@ function organizeAccountAddressForm(){
 }
 function moveCheckoutAddressFormIntoAccountPopup(){
   const form=document.getElementById('checkoutAddressFormFields');
-  const home=document.getElementById('checkoutAddressFormFieldsHome');
   const target=document.getElementById('accountAddressManualView');
-  const wilayahHome=document.getElementById('accountAddressWilayahHome');
-  if(!form||!home||!target)return;
-  if(!home.contains(form)&&form.parentElement!==target)home.appendChild(form);
+  if(!form||!target)return;
+
+  /* Susun kelompok alamat terlebih dahulu. Elemen wilayah berada di dalam
+     section ALAMAT PENERIMA, bukan anak langsung dari target popup. */
+  organizeAccountAddressForm();
+
   form.hidden=false;
-  /* Urutan popup: LABEL, penerima/telepon, lalu seluruh field wilayah. */
-  if(wilayahHome)target.insertBefore(form,wilayahHome);
-  else target.appendChild(form);
+  /* Tempatkan wrapper form pada target dengan anchor yang benar-benar
+     merupakan anak langsung target. Jangan insertBefore ke wilayahHome
+     karena elemen tersebut berada di dalam addressSection. */
+  const anchor=document.getElementById('accountAddressFormToast') ||
+               target.querySelector('.account-address-editor-actions');
+  if(form.parentElement!==target){
+    if(anchor&&anchor.parentElement===target)target.insertBefore(form,anchor);
+    else target.appendChild(form);
+  }else if(anchor&&anchor.parentElement===target&&form.nextElementSibling!==anchor){
+    target.insertBefore(form,anchor);
+  }
 }
 function restoreCheckoutAddressFormHome(){
   const form=document.getElementById('checkoutAddressFormFields');
