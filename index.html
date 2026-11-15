@@ -164,6 +164,7 @@ body.modal-open{overflow:hidden!important;overscroll-behavior:none}
 .checkout-address-method{display:grid;gap:9px;margin:18px 0 14px}
 .checkout-address-method-label{margin:0 0 1px!important}
 .checkout-address-method-btn{width:100%;display:flex;align-items:center;gap:11px;text-align:left;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);min-height:68px}
+.account-inline-loading{display:flex;align-items:center;justify-content:center;gap:9px;padding:18px 12px;color:var(--muted);font-size:11px;font-weight:800}.account-inline-spinner{width:17px;height:17px;border:2px solid var(--line);border-top-color:var(--blue);border-radius:50%;animation:accountInlineSpin .7s linear infinite}@keyframes accountInlineSpin{to{transform:rotate(360deg)}}
 .checkout-address-method-btn:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 .checkout-address-method-btn.selected{border:1.5px solid var(--blue);background:var(--blue-soft)}
 .checkout-method-icon{width:38px;height:38px;flex:0 0 38px;display:grid;place-items:center;border-radius:10px;background:var(--soft);color:var(--blue);font-size:19px;font-weight:800}
@@ -1396,15 +1397,6 @@ html[data-theme="dark"] .floating-catalog-back{
 })();
 </script>
 
-
-<style id="account-login-password-toggle-style">
-.account-login-password-wrap{position:relative;width:100%}
-.account-login-password-wrap input{padding-right:52px!important}
-.account-password-toggle{position:absolute;right:7px;top:50%;transform:translateY(-50%);width:38px;height:38px;display:grid;place-items:center;border:0;border-radius:9px;background:transparent;color:var(--muted,#64748b);cursor:pointer;padding:0}
-.account-password-toggle:hover{background:var(--soft,#f1f5f9)}
-.account-password-toggle:focus-visible{outline:2px solid var(--blue,#2563eb);outline-offset:1px}
-.account-password-toggle svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-</style>
 </head><body><div class="startup-loader" id="startupLoader" role="status" aria-live="polite" aria-label="Memuat Aliflam Printing"><div class="startup-loader-card"><img class="startup-loader-logo" src="https://aliflamprinting-gif.github.io/aliflam-web-order/assets/products/LOGO.webp" alt=""/><div class="startup-loader-title">Menyiapkan Aliflam Printing</div><div class="startup-loader-caption">Sebentar ya, kami siapkan katalog dan gambar untuk kamu.</div><div class="startup-loader-track" aria-hidden="true"></div></div></div><header><div class="wrap header"><a class="brand" href="#" onclick="navigate('home');return false"><img alt="Logo Aliflam Printing" id="logo" src="https://aliflamprinting-gif.github.io/aliflam-web-order/assets/products/LOGO.webp"/><span class="brandwords"><b class="brand-name"><span class="brand-name-main">ALIFLAM</span><span class="brand-name-accent">PRINTING</span></b><small>DESAIN &amp; PERCETAKAN</small></span></a><div class="tools"><button class="iconbtn" id="themeBtn" title="Ganti tema">☾</button><button class="iconbtn" onclick="openCart()" title="Keranjang">🛒 <span class="cartcount" id="cartCount">0</span></button></div></div></header>
 <main class="wrap"><section class="page active" id="homePage"><section class="home-hero" aria-label="Tentang Aliflam Printing">
   <div class="home-hero-copy">
@@ -1492,7 +1484,16 @@ html[data-theme="dark"] .floating-catalog-back{
     <button class="secondary full" type="button" style="margin-top:10px;min-height:46px" onclick="checkoutReturnToCart()">Kembali Ke Keranjang</button>
   </section>
   <section class="checkout-step" data-checkout-step="2">
-    <div id="checkoutSavedAddresses" hidden style="margin:0 0 16px"><div class="field">PILIH ALAMAT TERSIMPAN</div><div id="checkoutSavedAddressList" style="display:grid;gap:9px"></div><button class="secondary full" type="button" style="margin-top:10px" onclick="startCheckoutNewAddress()">＋ TAMBAH ALAMAT BARU</button><div style="text-align:center;color:var(--muted);font-size:10px;margin:12px 0">ATAU GUNAKAN FORM ALAMAT DI BAWAH</div></div>
+    <div id="checkoutSavedAddresses" hidden class="checkout-address-picker">
+      <div id="checkoutAddressPickerPanel" class="checkout-address-picker-panel">
+        <div class="checkout-address-picker-title">PILIH ALAMAT PENGIRIMAN</div>
+        <div id="checkoutSavedAddressList" style="display:grid;gap:11px"></div>
+        <button class="checkout-add-new-address" type="button" onclick="startCheckoutNewAddress()"><span>＋</span> TAMBAH ALAMAT</button>
+        <button id="checkoutContinueWithAddress" class="primary full" type="button" style="margin-top:12px;min-height:48px" onclick="continueCheckoutWithSelectedAddress()">LANJUTKAN</button>
+         <button class="secondary full" type="button" style="margin-top:9px;min-height:46px" onclick="checkoutReturnToCart()">KEMBALI KE KERANJANG</button>
+      </div>
+    </div>
+    <div id="checkoutAddressFormFieldsHome"></div><div id="checkoutAddressFormFields">
     <label class="field" for="checkoutRecipient">Nama penerima *</label><input class="input" id="checkoutRecipient" placeholder="Nama penerima"/>
     <label class="field" for="checkoutAddressPhone">No. HP penerima *</label><input class="input" id="checkoutAddressPhone" inputmode="tel" maxlength="22" placeholder="08xx-xxxx-xxxx"/>
     <p class="checkout-recipient-note">Nama penerima dan nomor HP diambil dari DATA PEMBELI. Kamu bisa mengubahnya sesuai dengan alamat penerima sebenarnya.</p>
@@ -1507,6 +1508,7 @@ html[data-theme="dark"] .floating-catalog-back{
       </button>
     </div>
 
+    </div>
     <div class="checkout-actions"><button class="secondary" type="button" onclick="checkoutBack(2)">Kembali</button><button class="primary" type="button" onclick="continueCheckoutAddressMethod()">Lanjutkan</button></div>
   </section>
   <section class="checkout-step" data-checkout-step="3">
@@ -1554,9 +1556,9 @@ html[data-theme="dark"] .floating-catalog-back{
   </div>
 </div>
 <div class="overlay" id="manualAddressOverlay" style="z-index:40" aria-hidden="true"><div class="dialog manual-address-dialog" role="dialog" aria-modal="true" aria-labelledby="manualAddressTitle">
-  <div class="dialoghead"><h2 id="manualAddressTitle">ISI ALAMAT MANUAL</h2><button class="close" type="button" aria-label="Tutup" onclick="closeManualAddressPopup()">×</button></div>
+  <div class="dialoghead"><h2 id="manualAddressTitle">ISI ALAMAT MANUAL</h2><button class="close" type="button" aria-label="Tutup" onclick="closeCheckoutAddressEditor()">×</button></div>
   <div id="checkoutWilayahMountHome"><div id="checkoutWilayahMount"></div></div>
-  <div class="checkout-actions"><button class="secondary" type="button" onclick="closeManualAddressPopup()">Kembali</button><button class="secondary" type="button" onclick="closeManualAddressPopup();openPasteAddressPopup()">TEMPEL ALAMAT</button><button class="primary" type="button" onclick="checkoutNext(2)">Lanjutkan</button></div>
+  <div class="checkout-actions"><button class="secondary" type="button" onclick="closeCheckoutAddressEditor()">Kembali</button><button class="primary" type="button" onclick="checkoutNext(2)">Lanjutkan</button></div>
 </div></div>
 <div class="overlay" id="pasteAddressOverlay" style="z-index:40" aria-hidden="true"><div class="dialog paste-address-dialog" role="dialog" aria-modal="true" aria-labelledby="pasteAddressTitle">
   <div class="dialoghead"><h2 id="pasteAddressTitle">TEMPELKAN ALAMAT</h2><button class="close" type="button" aria-label="Tutup" onclick="closePasteAddressPopup()">×</button></div>
@@ -1576,15 +1578,18 @@ html[data-theme="dark"] .floating-catalog-back{
       <button class="account-address-editor-close" type="button" aria-label="Tutup" onclick="closeManualAddressPopup()">×</button>
     </div>
     <section id="accountAddressManualView">
-      <div id="accountAddressLabelWrap" hidden>
-        <label class="field" for="accountAddressLabel">NAMA LABEL ALAMAT <span style="font-weight:500;color:var(--muted)">(opsional)</span></label>
-        <input class="input" id="accountAddressLabel" type="text" maxlength="40" placeholder="Contoh: Rumah, Kantor, Toko">
-        <p class="paste-address-stage-note">Kosongkan jika tidak ingin mengubah label yang sekarang.</p>
+      <div id="accountAddressLabelWrap">
+        <label class="field" for="accountAddressLabel">LABEL ALAMAT</label>
+        <select class="input" id="accountAddressLabel" required>
+          <option value="">PILIH LABEL ALAMAT</option>
+          <option value="RUMAH">RUMAH</option>
+          <option value="TEMPAT KERJA">TEMPAT KERJA</option>
+          <option value="LAINNYA">LAINNYA</option>
+        </select>
       </div>
       <div id="accountAddressWilayahHome"></div>
       <div class="checkout-actions account-address-editor-actions">
-        <button class="secondary" type="button" onclick="closeManualAddressPopup()">Kembali</button>
-        <button class="secondary" type="button" onclick="openPasteAddressPopup()">TEMPEL ALAMAT</button>
+        <button class="secondary" type="button" onclick="clearCheckoutNewAddressForm()">BERSIHKAN FORM</button>
         <button class="primary" type="button" onclick="checkoutNext(2)">SIMPAN ALAMAT</button>
       </div>
     </section>
@@ -2177,7 +2182,7 @@ function setCheckoutStep(step){
   const success=document.getElementById('checkoutSuccess');if(success)success.style.display='none';
 }
 function checkoutReturnToCart(){closeOverlay('checkoutOverlay');openCart()}
-function checkoutBack(from){setCheckoutStep(Math.max(1,from-1))}
+function checkoutBack(from){if(customerSession()&&from===2){checkoutReturnToCart();return;}setCheckoutStep(Math.max(1,from-1))}
 function clearCheckoutInvalidFields(root=document){
   root.querySelectorAll('.invalid-field').forEach(el=>el.classList.remove('invalid-field'));
 }
@@ -2228,6 +2233,11 @@ function openManualAddressPopup(){
   const overlay=document.getElementById('manualAddressOverlay');if(!overlay)return;
   overlay.style.zIndex='50';openOverlay('manualAddressOverlay');overlay.setAttribute('aria-hidden','false');
 }
+function closeCheckoutAddressEditor(){
+  const checkoutFlow=!!window.checkoutAddressPopupFlow;
+  closeManualAddressPopup();
+  if(checkoutFlow){restoreCheckoutAddressFormHome();window.checkoutAddressPopupFlow=false;addressEditorContext='';editingCustomerAddressId='';}
+}
 function closeManualAddressPopup(){
   const accountEditor=document.getElementById('accountAddressEditorOverlay');
   if(addressEditorContext==='account'||accountEditor?.classList.contains('open')){
@@ -2242,7 +2252,9 @@ function closeManualAddressPopup(){
     addressEditorContext='';editingCustomerAddressId='';syncModalLock();return;
   }
   const overlay=document.getElementById('manualAddressOverlay');if(!overlay)return;
-  overlay.classList.remove('open');overlay.setAttribute('aria-hidden','true');syncModalLock();
+  overlay.classList.remove('open');overlay.setAttribute('aria-hidden','true');
+  if(customerSession()){const form=document.getElementById('checkoutAddressFormFields');if(form)form.hidden=true;}
+  syncModalLock();
 }
 function openPasteAddressPopup(){
   if(addressEditorContext==='account'){
@@ -2482,17 +2494,15 @@ async function checkoutNext(from){
     const customer={name:val('checkoutName'),whatsapp:val('checkoutPhone'),email:val('checkoutEmail')};
     const address={recipientName:val('checkoutRecipient'),phone:val('checkoutAddressPhone'),province:val('checkoutProvince'),city:val('checkoutCity'),district:val('checkoutDistrict'),village:val('checkoutVillage'),postalCode:val('checkoutPostal'),fullAddress:val('checkoutFullAddress'),reference:val('checkoutReference')};
     if(addressEditorContext==='account'){
-      const saveButton=document.querySelector('#accountAddressManualView .checkout-actions .primary');
+      const saveButton=document.querySelector('#accountAddressManualView .account-address-editor-actions .primary');
       const originalButtonText=saveButton?.textContent||'SIMPAN ALAMAT';
       const isEdit=!!editingCustomerAddressId;
       const oldAddress=customerAddressCache.find(x=>x.addressId===editingCustomerAddressId)||null;
-      const typedLabel=(document.getElementById('accountAddressLabel')?.value||'').trim();
-      let label;
-      if(isEdit){
-        label=typedLabel||oldAddress?.label||'Alamat';
-      }else{
-        const usedNumbers=customerAddressCache.map(x=>Number(String(x.label||'').match(/^Alamat\\s+(\\d+)$/i)?.[1]||0));
-        label='Alamat '+(Math.max(0,...usedNumbers)+1);
+      const label=(document.getElementById('accountAddressLabel')?.value||'').trim().toUpperCase();
+      if(!['RUMAH','TEMPAT KERJA','LAINNYA'].includes(label)){
+        showNotice('Pilih label alamat terlebih dahulu.');
+        document.getElementById('accountAddressLabel')?.focus();
+        return;
       }
       if(accountAddressSaveInProgress)return;
       accountAddressSaveInProgress=true;
@@ -2501,6 +2511,7 @@ async function checkoutNext(from){
         showLoading(isEdit?'Memperbarui alamat...':'Menyimpan alamat...');
         const c=customerSession();
         if(!c?.sessionToken)throw Error('Sesi akun tidak ditemukan. Silakan login kembali.');
+        const previousAddressIds=new Set(customerAddressCache.map(x=>x.addressId));
         const r=await api('saveCustomerAddress',{customerSessionToken:c.sessionToken,addressId:editingCustomerAddressId,label,address});
         if(!r?.ok)throw Error(r?.error||'Alamat gagal disimpan.');
         let refreshWarning='';
@@ -2508,12 +2519,25 @@ async function checkoutNext(from){
           const refreshed=await api('customerAddresses',{customerSessionToken:c.sessionToken});
           if(!refreshed?.ok)throw Error(refreshed?.error||'Daftar alamat gagal diperbarui.');
           customerAddressCache=refreshed.data?.addresses||[];
+          if(window.checkoutAddressPopupFlow&&!isEdit){
+            const saved=customerAddressCache.find(x=>!previousAddressIds.has(x.addressId)&&
+              String(x.recipientName||'').trim()===String(address.recipientName||'').trim()&&
+              String(x.phone||'').trim()===String(address.phone||'').trim()) ||
+              customerAddressCache.find(x=>String(x.recipientName||'').trim()===String(address.recipientName||'').trim()&&
+              String(x.phone||'').trim()===String(address.phone||'').trim()&&
+              String(x.fullAddress||'').trim()===String(address.fullAddress||'').trim());
+            if(saved){
+              selectedCheckoutAddressId=saved.addressId;
+              saveBuyerData({name:document.getElementById('checkoutName').value,whatsapp:document.getElementById('checkoutPhone').value,email:document.getElementById('checkoutEmail').value},saved);
+            }
+          }
         }catch(refreshError){
           refreshWarning='Alamat sudah tersimpan, tetapi daftar belum berhasil diperbarui. Buka ulang tab DATA ALAMAT untuk memuat ulang.';
         }
         renderCustomerAddressList();
         renderCheckoutSavedAddresses();
         addressEditorContext='';editingCustomerAddressId='';
+        restoreCheckoutAddressFormHome();
         const editor=document.getElementById('accountAddressEditorOverlay');
         if(editor){editor.classList.remove('open');editor.setAttribute('aria-hidden','true');}
         const mount=document.getElementById('checkoutWilayahMount');
@@ -2525,11 +2549,14 @@ async function checkoutNext(from){
         if(pasteView)pasteView.hidden=true;
         const labelInput=document.getElementById('accountAddressLabel');
         if(labelInput)labelInput.value='';
-        document.getElementById('accountBuyerPanel').hidden=true;
-        document.getElementById('accountAddressesPanel').hidden=false;
-        document.getElementById('accountTabBuyer').classList.remove('primary');
-        document.getElementById('accountTabAddresses').classList.add('primary');
-        accountMessage(isEdit?'Alamat berhasil diperbarui.':'Alamat berhasil disimpan.');
+        if(!window.checkoutAddressPopupFlow){
+          document.getElementById('accountBuyerPanel').hidden=true;
+          document.getElementById('accountAddressesPanel').hidden=false;
+          document.getElementById('accountTabBuyer').classList.remove('primary');
+          document.getElementById('accountTabAddresses').classList.add('primary');
+          accountMessage(isEdit?'Alamat berhasil diperbarui.':'Alamat berhasil disimpan.');
+        }
+        window.checkoutAddressPopupFlow=false;
         showNotice(refreshWarning|| (isEdit?'Alamat berhasil diperbarui.':'Alamat berhasil disimpan.'),refreshWarning?'Berhasil, Perlu Muat Ulang':'Berhasil');
       }catch(error){
         showNotice(error.message||'Alamat gagal disimpan. Silakan coba lagi.','Gagal Menyimpan Alamat');
@@ -2540,7 +2567,15 @@ async function checkoutNext(from){
       }
       return;
     }
-    if(customerSession()&&!selectedCheckoutAddressId){const c=customerSession();const r=await api('saveCustomerAddress',{customerSessionToken:c.sessionToken,label:'Alamat '+(customerAddressCache.length+1),address});if(!r.ok)throw Error(r.error||'Alamat gagal disimpan ke akun.');await loadCustomerAddresses();}
+    if(customerSession()&&!selectedCheckoutAddressId){
+      const c=customerSession();
+      showLoading('Menyimpan alamat ke akun...');
+      try{
+        const r=await api('saveCustomerAddress',{customerSessionToken:c.sessionToken,label:'LAINNYA',address});
+        if(!r.ok)throw Error(r.error||'Alamat gagal disimpan ke akun.');
+        await loadCustomerAddresses(true);
+      }finally{hideLoading();}
+    }
     saveBuyerData(customer,address);
     closeManualAddressPopup();
   }
@@ -2575,12 +2610,15 @@ function buildWhatsAppOrderMessage(order){
 }
 async function checkoutInfo(){
   if(!cart.length)return showNotice('Keranjang masih kosong.');
+  const checkoutButton=document.querySelector('#cartOverlay .twoactions .primary');
+  if(checkoutButton?.disabled)return;
+  if(checkoutButton){checkoutButton.disabled=true;checkoutButton.dataset.originalText=checkoutButton.textContent;checkoutButton.textContent='MENYIAPKAN...';}
   showLoading('Menyiapkan checkout...');
   try{
     if(customerSession()){
       clearTimeout(customerCartSaveTimer);
       await persistCustomerCart();
-      await loadCustomerAddresses();
+      await loadCustomerAddresses(true);
     }
     const total=money(cart.reduce((a,b)=>a+b.qty*b.price,0));
     document.getElementById('checkoutTotal').textContent=total;
@@ -2590,13 +2628,33 @@ async function checkoutInfo(){
     checkoutAddressMethod='';selectedCheckoutAddressId='';addressEditorContext='';
     const manual=document.getElementById('checkoutManualMethod'),paste=document.getElementById('checkoutPasteMethod');
     [manual,paste].forEach(el=>{if(el){el.classList.remove('selected');el.setAttribute('aria-pressed','false')}});
-    closeManualAddressPopup();closePasteAddressPopup();setCheckoutStep(1);applySavedBuyerData();
+    closeManualAddressPopup();closePasteAddressPopup();applySavedBuyerData();
+    const activeCustomer=customerSession();
+    if(activeCustomer){
+      // Akun login langsung ke alamat; identitas pembeli diambil dari sesi akun.
+      const buyerName=activeCustomer.name||activeCustomer.customerName||'';
+      const buyerPhone=activeCustomer.whatsapp||activeCustomer.phone||'';
+      const buyerEmail=activeCustomer.email||'';
+      document.getElementById('checkoutName').value=buyerName;
+      document.getElementById('checkoutPhone').value=buyerPhone;
+      document.getElementById('checkoutEmail').value=buyerEmail;
+      document.getElementById('checkoutRecipient').value=buyerName;
+      document.getElementById('checkoutAddressPhone').value=buyerPhone;
+      const backButton=document.querySelector('[data-checkout-step="2"] .checkout-actions .secondary');
+      if(backButton)backButton.textContent='Kembali Ke Keranjang';
+      setCheckoutStep(2);
+    }else{
+      const backButton=document.querySelector('[data-checkout-step="2"] .checkout-actions .secondary');
+      if(backButton)backButton.textContent='Kembali';
+      setCheckoutStep(1);
+    }
     closeOverlay('cartOverlay');openOverlay('checkoutOverlay');
-    try{await loadCheckoutDropdowns()}catch(e){document.getElementById('submitOrderBtn').disabled=true}
+    await loadCheckoutDropdowns();
   }catch(e){
     showNotice(e.message||'Checkout belum dapat disiapkan.','Persiapan Checkout');
   }finally{
     hideLoading();
+    if(checkoutButton){checkoutButton.disabled=false;checkoutButton.textContent=checkoutButton.dataset.originalText||'Lanjut Checkout';delete checkoutButton.dataset.originalText;}
   }
 }
 let checkoutSubmitting=false;
@@ -2935,13 +2993,7 @@ html[data-theme="dark"] .account-unregistered-icon{background:#49351c;color:#ffd
   </section>
   <section class="account-panel" id="accountLoginForm">
    <label for="accountLoginPhone">Nomor WhatsApp</label><input id="accountLoginPhone" inputmode="tel" autocomplete="tel" placeholder="08xxxxxxxxxx"/>
-   <label for="accountLoginPassword">Password</label>
-   <div class="account-login-password-wrap">
-    <input id="accountLoginPassword" type="password" autocomplete="current-password" placeholder="Masukkan password"/>
-    <button class="account-password-toggle" type="button" aria-label="Tampilkan password" aria-pressed="false" onclick="toggleAccountLoginPassword(this)">
-     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
-    </button>
-   </div>
+   <label for="accountLoginPassword">Password</label><input id="accountLoginPassword" type="password" autocomplete="current-password" placeholder="Masukkan password"/>
    <button class="account-main-btn" type="button" onclick="submitCustomerLogin()">MASUK</button>
    <div class="account-divider">ATAU</div>
    <button class="account-link-btn account-register-link" type="button" onclick="showAccountForm('register')"><span>Belum punya akun?</span> <b>Buat akun</b></button>
@@ -3018,6 +3070,33 @@ html[data-theme="dark"] .account-unregistered-icon{background:#49351c;color:#ffd
 .account-pending-card p{font-size:12px;line-height:1.6;color:var(--muted);margin:0}
 .account-pending-card .account-pending-next{margin:13px 0 17px;color:var(--ink)}
 .account-pending-wa{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;min-height:49px;padding:12px 14px;border-radius:12px;background:#16a34a;color:#fff!important;font-size:12px;font-weight:900;text-decoration:none}
+
+/* Checkout address picker: spacious cards, collapsed by default */
+.checkout-address-picker{margin:4px 0 18px}
+.checkout-address-toggle{width:100%;min-height:68px;display:flex;align-items:center;gap:13px;padding:13px 15px;border:1px solid var(--line);border-radius:15px;background:var(--soft);color:var(--ink);text-align:left;cursor:pointer}
+.checkout-address-toggle-icon{width:40px;height:40px;display:grid;place-items:center;flex:0 0 40px;border-radius:12px;background:var(--blue-soft);color:var(--blue);font-size:25px;font-weight:800}
+.checkout-address-toggle b{display:block;font-size:12px;font-weight:900;letter-spacing:.25px}
+.checkout-address-toggle small{display:block;margin-top:4px;color:var(--muted);font-size:10px;line-height:1.4}
+.checkout-address-toggle-chevron{margin-left:auto;color:var(--muted);font-size:20px}
+.checkout-address-picker-panel{margin-top:12px;padding:13px;border:1px solid var(--line);border-radius:16px;background:var(--soft)}
+.checkout-address-picker-title{margin:0 0 11px;color:var(--muted);font-size:10px;font-weight:900;letter-spacing:.65px}
+.checkout-saved-address-card{width:100%;display:grid;grid-template-columns:minmax(0,1fr) 30px;gap:12px;align-items:center;padding:16px;border:1.5px solid var(--line);border-radius:14px;background:var(--card,var(--bg));color:var(--ink);text-align:left;cursor:pointer;min-height:112px}
+.checkout-saved-address-card:active{transform:scale(.99)}
+.checkout-saved-address-card.selected{border-color:var(--blue);background:var(--blue-soft)}
+.checkout-saved-address-card .address-label{display:inline-flex;align-items:center;gap:6px;margin-bottom:9px;font-size:11px;font-weight:900;letter-spacing:.4px;color:var(--blue)}
+.checkout-saved-address-card .address-recipient{display:block;font-size:14px;font-weight:900;line-height:1.35}
+.checkout-saved-address-card .address-phone{display:block;margin-top:3px;font-size:12px;font-weight:700;color:var(--muted)}
+.checkout-saved-address-card .address-full{display:block;margin-top:9px;font-size:12px;line-height:1.55;color:var(--ink);overflow-wrap:anywhere}
+.checkout-saved-address-card .address-check{width:27px;height:27px;display:grid;place-items:center;border:1.5px solid var(--line);border-radius:50%;color:transparent;font-size:15px;font-weight:900}
+.checkout-saved-address-card.selected .address-check{border-color:var(--blue);background:var(--blue);color:#fff}
+.checkout-add-new-address{width:100%;min-height:54px;margin-top:11px;border:1.5px dashed var(--blue);border-radius:13px;background:transparent;color:var(--blue);font-size:12px;font-weight:900;cursor:pointer}
+.checkout-add-new-address span{font-size:20px;vertical-align:-2px;margin-right:5px}
+.checkout-selected-address-summary{margin:0 0 12px;padding:14px;border:1.5px solid var(--blue);border-radius:14px;background:var(--blue-soft);color:var(--ink)}
+.checkout-selected-address-summary .summary-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;font-size:11px;font-weight:900;color:var(--blue)}
+.checkout-selected-address-summary .summary-name{font-size:13px;font-weight:900}
+.checkout-selected-address-summary .summary-detail{margin-top:6px;font-size:11px;line-height:1.55;overflow-wrap:anywhere}
+.checkout-address-picker[hidden],.checkout-address-picker-panel[hidden],#checkoutSelectedAddressPreview[hidden]{display:none!important}
+#checkoutAddressFormFields[hidden]{display:none!important}#checkoutAddressFormFields{display:block}
 .account-pending-wa svg{width:21px;height:21px;flex:0 0 21px}
 .account-pending-wa:hover{background:#15803d}
 .account-pending-continue{display:block;width:100%;min-height:47px;margin-top:10px;padding:12px;border:1px solid var(--blue);border-radius:12px;background:var(--blue-soft);color:var(--blue);font-size:11px;font-weight:900}
@@ -3032,13 +3111,115 @@ let accountAddressSaveInProgress=false;
 const deletingCustomerAddressIds=new Set();
 function customerAddressPayloadFromForm(){const v=id=>(document.getElementById(id)?.value||'').trim();return {recipientName:v('checkoutRecipient'),phone:v('checkoutAddressPhone'),province:v('checkoutProvince'),city:v('checkoutCity'),district:v('checkoutDistrict'),village:v('checkoutVillage'),postalCode:v('checkoutPostal'),fullAddress:v('checkoutFullAddress'),reference:v('checkoutReference')};}
 function showCustomerProfileTab(tab){const buyer=tab==='buyer';document.getElementById('accountBuyerPanel').hidden=!buyer;document.getElementById('accountAddressesPanel').hidden=buyer;document.getElementById('accountTabBuyer').classList.toggle('primary',buyer);document.getElementById('accountTabAddresses').classList.toggle('primary',!buyer);if(!buyer)loadCustomerAddresses();}
-async function loadCustomerAddresses(){const c=customerSession();if(!c)return;const wrap=document.getElementById('accountAddressList');if(wrap)wrap.innerHTML='<div class="account-note">Memuat alamat...</div>';try{const r=await api('customerAddresses',{customerSessionToken:c.sessionToken});if(!r.ok)throw Error(r.error||'Alamat gagal dimuat.');customerAddressCache=r.data.addresses||[];renderCustomerAddressList();renderCheckoutSavedAddresses();}catch(e){if(wrap)wrap.innerHTML='<div class="account-note">'+esc(e.message||'Alamat gagal dimuat.')+'</div>';}}
+async function loadCustomerAddresses(throwOnError=false){const c=customerSession();if(!c)return [];const wrap=document.getElementById('accountAddressList');if(wrap)wrap.innerHTML='<div class="account-inline-loading" role="status"><span class="account-inline-spinner" aria-hidden="true"></span>Memuat daftar alamat...</div>';try{const r=await api('customerAddresses',{customerSessionToken:c.sessionToken});if(!r.ok)throw Error(r.error||'Alamat gagal dimuat.');customerAddressCache=r.data.addresses||[];renderCustomerAddressList();renderCheckoutSavedAddresses();return customerAddressCache;}catch(e){if(wrap)wrap.innerHTML='<div class="account-note">'+esc(e.message||'Alamat gagal dimuat.')+'</div>';if(throwOnError)throw e;return [];}}
 function addressText(a){return [a.fullAddress,a.village,a.district,a.city,a.province,a.postalCode].filter(Boolean).join(', ');}
 function renderCustomerAddressList(){const wrap=document.getElementById('accountAddressList');if(!wrap)return;if(!customerAddressCache.length){wrap.innerHTML='<div class="account-note">Belum ada alamat tersimpan. Tambahkan alamat pertama kamu.</div>';return;}wrap.innerHTML=customerAddressCache.map(a=>`<article style="border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--soft)"><div style="display:flex;justify-content:space-between;gap:8px"><b>${esc(a.label||'Alamat')}</b><span style="font-size:10px;color:var(--muted)">TERSIMPAN</span></div><b style="display:block;margin-top:7px;font-size:12px">${esc(a.recipientName)}</b><div style="font-size:11px;color:var(--muted);margin-top:3px">${esc(a.phone)}</div><div style="font-size:11px;line-height:1.55;margin-top:7px">${esc(addressText(a))}</div>${a.reference?`<div style="font-size:10px;color:var(--muted);margin-top:4px">Patokan: ${esc(a.reference)}</div>`:''}<div style="display:flex;gap:8px;margin-top:10px"><button class="secondary" type="button" onclick="openCustomerAddressEditor('${esc(a.addressId)}')">EDIT</button><button class="secondary" type="button" onclick="removeCustomerAddress('${esc(a.addressId)}')">HAPUS</button></div></article>`).join('');}
-function renderCheckoutSavedAddresses(){const box=document.getElementById('checkoutSavedAddresses'),list=document.getElementById('checkoutSavedAddressList');if(!box||!list)return;const c=customerSession();if(!c){box.hidden=true;return;}box.hidden=false;if(!customerAddressCache.length){list.innerHTML='<div class="account-note">Belum ada alamat tersimpan. Tambahkan alamat baru untuk melanjutkan.</div>';return;}list.innerHTML=customerAddressCache.map(a=>`<button type="button" class="checkout-address-method-btn ${selectedCheckoutAddressId===a.addressId?'selected':''}" style="text-align:left" onclick="selectCheckoutSavedAddress('${esc(a.addressId)}')"><span><b>${esc(a.label||'Alamat')}</b><small>${esc(a.recipientName)} · ${esc(a.phone)}<br>${esc(addressText(a))}</small></span><span class="checkout-method-check">✓</span></button>`).join('');}
-async function selectCheckoutSavedAddress(id){const a=customerAddressCache.find(x=>x.addressId===id);if(!a)return;selectedCheckoutAddressId=id;await fillCheckoutAddress(a);saveBuyerData({name:document.getElementById('checkoutName').value,whatsapp:document.getElementById('checkoutPhone').value,email:document.getElementById('checkoutEmail').value},a);renderCheckoutSavedAddresses();setCheckoutStep(3);}
-async function fillCheckoutAddress(a){await loadWilayahPartial();await loadWilayahData();if(typeof window.AliflamWilayahInit!=='function')throw Error('Mesin dropdown wilayah belum siap.');const vals={checkoutRecipient:a.recipientName,checkoutAddressPhone:a.phone,checkoutFullAddress:a.fullAddress,checkoutReference:a.reference||''};Object.entries(vals).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.value=v||'';});window.AliflamWilayahInit({province:a.province,city:a.city,district:a.district,village:a.village,postalCode:a.postalCode,fullAddress:a.fullAddress,reference:a.reference});}
-async function startCheckoutNewAddress(){addressEditorContext='checkout';editingCustomerAddressId='';checkoutAddressMethod='';['checkoutRecipient','checkoutAddressPhone','checkoutFullAddress','checkoutReference'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});await loadWilayahPartial();await loadWilayahData();window.AliflamWilayahInit({});setCheckoutAddressMethod('manual');openManualAddressPopup();}
+function toggleCheckoutAddressPicker(force){const panel=document.getElementById('checkoutAddressPickerPanel'),btn=document.getElementById('checkoutAddressToggle');if(!panel||!btn)return;const open=typeof force==='boolean'?force:panel.hidden;panel.hidden=!open;btn.setAttribute('aria-expanded',String(open));const title=btn.querySelector('b');if(title)title.textContent=open?'TUTUP PILIHAN ALAMAT':(selectedCheckoutAddressId?'UBAH ALAMAT':'TAMBAH ALAMAT');const icon=btn.querySelector('.checkout-address-toggle-icon');if(icon)icon.textContent=open?'−':'＋';}
+function renderCheckoutSavedAddresses(){
+  const box=document.getElementById('checkoutSavedAddresses');
+  const list=document.getElementById('checkoutSavedAddressList');
+  const form=document.getElementById('checkoutAddressFormFields');
+  if(!box||!list)return;
+  const c=customerSession();
+  if(!c){box.hidden=true;if(form)form.hidden=false;return;}
+  box.hidden=false;if(form)form.hidden=true;
+  list.innerHTML=customerAddressCache.length?customerAddressCache.map(a=>{
+    const chosen=selectedCheckoutAddressId===a.addressId;
+    return `<button type="button" class="checkout-saved-address-card ${chosen?'selected':''}" aria-pressed="${chosen?'true':'false'}" onclick="selectCheckoutSavedAddress('${esc(a.addressId)}')"><span><span class="address-label">${esc(a.label||'LAINNYA')}</span><span class="address-name">${esc(a.recipientName||'')}</span><span class="address-phone">${esc(a.phone||'')}</span><span class="address-full">${esc(addressText(a))}${a.reference?'<br>Patokan: '+esc(a.reference):''}</span></span><span class="address-check" aria-hidden="true">✓</span></button>`;
+  }).join(''):'<div class="account-note" style="padding:12px">Belum ada alamat tersimpan. Klik TAMBAH ALAMAT untuk membuat alamat baru.</div>';
+  const panel=document.getElementById('checkoutAddressPickerPanel');if(panel)panel.hidden=false;
+  const next=document.getElementById('checkoutContinueWithAddress');
+  if(next)next.disabled=false;
+}
+
+async function selectCheckoutSavedAddress(id){
+  if(checkoutAddressSelectionBusy)return;
+  const a=customerAddressCache.find(x=>x.addressId===id);if(!a)return;
+  checkoutAddressSelectionBusy=true;
+  try{
+    showLoading('Memilih alamat pengiriman...');
+    await fillCheckoutAddress(a);
+    selectedCheckoutAddressId=id;
+    saveBuyerData({name:document.getElementById('checkoutName').value,whatsapp:document.getElementById('checkoutPhone').value,email:document.getElementById('checkoutEmail').value},a);
+    renderCheckoutSavedAddresses();
+  }catch(e){
+    showNotice(e.message||'Alamat terpilih gagal dimuat. Silakan coba lagi.','Gagal Memuat Alamat');
+  }finally{hideLoading();checkoutAddressSelectionBusy=false;}
+}
+function continueCheckoutWithSelectedAddress(){
+  if(!customerSession())return;
+  if(!selectedCheckoutAddressId)return showNotice('Pilih alamat pengiriman terlebih dahulu.');
+  const a=customerAddressCache.find(x=>x.addressId===selectedCheckoutAddressId);
+  if(!a)return showNotice('Alamat pilihan tidak ditemukan. Silakan pilih ulang.');
+  saveBuyerData({name:document.getElementById('checkoutName').value,whatsapp:document.getElementById('checkoutPhone').value,email:document.getElementById('checkoutEmail').value},a);
+  setCheckoutStep(3);
+}
+async function fillCheckoutAddress(a){await loadWilayahPartial();await loadWilayahData();if(typeof window.AliflamWilayahInit!=='function')throw Error('Mesin dropdown wilayah belum siap.');const vals={checkoutRecipient:a.recipientName,checkoutAddressPhone:a.phone,checkoutFullAddress:a.fullAddress,checkoutReference:a.reference||''};Object.entries(vals).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.value=v||'';});await Promise.resolve(window.AliflamWilayahInit({province:a.province,city:a.city,district:a.district,village:a.village,postalCode:a.postalCode,fullAddress:a.fullAddress,reference:a.reference}));}
+let checkoutAddressSelectionBusy=false,checkoutNewAddressBusy=false;
+function moveCheckoutAddressFormIntoAccountPopup(){
+  const form=document.getElementById('checkoutAddressFormFields');
+  const home=document.getElementById('checkoutAddressFormFieldsHome');
+  const target=document.getElementById('accountAddressManualView');
+  if(!form||!home||!target)return;
+  if(!home.contains(form))home.appendChild(form);
+  form.hidden=false;
+  target.appendChild(form);
+}
+function restoreCheckoutAddressFormHome(){
+  const form=document.getElementById('checkoutAddressFormFields');
+  const home=document.getElementById('checkoutAddressFormFieldsHome');
+  if(form&&home&&form.parentElement!==home)home.appendChild(form);
+  if(form)form.hidden=true;
+}
+function clearCheckoutNewAddressForm(){
+  const form=document.getElementById('checkoutAddressFormFields');
+  if(form)form.querySelectorAll('input,select,textarea').forEach(el=>{
+    if(el.type==='checkbox'||el.type==='radio')el.checked=false;
+    else el.value='';
+    el.classList.remove('invalid-field');
+  });
+  const label=document.getElementById('accountAddressLabel');if(label)label.value='';
+  const mount=document.getElementById('checkoutWilayahMount');
+  if(mount)mount.querySelectorAll('select').forEach(el=>{el.selectedIndex=0;el.dispatchEvent(new Event('change',{bubbles:true}));});
+  const recipient=document.getElementById('checkoutRecipient');if(recipient)recipient.value='';
+  const phone=document.getElementById('checkoutAddressPhone');if(phone)phone.value='';
+  const full=document.getElementById('checkoutFullAddress');if(full)full.value='';
+  const reference=document.getElementById('checkoutReference');if(reference)reference.value='';
+  showNotice('Form alamat berhasil dibersihkan.','Form Dibersihkan');
+}
+async function startCheckoutNewAddress(){
+  if(checkoutNewAddressBusy)return;
+  checkoutNewAddressBusy=true;
+  try{
+    showLoading('Menyiapkan form alamat...');
+    addressEditorContext='account';
+    window.checkoutAddressPopupFlow=true;
+    editingCustomerAddressId='';
+    checkoutAddressMethod='manual';
+    const c=customerSession();
+    const recipient=document.getElementById('checkoutRecipient');
+    const phone=document.getElementById('checkoutAddressPhone');
+    /* Isi default hanya saat form benar-benar masih kosong; X tidak menghapus draft. */
+    if(recipient&&!recipient.value)recipient.value=c?.name||'';
+    if(phone&&!phone.value)phone.value=c?.whatsapp||'';
+    await loadWilayahPartial();
+    await loadWilayahData();
+    if(typeof window.AliflamWilayahInit!=='function')throw Error('Mesin dropdown wilayah belum siap.');
+    window.AliflamWilayahInit({});
+    const label=document.getElementById('accountAddressLabel');if(label)label.value='';
+    moveCheckoutAddressFormIntoAccountPopup();
+    const manual=document.getElementById('accountAddressManualView');
+    const paste=document.getElementById('accountAddressPasteView');
+    if(manual)manual.hidden=false;if(paste)paste.hidden=true;
+    const overlay=document.getElementById('accountAddressEditorOverlay');
+    if(!overlay)throw Error('Popup form alamat tidak ditemukan.');
+    overlay.classList.add('open');overlay.setAttribute('aria-hidden','false');
+    syncModalLock();
+  }catch(e){
+    addressEditorContext='';
+    showNotice(e.message||'Form alamat baru gagal disiapkan.','Gagal Menyiapkan Alamat');
+  }finally{hideLoading();checkoutNewAddressBusy=false;}
+}
 async function openCustomerAddressEditor(id=''){
   const a=customerAddressCache.find(x=>x.addressId===id)||null;
   addressEditorContext='account';editingCustomerAddressId=id||'';
@@ -3051,10 +3232,11 @@ async function openCustomerAddressEditor(id=''){
     document.getElementById('checkoutReference').value=a?.reference||'';
     window.AliflamWilayahInit(a||{});
     document.getElementById('accountAddressEditorTitle').textContent=a?'EDIT ALAMAT':'TAMBAH ALAMAT';
-    const labelWrap=document.getElementById('accountAddressLabelWrap');
     const labelInput=document.getElementById('accountAddressLabel');
-    if(labelWrap)labelWrap.hidden=!a;
-    if(labelInput)labelInput.value=a?.label||'';
+    if(labelInput){
+      const currentLabel=String(a?.label||'').trim().toUpperCase();
+      labelInput.value=['RUMAH','TEMPAT KERJA','LAINNYA'].includes(currentLabel)?currentLabel:(a?'LAINNYA':'');
+    }
     setCheckoutAddressMethod('manual');openManualAddressPopup();
   }catch(error){addressEditorContext='';editingCustomerAddressId='';showNotice(error.message||'Form alamat gagal dibuka.');}
 }
@@ -3596,7 +3778,7 @@ html[data-theme="dark"] .account-modal textarea.invalid-field{
 <style id="account-address-editor-isolated">
 .account-address-editor-overlay{position:fixed;inset:0;z-index:1600;display:none;align-items:center;justify-content:center;padding:12px;background:rgba(8,18,32,.72);overscroll-behavior:contain}
 .account-address-editor-overlay.open{display:flex}
-.account-address-editor{width:min(560px,100%);max-height:92vh;overflow:auto;overscroll-behavior:contain;padding:18px;background:var(--card,#fff);color:var(--text,#202938);border:1px solid var(--line,#dbe3ec);border-radius:20px;box-shadow:0 24px 70px rgba(0,0,0,.35)}
+.account-address-editor{width:min(560px,100%);max-height:92vh;overflow:auto;overscroll-behavior:contain;padding:18px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:20px;box-shadow:0 24px 70px rgba(0,0,0,.35)}
 .account-address-editor-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
 .account-address-editor-head h2{margin:0 0 5px;font-size:19px;line-height:1.2;white-space:nowrap}
 .account-address-editor-head .account-subtitle{margin:0}
@@ -3613,20 +3795,31 @@ html[data-theme="dark"] .account-modal textarea.invalid-field{
 .account-modal .account-head-actions .account-logout-btn span{white-space:nowrap}
 .account-modal .account-head-actions .account-close{width:34px!important;height:34px!important;min-width:34px!important}
 @media(max-width:420px){.account-address-editor{padding:15px;width:calc(100% - 2px);max-height:94vh}.account-address-editor-actions{bottom:-15px;flex-wrap:wrap}.account-modal{padding:16px!important}.account-modal-head{gap:7px!important}.account-modal-head h2{font-size:18px!important}.account-modal .account-head-actions .account-logout-btn{height:34px!important;min-height:34px!important;padding:0 7px!important;font-size:9px!important}}
+\n/* Form popup pelanggan login: hanya input manual, tanpa pilihan metode tempel. */
+#accountAddressManualView #checkoutAddressFormFields .checkout-address-method,
+#accountAddressManualView #checkoutAddressFormFields>.checkout-actions{display:none!important}
+/* Kontras Dark Mode untuk popup akun dan editor alamat */
+html[data-theme="dark"] .account-address-editor,
+html[data-theme="dark"] .account-modal{color:var(--ink)!important}
+html[data-theme="dark"] .account-address-editor .field,
+html[data-theme="dark"] .account-address-editor label,
+html[data-theme="dark"] .account-modal label,
+html[data-theme="dark"] .account-modal h2,
+html[data-theme="dark"] .account-modal h3,
+html[data-theme="dark"] .account-modal p,
+html[data-theme="dark"] .account-modal small,
+html[data-theme="dark"] .account-modal strong{color:var(--ink)}
+html[data-theme="dark"] .account-address-editor input,
+html[data-theme="dark"] .account-address-editor select,
+html[data-theme="dark"] .account-address-editor textarea,
+html[data-theme="dark"] .account-modal input,
+html[data-theme="dark"] .account-modal select,
+html[data-theme="dark"] .account-modal textarea{background:var(--soft)!important;color:var(--ink)!important;border-color:var(--line)!important}
+html[data-theme="dark"] .account-address-editor input::placeholder,
+html[data-theme="dark"] .account-address-editor textarea::placeholder,
+html[data-theme="dark"] .account-modal input::placeholder,
+html[data-theme="dark"] .account-modal textarea::placeholder{color:var(--muted)!important;opacity:1}
+html[data-theme="dark"] .account-address-editor .paste-address-stage-note{color:var(--muted)!important}
 </style>
 
-
-<script id="account-login-password-toggle-script">
-function toggleAccountLoginPassword(button){
- const input=document.getElementById('accountLoginPassword');
- if(!input)return;
- const visible=input.type==='password';
- input.type=visible?'text':'password';
- button.setAttribute('aria-pressed',visible?'true':'false');
- button.setAttribute('aria-label',visible?'Sembunyikan password':'Tampilkan password');
- button.innerHTML=visible
-  ? '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8"/><path d="M9.9 5.2A10.8 10.8 0 0 1 12 5c6.4 0 10 7 10 7a15.7 15.7 0 0 1-3.1 3.8M6.2 6.2C3.5 8 2 12 2 12s3.6 7 10 7a10.7 10.7 0 0 0 4-.8"/></svg>'
-  : '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
-}
-</script>
 </body></html>
