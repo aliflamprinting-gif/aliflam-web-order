@@ -57,6 +57,8 @@ body.modal-open{overflow:hidden!important;overscroll-behavior:none}
 .checkout-actions>*{flex:1;min-height:46px}
 /* Checkout pelanggan login memakai tombol di kartu alamat; baris bawah hanya untuk guest. */
 .checkout-step.checkout-login-address-mode>.checkout-actions{display:none!important}
+/* REVISI 1: user login langsung menggunakan alur alamat manual; metode hanya untuk Guest. */
+.checkout-step.checkout-login-address-mode .checkout-address-method{display:none!important}
 .account-address-form-toast{margin:12px 0 2px;padding:10px 12px;border:1px solid #16a34a44;border-radius:10px;background:#16a34a12;color:#15803d;font-size:11px;font-weight:800;letter-spacing:.35px}
 .account-address-form-toast.show{animation:addressToastIn .18s ease-out}
 @keyframes addressToastIn{from{opacity:.35;transform:translateY(-3px)}to{opacity:1;transform:translateY(0)}}
@@ -1749,6 +1751,7 @@ async function loadCheckoutDropdowns(){
   if(submitButton)submitButton.disabled=true;
   checkoutDropdownsPromise=(async()=>{
     await loadWilayahPartial();
+    organizeAccountAddressForm();
     await loadWilayahData();
     if(typeof window.AliflamWilayahInit!=='function')throw Error('Mesin dropdown wilayah belum siap.');
     window.AliflamWilayahInit(savedBuyer.address||{});bindCheckoutInvalidClear();
@@ -2510,6 +2513,8 @@ async function checkoutNext(from){
     if(checkoutAddressMethod!=='manual')return showNotice('Pilih metode pengisian alamat terlebih dahulu.');
     if(!window.ALIFLAM_WILAYAH_DATA||!document.getElementById('checkoutProvince'))return showNotice('Data wilayah belum selesai dimuat. Tunggu sebentar lalu coba lagi.');
     const required=['checkoutRecipient','checkoutAddressPhone','checkoutProvince','checkoutCity','checkoutDistrict','checkoutVillage','checkoutFullAddress'];
+    // REVISI 2: LABEL ALAMAT wajib ikut ditandai merah pada form akun.
+    if(addressEditorContext==='account')required.unshift('accountAddressLabel');
     const missing=required.filter(id=>!val(id));
     if(missing.length){markCheckoutInvalid(missing,'Kolom alamat yang wajib diisi ditandai merah.');return;}
     if(val('checkoutProvince').toUpperCase().includes('LUAR PULAU JAWA'))return showNotice('Pengiriman di luar Pulau Jawa belum tersedia. Silakan pesan melalui Shopee.');
@@ -3196,6 +3201,27 @@ function continueCheckoutWithSelectedAddress(){
 }
 async function fillCheckoutAddress(a){await loadWilayahPartial();await loadWilayahData();if(typeof window.AliflamWilayahInit!=='function')throw Error('Mesin dropdown wilayah belum siap.');const vals={checkoutRecipient:a.recipientName,checkoutAddressPhone:a.phone,checkoutFullAddress:a.fullAddress,checkoutReference:a.reference||''};Object.entries(vals).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.value=v||'';});await Promise.resolve(window.AliflamWilayahInit({province:a.province,city:a.city,district:a.district,village:a.village,postalCode:a.postalCode,fullAddress:a.fullAddress,reference:a.reference}));}
 let checkoutAddressSelectionBusy=false,checkoutNewAddressBusy=false;
+function organizeAccountAddressForm(){
+  const target=document.getElementById('accountAddressManualView');
+  const labelWrap=document.getElementById('accountAddressLabelWrap');
+  const form=document.getElementById('checkoutAddressFormFields');
+  const wilayahHome=document.getElementById('accountAddressWilayahHome');
+  if(!target||!labelWrap||!form||!wilayahHome)return;
+  let labelSection=document.getElementById('accountAddressLabelSection');
+  if(!labelSection){labelSection=document.createElement('section');labelSection.id='accountAddressLabelSection';labelSection.className='account-address-form-section account-address-label-section';target.insertBefore(labelSection,target.firstChild);}
+  if(labelWrap.parentElement!==labelSection)labelSection.appendChild(labelWrap);
+  let recipientSection=document.getElementById('accountAddressRecipientSection');
+  if(!recipientSection){recipientSection=document.createElement('section');recipientSection.id='accountAddressRecipientSection';recipientSection.className='account-address-form-section';recipientSection.innerHTML='<h3 class="account-address-section-title">DATA PENERIMA</h3>';labelSection.after(recipientSection);}
+  let addressSection=document.getElementById('accountAddressDetailsSection');
+  if(!addressSection){addressSection=document.createElement('section');addressSection.id='accountAddressDetailsSection';addressSection.className='account-address-form-section account-address-details-section';addressSection.innerHTML='<h3 class="account-address-section-title">ALAMAT PENERIMA</h3>';recipientSection.after(addressSection);}
+  const recipientLabel=form.querySelector('label[for="checkoutRecipient"]');
+  const recipientInput=document.getElementById('checkoutRecipient');
+  const phoneLabel=form.querySelector('label[for="checkoutAddressPhone"]');
+  const phoneInput=document.getElementById('checkoutAddressPhone');
+  const note=form.querySelector('.checkout-recipient-note');
+  [recipientLabel,recipientInput,phoneLabel,phoneInput,note].forEach(el=>{if(el&&el.parentElement!==recipientSection)recipientSection.appendChild(el);});
+  if(wilayahHome.parentElement!==addressSection)addressSection.appendChild(wilayahHome);
+}
 function moveCheckoutAddressFormIntoAccountPopup(){
   const form=document.getElementById('checkoutAddressFormFields');
   const home=document.getElementById('checkoutAddressFormFieldsHome');
@@ -3230,7 +3256,7 @@ function clearCheckoutNewAddressForm(showFeedback=true){
     else el.value='';
     el.classList.remove('invalid-field');
   });
-  const label=document.getElementById('accountAddressLabel');if(label)label.value='';
+  const label=document.getElementById('accountAddressLabel');if(label){label.value='';label.classList.remove('invalid-field');}
   const mount=document.getElementById('checkoutWilayahMount');
   if(mount)mount.querySelectorAll('select').forEach(el=>{el.selectedIndex=0;el.dispatchEvent(new Event('change',{bubbles:true}));});
   const recipient=document.getElementById('checkoutRecipient');if(recipient)recipient.value='';
@@ -3263,7 +3289,7 @@ async function startCheckoutNewAddress(){
     if(phone)phone.value=c?.whatsapp||c?.phone||'';
     if(typeof window.AliflamWilayahInit!=='function')throw Error('Mesin dropdown wilayah belum siap.');
     window.AliflamWilayahInit({});
-    const label=document.getElementById('accountAddressLabel');if(label)label.value='';
+    const label=document.getElementById('accountAddressLabel');if(label){label.value='';label.classList.remove('invalid-field');}
     moveCheckoutAddressFormIntoAccountPopup();
     const manual=document.getElementById('accountAddressManualView');
     const paste=document.getElementById('accountAddressPasteView');
@@ -3287,7 +3313,7 @@ async function openCustomerAddressEditor(id=''){
   addressEditorContext='account';editingCustomerAddressId=id||'';
   window.checkoutAddressPopupFlow=false;
   try{
-    await loadWilayahPartial();await loadWilayahData();
+    await loadWilayahPartial();organizeAccountAddressForm();await loadWilayahData();
     const c=customerSession();
     document.getElementById('checkoutRecipient').value=a?.recipientName||c?.name||'';
     document.getElementById('checkoutAddressPhone').value=a?.phone||c?.whatsapp||'';
@@ -3884,6 +3910,16 @@ html[data-theme="dark"] .account-modal textarea.invalid-field{
 \n/* Form popup pelanggan login: hanya input manual, tanpa pilihan metode tempel. */
 #accountAddressManualView #checkoutAddressFormFields .checkout-address-method,
 #accountAddressManualView #checkoutAddressFormFields .checkout-recipient-note{display:none!important}
+
+/* REVISI 4: pengelompokan form alamat agar alur pengisian lebih jelas. */
+.account-address-form-section{display:block;margin:0 0 16px}
+.account-address-label-section{margin-bottom:16px}
+.account-address-section-title{margin:0 0 10px;font-size:12px;font-weight:900;letter-spacing:.06em;color:var(--ink)}
+.account-address-details-section{margin-top:20px;padding-top:2px}
+.account-address-form-section .field{display:block;margin:0 0 6px}
+.account-address-form-section input,.account-address-form-section select,.account-address-form-section textarea{margin-bottom:12px}
+.account-address-details-section #checkoutFullAddress{margin-bottom:0}
+.account-address-details-section #checkoutReference{margin-top:14px}
 /* Kontras Dark Mode untuk popup akun dan editor alamat */
 html[data-theme="dark"] .account-address-editor,
 html[data-theme="dark"] .account-modal{color:var(--ink)!important}
@@ -3906,6 +3942,127 @@ html[data-theme="dark"] .account-address-editor textarea::placeholder,
 html[data-theme="dark"] .account-modal input::placeholder,
 html[data-theme="dark"] .account-modal textarea::placeholder{color:var(--muted)!important;opacity:1}
 html[data-theme="dark"] .account-address-editor .paste-address-stage-note{color:var(--muted)!important}
+/* REVISI 3: popup tambah/edit alamat diberi ruang dan scroll tetap di dalam popup. */
+.account-address-editor-overlay{
+  box-sizing:border-box;
+  padding:28px 16px;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+}
+.account-address-editor{
+  box-sizing:border-box;
+  max-height:calc(100vh - 56px);
+  max-height:calc(100dvh - 56px);
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  scrollbar-gutter:stable;
+}
+.account-address-editor-actions{
+  position:sticky;
+  bottom:0;
+  z-index:2;
+  padding:12px 0 4px;
+  margin-bottom:-2px;
+}
+@media(max-width:600px){
+  .account-address-editor-overlay{padding:24px 14px;}
+  .account-address-editor{
+    width:100%;
+    max-height:calc(100vh - 48px);
+    max-height:calc(100dvh - 48px);
+    border-radius:18px;
+  }
+}
+
+</style>
+
+<style id="dark-mode-validation-contrast-revisi-5">
+/* REVISI 5: indikator validasi merah dibuat lebih tegas dan konsisten pada Dark Mode. */
+html[data-theme="dark"] .invalid-field,
+html[data-theme="dark"] input.invalid-field,
+html[data-theme="dark"] select.invalid-field,
+html[data-theme="dark"] textarea.invalid-field,
+html[data-theme="dark"] .account-modal .invalid-field,
+html[data-theme="dark"] .account-address-editor .invalid-field,
+html[data-theme="dark"] .payment-option.invalid-field {
+  border: 2px solid #ff5268 !important;
+  box-shadow: 0 0 0 2px rgba(255,82,104,.28), 0 0 12px rgba(255,55,82,.38) !important;
+}
+html[data-theme="dark"] input.invalid-field,
+html[data-theme="dark"] select.invalid-field,
+html[data-theme="dark"] textarea.invalid-field,
+html[data-theme="dark"] .account-modal input.invalid-field,
+html[data-theme="dark"] .account-modal select.invalid-field,
+html[data-theme="dark"] .account-modal textarea.invalid-field,
+html[data-theme="dark"] .account-address-editor input.invalid-field,
+html[data-theme="dark"] .account-address-editor select.invalid-field,
+html[data-theme="dark"] .account-address-editor textarea.invalid-field {
+  background: #451923 !important;
+  color: #fff4f5 !important;
+  caret-color: #fff4f5 !important;
+}
+html[data-theme="dark"] .invalid-field:focus,
+html[data-theme="dark"] input.invalid-field:focus,
+html[data-theme="dark"] select.invalid-field:focus,
+html[data-theme="dark"] textarea.invalid-field:focus {
+  outline: 2px solid #ff8292 !important;
+  outline-offset: 2px !important;
+}
+
+/* REVISI 6: validasi error kontras tinggi khusus Dark Mode, konsisten untuk semua elemen bertanda invalid-field. */
+html[data-theme="dark"] .invalid-field,
+html[data-theme="dark"] input.invalid-field,
+html[data-theme="dark"] select.invalid-field,
+html[data-theme="dark"] textarea.invalid-field,
+html[data-theme="dark"] .payment-option.invalid-field,
+html[data-theme="dark"] [class~="invalid-field"] {
+  border: 2px solid #ff5c70 !important;
+  background-color: rgba(255, 65, 92, .13) !important;
+  color: #fff1f2 !important;
+  box-shadow: 0 0 0 2px rgba(255, 92, 112, .24), 0 0 12px rgba(255, 55, 85, .30) !important;
+}
+html[data-theme="dark"] .invalid-field:focus,
+html[data-theme="dark"] input.invalid-field:focus,
+html[data-theme="dark"] select.invalid-field:focus,
+html[data-theme="dark"] textarea.invalid-field:focus {
+  outline: 2px solid rgba(255, 112, 130, .82) !important;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(255, 92, 112, .28), 0 0 15px rgba(255, 55, 85, .38) !important;
+}
+html[data-theme="dark"] .invalid-field::placeholder,
+html[data-theme="dark"] input.invalid-field::placeholder,
+html[data-theme="dark"] textarea.invalid-field::placeholder {
+  color: #ffc1c8 !important;
+  opacity: 1;
+}
+html[data-theme="dark"] .outside-java-location-error,
+html[data-theme="dark"] .order-pin-error {
+  color: #ff8291 !important;
+}
+
+
+/* REVISI 12: label field ikut menunjukkan status error pada Dark Mode.
+   Indikator mengikuti invalid-field dan otomatis hilang saat field diperbaiki. */
+html[data-theme="dark"] .field:has(+ input.invalid-field),
+html[data-theme="dark"] .field:has(+ select.invalid-field),
+html[data-theme="dark"] .field:has(+ textarea.invalid-field),
+html[data-theme="dark"] label.field:has(+ .input.invalid-field),
+html[data-theme="dark"] .account-address-editor label.field:has(+ select.invalid-field),
+html[data-theme="dark"] .account-address-editor label.field:has(+ input.invalid-field),
+html[data-theme="dark"] .account-address-editor label.field:has(+ textarea.invalid-field) {
+  color: #ff8292 !important;
+  text-shadow: 0 0 8px rgba(255, 82, 104, .22);
+}
+html[data-theme="dark"] .field:has(+ input.invalid-field)::after,
+html[data-theme="dark"] .field:has(+ select.invalid-field)::after,
+html[data-theme="dark"] .field:has(+ textarea.invalid-field)::after {
+  content: " • WAJIB DIISI";
+  color: #ff9aa6;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .25px;
+}
 </style>
 
 </body></html>
