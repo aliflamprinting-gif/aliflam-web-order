@@ -2980,6 +2980,141 @@ function sendAliflamWhatsApp(){
   closeAliflamWhatsApp();
 }
 
+
+/* ==========================================
+   ALIFLAM WEBSITE ANALYTICS
+   Tracking kunjungan dan klik Shopee.
+   Tidak mengubah alur checkout / login / katalog.
+========================================== */
+const ALIFLAM_ANALYTICS_ENDPOINT='https://script.google.com/macros/s/AKfycbwmD6pwnN5lnynezHmENd_KtxAqPqB_0-LB0FCo9_cinRDZZx7ruDA63cyNjCEISSPW/exec';
+const ALIFLAM_ANALYTICS_VISITOR_KEY='ALIFLAM_ANALYTICS_VISITOR_V1';
+const ALIFLAM_ANALYTICS_SESSION_KEY='ALIFLAM_ANALYTICS_SESSION_V1';
+const ALIFLAM_ANALYTICS_ATTRIBUTION_KEY='ALIFLAM_ANALYTICS_ATTRIBUTION_V1';
+const ALIFLAM_ANALYTICS_VISIT_SENT_KEY='ALIFLAM_ANALYTICS_VISIT_SENT_V1';
+
+function analyticsId_(prefix){
+  let token='';
+  try{
+    token=window.crypto&&typeof crypto.randomUUID==='function'
+      ?crypto.randomUUID()
+      :'';
+  }catch(_){}
+  if(!token)token=Date.now().toString(36)+'-'+Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);
+  return prefix+'-'+token;
+}
+function analyticsReadJson_(key,storage){
+  try{return JSON.parse(storage.getItem(key)||'null')}catch(_){return null}
+}
+function analyticsGetIdentity_(){
+  let visitor='';
+  try{visitor=localStorage.getItem(ALIFLAM_ANALYTICS_VISITOR_KEY)||''}catch(_){}
+  if(!visitor){
+    visitor=analyticsId_('VIS');
+    try{localStorage.setItem(ALIFLAM_ANALYTICS_VISITOR_KEY,visitor)}catch(_){}
+  }
+  let session='';
+  try{session=sessionStorage.getItem(ALIFLAM_ANALYTICS_SESSION_KEY)||''}catch(_){}
+  if(!session){
+    session=analyticsId_('SES');
+    try{sessionStorage.setItem(ALIFLAM_ANALYTICS_SESSION_KEY,session)}catch(_){}
+  }
+  return {idPengunjung:visitor,idKunjungan:session};
+}
+function analyticsGetAttribution_(){
+  const params=new URLSearchParams(location.search);
+  const hasUtm=['utm_source','utm_medium','utm_campaign','utm_id'].some(key=>params.has(key));
+  let saved=analyticsReadJson_(ALIFLAM_ANALYTICS_ATTRIBUTION_KEY,localStorage)||{};
+  if(hasUtm){
+    saved={
+      source:params.get('utm_source')||'',
+      medium:params.get('utm_medium')||'',
+      campaign:params.get('utm_campaign')||'',
+      idLinkTracking:params.get('utm_id')||'',
+      capturedAt:new Date().toISOString()
+    };
+    try{localStorage.setItem(ALIFLAM_ANALYTICS_ATTRIBUTION_KEY,JSON.stringify(saved))}catch(_){}
+  }
+  if(!saved.source&&!saved.medium&&!saved.campaign){
+    saved={source:'direct',medium:'(none)',campaign:'(direct)',idLinkTracking:''};
+  }
+  return saved;
+}
+function analyticsDevice_(){
+  const ua=navigator.userAgent||'';
+  const perangkat=/tablet|ipad/i.test(ua)?'TABLET':(/mobile|android|iphone/i.test(ua)?'MOBILE':'DESKTOP');
+  let browser='OTHER';
+  if(/Edg\//i.test(ua))browser='EDGE';
+  else if(/Chrome\//i.test(ua)&&!/Edg\//i.test(ua))browser='CHROME';
+  else if(/Firefox\//i.test(ua))browser='FIREFOX';
+  else if(/Safari\//i.test(ua)&&!/Chrome\//i.test(ua))browser='SAFARI';
+  return {perangkat,browser};
+}
+function analyticsSend_(data){
+  try{
+    const body=JSON.stringify(data);
+    if(navigator.sendBeacon){
+      const blob=new Blob([body],{type:'text/plain;charset=UTF-8'});
+      if(navigator.sendBeacon(ALIFLAM_ANALYTICS_ENDPOINT,blob))return true;
+    }
+    fetch(ALIFLAM_ANALYTICS_ENDPOINT,{
+      method:'POST',
+      mode:'no-cors',
+      headers:{'Content-Type':'text/plain;charset=UTF-8'},
+      body,
+      keepalive:true
+    }).catch(()=>{});
+    return true;
+  }catch(error){
+    // Tracking bersifat tambahan; kegagalannya tidak boleh mengganggu website.
+    return false;
+  }
+}
+function analyticsTrack_(jenis,extra={}){
+  const identity=analyticsGetIdentity_();
+  const attribution=analyticsGetAttribution_();
+  const device=analyticsDevice_();
+  const payload={
+    ...identity,
+    idAktivitas:analyticsId_('ACT'),
+    jenisAktivitas:jenis,
+    halamanAsal:location.href,
+    referrer:document.referrer||'',
+    perangkat:device.perangkat,
+    browser:device.browser,
+    source:attribution.source||'',
+    medium:attribution.medium||'',
+    campaign:attribution.campaign||'',
+    idLinkTracking:attribution.idLinkTracking||'',
+    ...extra
+  };
+  return analyticsSend_(payload);
+}
+function analyticsStart_(){
+  // Satu event kunjungan per sesi browser; refresh tidak menambah total kunjungan.
+  let alreadySent=false;
+  try{alreadySent=sessionStorage.getItem(ALIFLAM_ANALYTICS_VISIT_SENT_KEY)==='1'}catch(_){}
+  if(!alreadySent){
+    analyticsTrack_('KUNJUNGAN_HALAMAN',{kategori:'WEBSITE'});
+    try{sessionStorage.setItem(ALIFLAM_ANALYTICS_VISIT_SENT_KEY,'1')}catch(_){}
+  }
+  // Delegasi event menjaga tombol Shopee yang diisi dinamis oleh openDetail().
+  document.addEventListener('click',function(event){
+    const button=event.target&&event.target.closest
+      ?event.target.closest('#shopeeButton'):null;
+    if(!button||button.style.display==='none'||!button.href||button.href==='#')return;
+    const product=typeof selected!=='undefined'&&selected?selected:null;
+    analyticsTrack_('KLIK_SHOPEE',{
+      kategori:'SHOPEE',
+      idProduk:product?String(product.id||''):'',
+      namaProduk:product?String(product.name||''):'',
+      linkTujuan:button.href,
+      keterangan:'Klik ORDER VIA SHOPEE'
+    });
+  },true);
+}
+
+analyticsStart_();
+
 loadLocalData();
 if(customerSession()){captureDeviceCartForRestore(cart);hydrateCustomerCart().catch(error=>{customerCartSyncReady=false;showNotice(error.message||'Keranjang akun gagal dimuat. Silakan login ulang.','Keranjang Akun')})}else customerCartSyncReady=true;
 renderMyOrders();
